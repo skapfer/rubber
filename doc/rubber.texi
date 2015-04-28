@@ -457,6 +457,11 @@ Set the value of a variable as a list of strings. The list is space-separated,
 possibly empty. For details on the existing variables and their meaning, see
 @ref{Variables}.
 
+@item shell_escape
+Pass the option @option{--shell-escape} to LaTeX, which is required by some
+packages.  The same as the @option{--shell-escape} command-line option to
+rubber, but only applies to the current target.
+
 @item watch <file>
 Watch the specified file for changes. If the contents of this file has
 changed after a compilation, then another compilation is triggered. This is
