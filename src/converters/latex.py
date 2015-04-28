@@ -555,6 +555,7 @@ class LaTeXDep (Node):
 			"paper": "",
 			"arguments": [],
 			"src-specials": "",
+			"shell_escape": 0,
 			"source": None,
 			"target": None,
 			"path": None,
@@ -565,9 +566,6 @@ class LaTeXDep (Node):
 		self.vars_stack = []
 
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
-
-		if self.vars.get('shell_escape', 0):
-			self.cmdline.insert(0, '--shell-escape')
 
 		# the initial hooks:
 
@@ -914,13 +912,19 @@ class LaTeXDep (Node):
 
 	def do_set (self, name, val):
 		try:
+			if type (self.vars[name]) is list:
+				msg.warn (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
+				return
 			self.vars[name] = val
 		except KeyError:
 			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
+	def do_shell_escape (self):
+		self.vars['shell_escape'] = 1
+
 	def do_setlist (self, name, *val):
 		try:
-			self.vars[name] = val
+			self.vars[name] = list(val)
 		except KeyError:
 			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
@@ -1151,6 +1155,12 @@ class LaTeXDep (Node):
 			else:
 				cmd.append("-src-specials=" + specials)
 
+		if self.vars['shell_escape']:
+			cmd += [ '--shell-escape' ]
+
+		# make sure the arguments actually are a list, otherwise the
+		# characters of the string might be passed as individual arguments
+		assert type (self.vars["arguments"]) is list
 		cmd += self.vars["arguments"]
 
 		cmd += [x.replace("%s",file) for x in self.cmdline]

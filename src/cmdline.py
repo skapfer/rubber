@@ -226,11 +226,12 @@ available options:
 	
 			env = Environment()
 
-			env.vars.new_key('shell_escape', self.shell_escape)
-
 			if env.set_source(src, jobname=self.jobname):
 				return 1
 			self.jobname = None
+
+			if self.shell_escape:
+				env.main.vars['shell_escape'] = 1
 
 			if self.include_only is not None:
 				env.main.includeonly(self.include_only)
