@@ -39,6 +39,9 @@ class Modules:
 		"""
 		return self.objects[name]
 
+	def __contains__ (self, other):
+		return other in self.objects
+
 	def has_key (self, name):
 		"""
 		Check if a given module is loaded.
