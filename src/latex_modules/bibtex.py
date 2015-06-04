@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 BibTeX support for Rubber
 
@@ -250,7 +251,11 @@ class Bibliography:
 			cmd = ["bibtex"]
 		else:
 			cmd = ["bibtex", "-min-crossrefs=" + self.crossrefs]
-		if self.doc.env.execute(['bibtex', self.base], doc):
+		# BibTeX comes with a straightjacket in some TeX distros and can't write
+		# to absolute paths.  strip the directory, and change into that dir.
+		workdir = os.path.dirname (self.base)
+		basename = os.path.basename (self.base)
+		if self.doc.env.execute(['bibtex', basename], doc, pwd=workdir):
 			msg.info(_("There were errors making the bibliography."))
 			return False
 		self.run_needed = 0
