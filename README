@@ -39,7 +39,10 @@ precise usage information.
 
 * Author
 
-Rubber is written and maintained by Emmanuel Beffara <emmanuel@beffara.org>.
+Rubber was originally written by Emmanuel Beffara <emmanuel@beffara.org>.
+It is currently maintained by Sebastian Kapfer <sebastian.kapfer@fau.de>.
+
+Its homepage can be found at https://launchpad.net/rubber.
 
 Thanks to all those who provided testing, comments and suggestions, and
 re-thanks to those who wrote patches and bugfixes.

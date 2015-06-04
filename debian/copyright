@@ -1,12 +1,8 @@
-This package was debianized by Emmanuel Beffara <emmanuel@beffara.org> on
-Fri, 31 May 2002 11:54:47 +0200.
+The program's home page can be found at https://launchpad.net/rubber.
 
-Original source can be found at: ftp://ftp.beffara.org/soft/
-The program's home page can be found at: http://beffara.org/stuff/rubber.html
+Rubber was originally written by Emmanuel Beffara <emmanuel@beffara.org>
 
-Upstream author: Emmanuel Beffara <emmanuel@beffara.org>
-
-This software is copyright (c) 2002 by Emmanuel Beffara
+It is currently maintained by Sebastian Kapfer <sebastian.kapfer@fau.de>
 
 You are free to distribute this software under the terms of
 the GNU General Public License.
