@@ -1,7 +1,7 @@
 Source: rubber
 Section: tex
 Priority: optional
-Maintainer: Emmanuel Beffara <manu@beffara.org>
+Maintainer: Sebastian Kapfer <sebastian.kapfer@fau.de>
 Uploaders: Baruch Even <baruch@debian.org>
 Build-Depends: debhelper (>= 5.0.37.2)
 Build-Depends-Indep: python-dev (>= 2.2), texinfo, python-support (>= 0.3)
@@ -22,4 +22,4 @@ Description: an automated system for building LaTeX documents
  including graphics/graphicx with automatic conversion between various
  graphics formats and Metapost compilation.
  .
- Homepage: http://www.pps.jussieu.fr/~beffara/soft/rubber/
+ Homepage: https://launchpad.net/rubber
