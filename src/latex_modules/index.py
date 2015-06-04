@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2004--2006
+# vim: noet:ts=4
 """
 Indexing support with package 'index'.
 
@@ -57,10 +58,7 @@ class Index:
 		self.source = doc.target + "." + source
 		self.target = doc.target + "." + target
 		self.transcript = doc.target + "." + transcript
-		if os.path.exists(self.source):
-			self.md5 = md5_file(self.source)
-		else:
-			self.md5 = None
+		self.md5 = md5_file(self.source)
 
 		self.tool = "makeindex"
 		self.lang = None   # only for xindy

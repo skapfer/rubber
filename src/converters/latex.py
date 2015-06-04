@@ -881,10 +881,7 @@ class LaTeXDep (Node):
 	def do_onchange (self, file, cmd):
 		file = self.abspath(file)
 		self.onchange_cmd[file] = cmd
-		if os.path.exists(file):
-			self.onchange_md5[file] = md5_file(file)
-		else:
-			self.onchange_md5[file] = None
+		self.onchange_md5[file] = md5_file(file)
 
 	def do_paper (self, arg):
 		self.vars["paper"] = arg
@@ -1026,10 +1023,7 @@ class LaTeXDep (Node):
 			aux = filename + ".aux"
 			self.removed_files.append(aux)
 			self.aux_old[aux] = None
-			if os.path.exists(aux):
-				self.aux_md5[aux] = md5_file(aux)
-			else:
-				self.aux_md5[aux] = None
+			self.aux_md5[aux] = md5_file(aux)
 
 	def h_includeonly (self, loc, files):
 		"""
@@ -1222,10 +1216,7 @@ class LaTeXDep (Node):
 		BibTeXing).
 		"""
 		aux = self.target + ".aux"
-		if os.path.exists(aux):
-			self.aux_md5[aux] = md5_file(aux)
-		else:
-			self.aux_md5[aux] = None
+		self.aux_md5[aux] = md5_file(aux)
 		self.aux_old[aux] = None
 
 		self.log.read(self.target + ".log")
@@ -1407,10 +1398,7 @@ class LaTeXDep (Node):
 		watched. When the file changes during a compilation, it means that
 		another compilation has to be done.
 		"""
-		if os.path.exists(file):
-			self.watched_files[file] = md5_file(file)
-		else:
-			self.watched_files[file] = None
+		self.watched_files[file] = md5_file(file)
 
 	def update_watches (self):
 		"""

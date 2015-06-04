@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim:noet:ts=4
 """
 This module contains utility functions and classes used by the main system and
 by the modules for various tasks.
@@ -7,6 +8,7 @@ by the modules for various tasks.
 
 import hashlib
 import os, stat, time
+import errno
 import imp
 import re, string
 from string import whitespace
@@ -142,13 +144,19 @@ msg = Message()
 def md5_file (fname):
 	"""
 	Compute the MD5 sum of a given file.
+	Returns None if the file does not exist.
 	"""
-	m = hashlib.md5()
-	file = open(fname)
-	for line in file.readlines():
-		m.update(line)
-	file.close()
-	return m.digest()
+	try:
+		m = hashlib.md5()
+		file = open(fname)
+		for line in file.readlines():
+			m.update(line)
+		file.close()
+		return m.digest()
+	except IOError as e:
+		if e.errno == errno.ENOENT:
+			return None
+		raise e
 
 
 #-- Keyval parsing --{{{1
