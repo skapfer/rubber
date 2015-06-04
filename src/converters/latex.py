@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 LaTeX document building system for Rubber.
 
@@ -587,7 +588,9 @@ class LaTeXDep (Node):
 			"RequirePackage" : ("oa", self.h_usepackage),
 			"documentclass" : ("oa", self.h_documentclass),
 			"LoadClass" : ("oa", self.h_documentclass),
-			"LoadClassWithOptions" : ("a", self.h_documentclass),
+			# LoadClassWithOptions doesn't take optional arguments, but
+			# we recycle the same handler
+			"LoadClassWithOptions" : ("oa", self.h_documentclass),
 			"tableofcontents" : ("", self.h_tableofcontents),
 			"listoffigures" : ("", self.h_listoffigures),
 			"listoftables" : ("", self.h_listoftables),
