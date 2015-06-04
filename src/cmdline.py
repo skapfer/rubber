@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim:noet:ts=4
 """
 This is the command line interface for Rubber.
 """
@@ -214,13 +215,17 @@ available options:
 
 			# Go to the appropriate directory
 
-			if self.place != ".":
-				if self.place is None:
-					msg.path = os.path.dirname(src)
-					os.chdir(os.path.dirname(src))
-					src = os.path.basename(src)
-				else:
-					os.chdir(self.place)
+			try:
+				if self.place != ".":
+					if self.place is None:
+						msg.path = os.path.dirname(src)
+						os.chdir(os.path.dirname(src))
+						src = os.path.basename(src)
+					else:
+						os.chdir(self.place)
+			except OSError as e:
+				msg.error(_("Error changing to working directory: %s") % e.strerror)
+				return 1
 
 			# Check the source and prepare it for processing
 	
