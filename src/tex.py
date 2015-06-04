@@ -220,7 +220,7 @@ class ParserBase:
 		"""
 		Skip white space in the input.
 		"""
-		while self.peek_token().cat == SPACE:
+		while self.peek_token().cat in (SPACE, END_LINE):
 			self.get_token()
 
 	def get_group (self):

@@ -56,6 +56,8 @@ class Modules:
 			msg.debug(_("module %s already registered") % name, pkg='latex')
 			return 2
 
+		assert name != ''
+
 		# First look for a script
 
 		mod = None
@@ -1058,6 +1060,7 @@ class LaTeXDep (Node):
 		"""
 		for name in string.split(names, ","):
 			name = name.strip()
+			if name == '': continue  # \usepackage{a,}
 			file = self.env.find_file(name + ".sty")
 			if file and not os.path.exists(name + ".py"):
 				self.process(file)
