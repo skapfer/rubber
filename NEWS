@@ -9,13 +9,16 @@ Version 1.2 (2015-06-xx)
             % rubber: shell_escape
       near the header.  To grant shell-escape to a document, run rubber as
             rubber --unsafe document.tex
-      There are several older hacks documented in the internet which continue
+      There are several older hacks documented on the internet which continue
       to work, but are deprecated from now on.  The 'arguments' variable
       will be removed in the future.
       https://bugs.launchpad.net/rubber/+bug/878629
-    - Support for gnuplottex (requires shell_escape).
-      Will automatically mark the document as requiring shell-escape.
     - XeLaTeX support.
+      https://bugs.launchpad.net/rubber/+bug/660426
+      https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=579757
+    - Support for gnuplottex (requires --unsafe)
+    - Experimental PythonTeX support contributed by Ferdinand Schwenk
+      (requires --unsafe).
 
   Bugfixes:
     - Fix handling of set{,list} arguments.
@@ -24,6 +27,7 @@ Version 1.2 (2015-06-xx)
     - Fix LaTeX parsing with optional whitespace
       https://bugs.launchpad.net/rubber/+bug/195258
     - Fix behavior when .aux is not generated
+      https://bugs.launchpad.net/rubber/+bug/1208464
       https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=402150
     - Catch broken working directory and print error
       https://bugs.launchpad.net/rubber/+bug/529198
@@ -34,6 +38,9 @@ Version 1.2 (2015-06-xx)
       https://bugs.launchpad.net/rubber/+bug/921444
       https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=691305
     - Update homepage
+      https://bugs.launchpad.net/rubber/+bug/1169485
+    - Fix crash on nonexisting directory
+      https://bugs.launchpad.net/rubber/+bug/529198
 
   And many others...
 
