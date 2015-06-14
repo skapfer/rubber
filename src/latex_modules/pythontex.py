@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Ferdinand Schwenk, 2013
+# vim: noet:ts=4
 """
 pythontex support for Rubber
 """
@@ -17,7 +18,7 @@ class PythonTeX (object):
 
 	def pre_compile (self):
 		if not os.path.exists(self.doc.target + '.pytxcode'):
-			msg.info(_("Need compilation!!!!"), pkg="pythontex")
+			msg.info(_("Need compilation!"), pkg="pythontex")
 			self.force_compilation()
 		msg.info(_("running pythontex..."), pkg="pythontex")
 		self.run_pythontex()
@@ -34,6 +35,9 @@ class PythonTeX (object):
 	def run_pythontex(self):
 		call = ['pythontex', self.doc.target + '.tex', ]
 		msg.debug(_("pythontex call is '%s'") % ' '.join(call), pkg="pythontex")
+		if not self.doc.env.is_in_unsafe_mode_:
+			msg.error(_("the document tries to run external programs which could be dangerous.  use rubber --unsafe if the document is trusted."))
+			return
 		subprocess.call(call)
 
 	def force_compilation(self):
