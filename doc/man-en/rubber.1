@@ -207,6 +207,10 @@ Display LaTeX's error messages in a compact form (one error per line).
 .BI \-I,\ \-\-texpath \ <directory>
 Add the specified directory to TeX's search path.
 .TP
+.BI \-\-unsafe
+Permit the document to invoke arbitrary external programs.  This is potentially
+dangerous, only use this option for documents coming from a trusted source.
+.TP
 .B \-v, \-\-verbose
 Increase the verbosity level.
 Levels between 0 and 4 exist, the default level is 1 for
@@ -533,9 +537,9 @@ For details on the existing variables and their meaning, see the info
 documentation.
 .TP
 .BI shell_escape
-Pass the option \-\-shell\-escape to LaTeX, which is required by some packages.
-The same as the \-\-shell\-escape command-line option to rubber, but only
-applies to the current target.
+Mark the document as requiring external programs (shell-escape or write18).
+Rubber does not actually enable this unless called with the option
+\-\-unsafe.
 .TP
 .BI watch \ <file>
 Watch the specified file for changes.

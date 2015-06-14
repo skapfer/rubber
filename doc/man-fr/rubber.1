@@ -209,6 +209,11 @@ ligne).
 .BI \-I,\ \-\-texpath \ <répertoire>
 Ajoute le répertoire spécifié au chemin de recherche de fichiers de TeX.
 .TP
+.BI \-\-unsafe
+Permettre, au document, de lancer des logiciels externes.
+Cette option est potentiellement dangereuse, ne pas l'utiliser que pour
+documents venant d'une source de confiance !
+.TP
 .B \-v, \-\-verbose
 Incrémente le degré de détail dans les messages affichés.
 Les niveaux existants vont de 0 à 4, le niveau par défaut est 1 pour
@@ -546,9 +551,9 @@ Les valeurs sont séparées par des espaces.
 Pour plus d'informations sur les variables, voir la documentation en info.
 .TP
 .BI shell_escape
-Passer l'option \-\-shell\-escape à LaTeX, qui est necessaire pour quelques
-packages.  Equivalent à l'option \-\-shell\-escape à rubber, mais s'applique
-seulement à un seul fichier.
+Marquer ce document comme nécessitant des logiciels externes (shell-escape
+ou write18).  Rubber va ne pas accepter cette option sauf quand l'option
+\-\-unsafe est utilisée.
 .TP
 .BI watch \ <fichier> 
 Surveille les modifications sur le fichier spécifié.
