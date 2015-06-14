@@ -1,6 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
-# vim:noet:ts=4
+# vim: noet:ts=4
 """
 This is the command line interface for Rubber.
 """
@@ -64,7 +64,7 @@ available options:
   -q, --quiet              suppress messages
   -r, --read=FILE          read additional directives from FILE
   -S, --src-specials       enable insertion of source specials
-      --shell-escape       allows execution of arbitrary write18 commands
+      --unsafe             permits the document to run external commands
   -s, --short              display errors in a compact form
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
@@ -79,7 +79,7 @@ available options:
 				["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
 				 "help", "inplace", "into=", "jobname=", "keep", "landcape", "maxerr=",
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
-				 "src-sepcials", "shell-escape", "short", "texpath=", "verbose", "version",
+				 "src-specials", "shell-escape", "unsafe", "short", "texpath=", "verbose", "version",
 				 "warn="] + long)
 		except GetoptError, e:
 			print e
@@ -142,12 +142,13 @@ available options:
 				using_dvips = 1
 			elif opt in ("-q", "--quiet"):
 				msg.level = msg.level - 1
+			# we continue to accept --shell-escape for now
+			elif opt in ("--unsafe", "--shell-escape"):
+				self.unsafe = True
 			elif opt in ("-r" ,"--read"):
 				self.prologue.append("read " + arg)
 			elif opt in ("-S", "--src-specials"):
 				self.prologue.append("set src-specials yes")
-			elif opt in ("--shell-escape"):
-				self.shell_escape = 1
 			elif opt in ("-s", "--short"):
 				msg.short = 1
 			elif opt in ("-I", "--texpath"):
@@ -190,7 +191,7 @@ available options:
 		self.epilogue = []
 		self.clean = 0
 		self.force = 0
-		self.shell_escape = 0
+		self.unsafe = False
 
 		self.warn = 0
 		self.warn_boxes = 0
@@ -235,8 +236,7 @@ available options:
 				return 1
 			self.jobname = None
 
-			if self.shell_escape:
-				env.main.vars['shell_escape'] = 1
+			env.is_in_unsafe_mode_ = self.unsafe
 
 			if self.include_only is not None:
 				env.main.includeonly(self.include_only)

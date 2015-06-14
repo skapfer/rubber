@@ -561,7 +561,6 @@ class LaTeXDep (Node):
 			"paper": "",
 			"arguments": [],
 			"src-specials": "",
-			"shell_escape": 0,
 			"source": None,
 			"target": None,
 			"path": None,
@@ -925,7 +924,7 @@ class LaTeXDep (Node):
 			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
 	def do_shell_escape (self):
-		self.vars['shell_escape'] = 1
+		self.env.doc_requires_shell_ = True
 
 	def do_setlist (self, name, *val):
 		try:
@@ -1158,13 +1157,20 @@ class LaTeXDep (Node):
 			else:
 				cmd.append("-src-specials=" + specials)
 
-		if self.vars['shell_escape']:
+		if self.env.is_in_unsafe_mode_:
 			cmd += [ '--shell-escape' ]
+		elif self.env.doc_requires_shell_:
+			msg.error (_("the document tries to run external programs which could be dangerous.  use rubber --unsafe if the document is trusted."))
 
 		# make sure the arguments actually are a list, otherwise the
 		# characters of the string might be passed as individual arguments
 		assert type (self.vars["arguments"]) is list
-		cmd += self.vars["arguments"]
+		# arguments inserted by the document allowed only in unsafe mode, since
+		# this could do arbitrary things such as enable shell escape (write18)
+		if self.env.is_in_unsafe_mode_:
+			cmd += self.vars["arguments"]
+		elif len (self.vars["arguments"]) > 0:
+			msg.error (_("the document tries to modify the LaTeX command line which could be dangerous.  use rubber --unsafe if the document is trusted."))
 
 		cmd += [x.replace("%s",file) for x in self.cmdline]
 

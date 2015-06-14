@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 This module contains the code for formatted message output (the Message class)
 and the class Environment, which contains all information about a given
@@ -43,7 +44,9 @@ class Environment:
 		self.depends = rubber.depend.Set()
 		self.converter = Converter(self.depends)
 		self.converter.read_ini(os.path.join(moddir, 'rules.ini'))
-		
+
+		self.is_in_unsafe_mode_ = False
+		self.doc_requires_shell_ = False
 		self.main = None
 		self.final = None
 
