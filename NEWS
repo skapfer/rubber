@@ -1,3 +1,39 @@
+Version 1.2 (2015-06-xx)
+
+  Features:
+    - shell_escape feature to enable -shell-escape in LaTeX.
+      BEWARE: granting shell-escape (write18) to a document permits it
+      to run arbitrary external commands.  Use only on trusted (your own)
+      documents!
+      Usage:  to mark a document as requiring shell-escape, add the line
+            % rubber: shell_escape
+      near the header.  To grant shell-escape to a document, run rubber as
+            rubber --unsafe document.tex
+      There are several older hacks documented in the internet which continue
+      to work, but are deprecated from now on.  The 'arguments' variable
+      will be removed in the future.
+    - Support for gnuplottex (requires shell_escape).
+      Will automatically mark the document as requiring shell-escape.
+    - XeLaTeX support.
+
+  Bugfixes:
+    - Fix handling of set{,list} arguments.
+    - Fix BibTeX called with absolute path and refusing to write.
+      https://bugs.launchpad.net/rubber/+bug/1287593
+    - Fix behavior when .aux is not generated
+      https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=402150
+    - Catch broken working directory and print error
+      https://bugs.launchpad.net/rubber/+bug/529198
+    - Fix LoadClassWithOptions
+      https://bugs.launchpad.net/rubber/+bug/1266912
+      https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=718932
+    - Fix \pdfoutput=1
+      https://bugs.launchpad.net/rubber/+bug/921444
+      https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=691305
+    - Update homepage
+
+  And many others...
+
 Version 1.1 (2006-03-17)
 
   Features:
