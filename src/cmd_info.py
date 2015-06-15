@@ -9,7 +9,7 @@ from getopt import *
 import string
 from os.path import *
 
-from rubber import _, msg
+from rubber.util import _, msg, parse_line
 from rubber.environment import Environment
 from rubber.version import *
 import rubber.cmdline
