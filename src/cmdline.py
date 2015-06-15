@@ -10,11 +10,10 @@ import os.path
 import string
 from getopt import *
 
-from rubber import _, msg
 from rubber.environment import Environment
 from rubber.version import *
 from rubber.depend import ERROR, CHANGED, UNCHANGED
-from rubber.util import Variables, parse_line
+from rubber.util import _, msg, Variables, parse_line
 
 class Main (object):
 	def __init__ (self):

@@ -41,7 +41,10 @@ class Environment:
 		self.vars = Variables(items = { 'cwd': cwd, '_environment': self })
 		self.path = [cwd]
 		self.conv_prefs = {}
-		self.depends = rubber.depend.Set()
+
+		# Represents a set of dependency nodes. Nodes can be accessed by absolute
+		# path name using the dictionary interface.
+		self.depends = dict()
 		self.converter = Converter(self.depends)
 		self.converter.read_ini(os.path.join(moddir, 'rules.ini'))
 
@@ -75,6 +78,8 @@ class Environment:
 		if i >= 0:
 			ext = name[i+1:]
 			if ext in ["w", "lhs"]:
+				# CWebDep does not exist, and LHSDep does not work.
+				raise RuntimeError("currently broken")
 				path = self.find_file(name)
 				if not path:
 					msg.error(_("cannot find %s") % name)

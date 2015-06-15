@@ -41,7 +41,7 @@ occur.
 
 import os, os.path, re
 
-from rubber import _, msg
+from rubber.util import _
 from rubber.util import *
 
 class Index:

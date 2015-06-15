@@ -10,7 +10,7 @@ Metapost's log files after the process. Is it enough?
 import os, os.path
 import re, string
 
-from rubber import _
+from rubber.util import _
 from rubber.util import *
 from rubber.depend import Node
 from rubber.converters.latex import LogCheck

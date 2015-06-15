@@ -7,13 +7,6 @@ from subprocess import Popen
 
 from rubber.util import _, msg
 
-class Set (dict):
-	"""
-	Represents a set of dependency nodes. Nodes can be accessed by absolute
-	path name using the dictionary interface.
-	"""
-	pass
-
 # constants for the return value of Node.make:
 
 ERROR = 0
