@@ -153,7 +153,8 @@ if len(sys.argv) > 1:
 		sub = settings.sub
 		make_files(sub, [
 			"rubber.spec",
-			"Makefile", "doc/Makefile",
+			"Makefile",
+			"doc/rubber.texi",
 			"src/version.py"])
 		print ("""
 Rubber is now configured. It will use the following Python interpreter:
