@@ -41,6 +41,7 @@ Version 1.2 (2015-06-xx)
       https://bugs.launchpad.net/rubber/+bug/1169485
     - Fix crash on nonexisting directory
       https://bugs.launchpad.net/rubber/+bug/529198
+    - Fix CWEB and lhs2tex support which was broken.
 
   And many others...
 

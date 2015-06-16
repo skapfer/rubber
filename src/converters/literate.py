@@ -1,18 +1,15 @@
 # This file is part of Rubber and thus covered by the GPL
-# (c) Emmanuel Beffara, 2002--2006
+# Sebastian Kapfer <sebastian.kapfer@fau.de>
+# vim: noet:ts=4
 """
-Literate Haskell support for Rubber.
+Literate programming support for Rubber.
 
-This module handles Literate Haskell by using the lhs2TeX processor to
-pretty-print Haskell code in the source file when needed.
+Nodes to make the main TeX file.
 """
 
 from subprocess import Popen
-from rubber.util import prog_available
-from rubber.depend import Node
-
-def check (source, target, context):
-	return prog_available('lhs2tex')
+from rubber.util import _, msg
+from rubber.depend import Node, Shell
 
 class LHSDep (Node):
 	def __init__ (self, set, target, source):
@@ -30,5 +27,12 @@ class LHSDep (Node):
 		output.close()
 		return True
 
-def convert (source, target, context, set):
-	return LHSDep(set, target, source)
+class CWebDep (Shell):
+	def __init__ (self, set, target, source):
+		assert target[-4:] == '.tex'
+		base = target[:-4]
+		Shell.__init__(self, set, ["cweave", source, target],
+			[target, base + ".idx", base + ".scn"],
+			[source])
+
+literate_preprocessors = { ".lhs": LHSDep, ".w": CWebDep }

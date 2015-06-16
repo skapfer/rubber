@@ -15,6 +15,7 @@ from rubber.version import moddir
 from rubber.util import _
 from rubber.util import *
 import rubber.converters
+from rubber.converters.literate import literate_preprocessors
 import rubber.depend
 from rubber.convert import Converter
 
@@ -73,30 +74,17 @@ class Environment:
 		has an extension that is known of a preprocessor, this preprocessor is
 		used, otherwise the name is that of a LaTeX source.
 		"""
-		src = None
-		i = name.rfind(".")
-		if i >= 0:
-			ext = name[i+1:]
-			if ext in ["w", "lhs"]:
-				# CWebDep does not exist, and LHSDep does not work.
-				raise RuntimeError("currently broken")
-				path = self.find_file(name)
-				if not path:
-					msg.error(_("cannot find %s") % name)
-					return 1
-				src = path[:-len(ext)] + "tex"
-				if ext == "w":
-					from rubber.converters.cweb import CWebDep
-					self.src_node = CWebDep(self, src, path)
-				elif ext == "lhs":
-					from rubber.converters.lhs2TeX import LHSDep
-					self.src_node = LHSDep(self, src, path)
+		path = self.find_file(name, ".tex")
+		if not path:
+			msg.error(_("cannot find %s") % name)
+			return 1
 
-		if src is None:
-			path = self.find_file(name, ".tex")
-			if not path:
-				msg.error(_("cannot find %s") % name)
-				return 1
+		base,ext = os.path.splitext(path)
+
+		if ext in literate_preprocessors.keys():
+			src = base + ".tex"
+			self.src_node = literate_preprocessors[ext](self.depends, src, path)
+		else:
 			src = path
 			self.src_node = None
 
