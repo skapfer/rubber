@@ -7,31 +7,21 @@ Literate programming support for Rubber.
 Nodes to make the main TeX file.
 """
 
-from subprocess import Popen
-from rubber.util import _, msg
-from rubber.depend import Node, Shell
+from rubber.depend import Pipe, Shell
 
-class LHSDep (Node):
+class LHSDep (Pipe):
 	def __init__ (self, set, target, source):
-		Node.__init__(self, set, [target], [source])
-		self.source = source
-		self.target = target
-
-	def run (self):
-		msg.progress(_("pretty-printing %s") % self.source)
-		output = open(self.target, 'w')
-		process = Popen(['lhs2tex', '--poly', self.source], stdout=output)
-		if process.wait() != 0:
-			msg.error(_("pretty-printing of %s failed") % self.source)
-			return False
-		output.close()
-		return True
+		Pipe.__init__(self, set,
+			['lhs2tex', '--poly', source],
+			[target],
+			[source])
 
 class CWebDep (Shell):
 	def __init__ (self, set, target, source):
 		assert target[-4:] == '.tex'
 		base = target[:-4]
-		Shell.__init__(self, set, ["cweave", source, target],
+		Shell.__init__(self, set,
+			["cweave", source, target],
 			[target, base + ".idx", base + ".scn"],
 			[source])
 

@@ -1,6 +1,7 @@
 """
 This module contains code for handling dependency graphs.
 """
+# vim: noet:ts=4
 
 import os, time
 from subprocess import Popen
@@ -264,11 +265,25 @@ class Shell (Node):
 	def __init__ (self, set, command, products, sources):
 		Node.__init__(self, set, products, sources)
 		self.command = command
+		self.stdout = None
 
 	def run (self):
 		msg.progress(_("running: %s") % ' '.join(self.command))
-		process = Popen(self.command)
+		process = Popen(self.command, stdout=self.stdout)
 		if process.wait() != 0:
 			msg.error(_("execution of %s failed") % self.command[0])
 			return False
 		return True
+
+class Pipe (Shell):
+	"""
+	This class specializes Node for generating files using the stdout of shell commands.
+	"""
+	def __init__ (self, set, command, products, sources):
+		Shell.__init__(self, set, command, products, sources)
+
+	def run (self):
+		self.stdout = open(self.products[0], 'w')
+		ret = Shell.run(self)
+		self.stdout.close()
+		return ret
