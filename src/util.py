@@ -418,3 +418,10 @@ def make_line (template, dict):
 					val = val + str(dict[elem[1:]])
 		return val
 	return map(one_string, template)
+
+devnull_fp = None
+def devnull ():
+	global devnull_fp
+	if not devnull_fp:
+		devnull_fp = open(os.devnull, 'rw')
+	return devnull_fp

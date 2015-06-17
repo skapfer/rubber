@@ -221,6 +221,7 @@ class Environment:
 			executable = progname,
 			env = penv,
 			cwd = pwd,
+			stdin = devnull(),
 			stdout = subprocess.PIPE,
 			stderr = stderr)
 

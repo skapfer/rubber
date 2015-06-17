@@ -6,7 +6,7 @@ This module contains code for handling dependency graphs.
 import os, time
 from subprocess import Popen
 
-from rubber.util import _, msg
+from rubber.util import _, msg, devnull
 
 # constants for the return value of Node.make:
 
@@ -269,7 +269,7 @@ class Shell (Node):
 
 	def run (self):
 		msg.progress(_("running: %s") % ' '.join(self.command))
-		process = Popen(self.command, stdout=self.stdout)
+		process = Popen(self.command, stdin=devnull(), stdout=self.stdout)
 		if process.wait() != 0:
 			msg.error(_("execution of %s failed") % self.command[0])
 			return False
