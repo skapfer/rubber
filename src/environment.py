@@ -192,7 +192,7 @@ class Environment:
 		of arguments for the program, `prog[0]' is the program name. The `env'
 		argument is a dictionary with definitions that should be added to the
 		environment when running the program. The standard output is passed
-		line by line to the `out' function (or discarded by default). In the
+		line by line to the `out' function (or discarded by default). If the
 		optional argument `kpse' is true, the error output is parsed and
 		messages from Kpathsea are processed (to indicate e.g. font
 		compilation), otherwise the error output is kept untouched.
