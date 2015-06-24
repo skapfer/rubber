@@ -19,7 +19,6 @@ Version 1.2 (2015-06-xx)
     - Support for gnuplottex (requires --unsafe)
     - Experimental PythonTeX support contributed by Ferdinand Schwenk
       (requires --unsafe).
-    - Experimental support for .Rtex files via Knitr (rubber -d foo.Rtex)
 
   Bugfixes:
     - Fix handling of set{,list} arguments.
@@ -43,6 +42,8 @@ Version 1.2 (2015-06-xx)
     - Fix crash on nonexisting directory
       https://bugs.launchpad.net/rubber/+bug/529198
     - Fix CWEB and lhs2tex support which was broken.
+    - Fix stdin being leaked to subprocesses, including LaTeX
+      https://bugs.launchpad.net/rubber/+bug/802169
 
   And many others...
 
