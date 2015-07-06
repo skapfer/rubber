@@ -1241,13 +1241,11 @@ class LaTeXDep (Node):
 		msg.log(_("running post-compilation scripts..."), pkg='latex')
 
 		for file, md5 in self.onchange_md5.items():
-			if not os.path.exists(file):
-				continue
 			new = md5_file(file)
-			if md5 != new:
+			if new != None and md5 != new:
 				msg.progress(_("running %s") % self.onchange_cmd[file])
 				self.env.execute(["sh", "-c", self.onchange_cmd[file]])
-			self.onchange_md5[file] = new
+				self.onchange_md5[file] = new
 
 		for mod in self.modules.objects.values():
 			if not mod.post_compile():
@@ -1407,10 +1405,9 @@ class LaTeXDep (Node):
 		"""
 		changed = None
 		for file in self.watched_files.keys():
-			if os.path.exists(file):
-				new = md5_file(file)
-				if self.watched_files[file] != new:
-					changed = file
+			new = md5_file(file)
+			if new != None and self.watched_files[file] != new:
+                                changed = file
 				self.watched_files[file] = new
 		return changed
 

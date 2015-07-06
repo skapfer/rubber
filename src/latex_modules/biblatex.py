@@ -35,10 +35,7 @@ def get_initial_hashes ():
     bcfhash = None
 
     bbl = doc.target + "." + "bbl"
-    if exists(bbl):
-        bblhash = md5_file(bbl)
-    else:
-        bblhash = None
+    bblhash = md5_file(bbl)
 
 def hook_bibresource (loc, opt, file):
     options = parse_keyval(opt) if opt != None else {}
