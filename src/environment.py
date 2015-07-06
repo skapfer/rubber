@@ -227,7 +227,7 @@ class Environment:
 
 		if kpse:
 			def parse_kpse ():
-				for line in process.stderr.readlines():
+				for line in process.stderr:
 					line = line.rstrip()
 					match = re_kpse.match(line)
 					if not match:
@@ -240,7 +240,7 @@ class Environment:
 			thread.start_new_thread(parse_kpse, ())
 
 		if out is not None:
-			for line in process.stdout.readlines():
+			for line in process.stdout:
 				out(line)
 		else:
 			process.stdout.readlines()

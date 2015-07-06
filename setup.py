@@ -80,13 +80,10 @@ def make_files (subst, files):
 		if not os.path.exists(file + ".in"):
 			continue
 		print "writing %s..." % file
-		input = open(file + ".in")
-		output = open(file, "w")
-		for line in input.readlines():
-			output.write(pat1.sub(repl, pat2.sub(full_repl, line)))
-		input.close()
-		output.close()
-
+		with open (file + ".in") as input:
+			with open (file, "w") as output:
+				for line in input:
+					output.write(pat1.sub(repl, pat2.sub(full_repl, line)))
 
 ###  distutils setup
 

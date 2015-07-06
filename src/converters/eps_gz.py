@@ -26,14 +26,12 @@ class Dep (Node):
 		single line.
 		"""
 		msg.progress(_("extracting bounding box from %s") % self.source)
-		source = GzipFile(self.source)
-		for line in source.readlines():
-			if re_bbox.match(line):
-				target = open(self.target, "w")
-				target.write(line)
-				target.close()
-				return True
-		source.close()
+		with GzipFile(self.source) as source:
+ 			for line in source:
+				if re_bbox.match(line):
+					with open(self.target, "w") as target:
+						target.write(line)
+					return True
 		msg.error(_("no bounding box was found in %s!") % self.source)
 		return False
 

@@ -163,13 +163,11 @@ class Bibliography:
 				msg.log(_("bibliography database %s was modified") % db, pkg="bibtex")
 				return 1
 
-		blg = open(self.base + ".blg")
-		for line in blg.readlines():
-			if re_error.search(line):
-				blg.close()
-				msg.log(_("last BibTeXing failed"), pkg="bibtex")
-				return 1
-		blg.close()
+		with open(self.base + ".blg") as blg:
+			for line in blg:
+				if re_error.search(line):
+					msg.log(_("last BibTeXing failed"), pkg="bibtex")
+					return 1
 
 		if self.style_changed():
 			return 1
@@ -187,19 +185,18 @@ class Bibliography:
 		cites = {}
 		dbs = []
 		for auxname in self.doc.aux_md5.keys():
-			aux = open(auxname)
-			for line in aux.readlines():
-				match = re_citation.match(line)
-				if match:
-					cite = match.group("cite")
-					if not cites.has_key(cite):
-						last = last + 1
-						cites[cite] = last
-					continue
-				match = re_bibdata.match(line)
-				if match:
-					dbs.extend(match.group("data").split(","))
-			aux.close()
+			with open(auxname) as aux:
+				for line in aux:
+					match = re_citation.match(line)
+					if match:
+						cite = match.group("cite")
+						if not cites.has_key(cite):
+							last = last + 1
+							cites[cite] = last
+						continue
+					match = re_bibdata.match(line)
+					if match:
+						dbs.extend(match.group("data").split(","))
 		dbs.sort()
 
 		if self.sorted:

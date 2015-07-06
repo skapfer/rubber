@@ -37,16 +37,11 @@ class MPLogCheck (LogCheck):
 		The read() method in LogCheck checks that the log is produced by TeX,
 		here we check that it is produced by MetaPost.
 		"""
-		file = open(name)
-		line = file.readline()
-		if not line:
-			file.close()
-			return 1
-		if line.find("This is MetaPost,") == -1:
-			file.close()
-			return 1
-		self.lines = file.readlines()
-		file.close()
+		with open (name) as file:
+			line = file.readline()
+			if not line or line.find("This is MetaPost,") == -1:
+				return 1
+			self.lines = file.readlines()
 		return 0
 
 	def continued (self, line):
@@ -81,9 +76,8 @@ class MPLogCheck (LogCheck):
 
 			# read mpxerr.tex to read line unmbers from it
 
-			tex_file = open(os.path.join(self.pwd, "mpxerr.tex"))
-			tex = tex_file.readlines()
-			tex_file.close()
+			with open(os.path.join(self.pwd, "mpxerr.tex")) as tex_file:
+				tex = tex_file.readlines()
 
 			# get the name of the mpxNNN.tex source
 
@@ -151,12 +145,11 @@ class Dep (Node):
 		elif not os.path.exists(file):
 			return
 		list.append(file)
-		fd = open(file)
-		for line in fd.readlines():
-			m = re_input.search(line)
-			if m:
-				self.include(m.group("file"), list)
-		fd.close()
+		with open(file) as fd:
+			for line in fd:
+				m = re_input.search(line)
+				if m:
+					self.include(m.group("file"), list)
 
 	def run (self):
 		"""
