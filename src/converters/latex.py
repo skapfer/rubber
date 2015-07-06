@@ -165,10 +165,10 @@ class LogCheck (object):
 		self.lines = None
 		try:
 			with open(name) as file:
-                                line = file.readline()
-                                if not line or not re_loghead.match(line):
-                                        return 1
-                                self.lines = file.readlines()
+				line = file.readline()
+				if not line or not re_loghead.match(line):
+					return 1
+				self.lines = file.readlines()
 		except IOError:
 			return 2
 		return 0
@@ -888,15 +888,15 @@ class LaTeXDep (Node):
 		self.push_vars(file=path, line=None)
 		try:
 			with open(path) as file:
-                                lineno = 0
-                                for line in file:
-                                        lineno += 1
-                                        line = line.strip()
-                                        if line == "" or line[0] == "%":
-                                                continue
-                                        self.vars["line"] = lineno
-                                        lst = parse_line(line, self.vars)
-                                        self.command(lst[0], lst[1:])
+				lineno = 0
+				for line in file:
+					lineno += 1
+					line = line.strip()
+					if line == "" or line[0] == "%":
+						continue
+					self.vars["line"] = lineno
+					lst = parse_line(line, self.vars)
+					self.command(lst[0], lst[1:])
 		except IOError:
 			msg.warn(_("cannot read option file %s") % name, **self.vars)
 		self.pop_vars()
@@ -1409,7 +1409,7 @@ class LaTeXDep (Node):
 		for file in self.watched_files.keys():
 			new = md5_file(file)
 			if new != None and self.watched_files[file] != new:
-                                changed = file
+				changed = file
 				self.watched_files[file] = new
 		return changed
 
@@ -1491,14 +1491,14 @@ class ScriptModule (Module):
 			'line': None })
 		lineno = 0
 		with open(filename) as file:
-                        for line in file:
-                                line = line.strip()
-                                lineno = lineno + 1
-                                if line == "" or line[0] == "%":
-                                        continue
-                                vars['line'] = lineno
-                                lst = parse_line(line, vars)
-                                env.command(lst[0], lst[1:], vars)
+			for line in file:
+				line = line.strip()
+				lineno = lineno + 1
+				if line == "" or line[0] == "%":
+					continue
+				vars['line'] = lineno
+				lst = parse_line(line, vars)
+				env.command(lst[0], lst[1:], vars)
 
 class PyModule (Module):
 	def __init__ (self, document, pymodule, context):

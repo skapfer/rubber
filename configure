@@ -76,7 +76,7 @@ if test -z "$python"; then
 	if test -z "$python"; then
 		cat <<EOF
 I could not run the Python interpreter. Since Rubber is written in Python, you
-need a working Pyhton installation. Please make it so...
+need a working Python installation. Please make it so...
 EOF
 		exit 1
 	fi
