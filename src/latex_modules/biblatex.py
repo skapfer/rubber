@@ -17,7 +17,7 @@ def setup (document, context):
 
     opt = context['opt'] or None
     options = parse_keyval(opt) if opt != None else {}
-    
+
     if "backend" in options and options["backend"] != "biber":
         msg.warn(_("rubber's biblatex plugin only supports the biber backend"))
 
