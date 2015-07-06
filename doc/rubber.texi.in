@@ -577,7 +577,7 @@ This modules handles graphics inclusion for the documents that use the old
 style @code{\psfig} macro. It is actually an interface for the graphics
 system, for details see @ref{Graphics}.
 
-@glossaries
+@item glossaries
 Run @code{makeglossaries} and recompiles when the @code{.glo} file changes.
 
 @item graphics
