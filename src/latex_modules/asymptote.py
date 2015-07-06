@@ -60,8 +60,13 @@ def setup (document, context):
         prefix = basename + "-" + str (count.next ())
         source = prefix + ".asy"
         document.do_watch (source)
-        document.do_onchange (source, "asy " + source)
+        # Asy replaces the main .aux file with an empty one.
+        document.do_onchange (
+            source,
+            "mv -n %s.aux %s.aux.tmp && asy %s && mv %s.aux.tmp %s.aux"
+            % (basename, basename, source, basename, basename))
         document.do_clean (source)
+        document.do_clean (basename + ".aux.tmp")
         for s in product_suffixes:
             document.do_clean (prefix + s)
     document.hook_begin ("asy", on_begin_asy)
