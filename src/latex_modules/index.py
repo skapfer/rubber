@@ -55,9 +55,10 @@ class Index:
 		(e.g. .ilg) file.  Transcript is used by glosstex.py.
 		"""
 		self.doc = doc
-		self.source = doc.target + "." + source
-		self.target = doc.target + "." + target
-		self.transcript = doc.target + "." + transcript
+		basename = os.path.basename(doc.target)
+		self.source = basename + "." + source
+		self.target = basename + "." + target
+		self.transcript = basename + "." + transcript
 		self.md5 = md5_file(self.source)
 
 		self.tool = "makeindex"
