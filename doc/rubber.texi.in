@@ -562,6 +562,7 @@ This module handles Beamer's extra files the same way as other tables
 of contents.
 
 @item bibtex
+@itemx biblatex
 @itemx multibib
 Takes care of processing the document's bibliographies with BibTeX when
 needed. The @command{bibtex} module is automatically loaded if the document
