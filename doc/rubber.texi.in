@@ -605,6 +605,9 @@ list of dependencies.
 @item natbib
 May cause an extra compilation to solve references.
 
+@item ltxtable
+Add dependencies for files inserted via the @code{ltxtable} LaTeX package.
+
 @item xr
 Add additional @file{.aux} files used for external references to the list of
 dependencies, so recompiling is automatic when refer- enced document are
