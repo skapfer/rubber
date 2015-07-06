@@ -563,7 +563,6 @@ class LaTeXDep (Node):
 			"ext": None,
 			"job": None,
 			"graphics_suffixes" : [] })
-		self.vars_stack = []
 
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
 
@@ -885,8 +884,10 @@ class LaTeXDep (Node):
 
 	def do_read (self, name):
 		path = self.abspath(name)
-		self.push_vars(file=path, line=None)
+		saved_vars = self.vars
 		try:
+			self.vars = Variables (self.vars,
+					{'file':path, 'line':None})
 			with open(path) as file:
 				lineno = 0
 				for line in file:
@@ -899,7 +900,8 @@ class LaTeXDep (Node):
 					self.command(lst[0], lst[1:])
 		except IOError:
 			msg.warn(_("cannot read option file %s") % name, **self.vars)
-		self.pop_vars()
+		finally:
+			self.vars = saved_vars
 
 	def do_rules (self, file):
 		name = self.env.find_file(file)
