@@ -1242,10 +1242,12 @@ class LaTeXDep (Node):
 
 		for file, md5 in self.onchange_md5.items():
 			new = md5_file(file)
-			if new != None and md5 != new:
-				msg.progress(_("running %s") % self.onchange_cmd[file])
-				self.env.execute(["sh", "-c", self.onchange_cmd[file]])
+			if md5 != new:
 				self.onchange_md5[file] = new
+				if new != None:
+					msg.progress(_("running %s") % self.onchange_cmd[file])
+					# FIXME portability issue: explicit reference to shell
+					self.env.execute(["sh", "-c", self.onchange_cmd[file]])
 
 		for mod in self.modules.objects.values():
 			if not mod.post_compile():
