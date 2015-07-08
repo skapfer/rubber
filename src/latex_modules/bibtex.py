@@ -13,7 +13,7 @@ The module provides the following commands:
 """
 
 import os, sys
-from os.path import *
+from os.path import exists, getmtime, join
 import re, string
 from subprocess import Popen, PIPE
 
@@ -35,13 +35,13 @@ class Bibliography:
 	"""
 	This class represents a single bibliography for a document.
 	"""
-	def __init__ (self, document, basename):
+	def __init__ (self, document):
 		"""
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
 		self.doc = document
-		self.base = basename
+		self.base = os.path.basename (document.target)
 
 		cwd = document.vars["cwd"]
 		self.bib_path = [cwd, document.vars["path"]]
@@ -123,7 +123,7 @@ class Bibliography:
 		checks if BibTeX has been run by someone else, and in this case it
 		tells the system that it should recompile the document.
 		"""
-		if exists(self.doc.target + ".aux"):
+		if os.path.exists (self.base + ".aux"):
 			self.used_cites, self.prev_dbs = self.parse_aux()
 		else:
 			self.prev_dbs = None
@@ -140,7 +140,7 @@ class Bibliography:
 
 		bbl = self.base + ".bbl"
 		if exists(bbl):
-			if getmtime(bbl) > getmtime(self.doc.target + ".log"):
+			if os.path.getmtime (bbl) > os.path.getmtime (self.base + ".log"):
 				self.doc.must_compile = 1
 		return True
 
@@ -152,9 +152,9 @@ class Bibliography:
 		the very particular case when the style has changed since last
 		compilation.
 		"""
-		if not exists(self.base + ".aux"):
+		if not os.path.exists (self.base + ".aux"):
 			return 0
-		if not exists(self.base + ".blg"):
+		if not os.path.exists (self.base + ".blg"):
 			return 1
 
 		dtime = getmtime(self.base + ".blg")
@@ -236,7 +236,7 @@ class Bibliography:
 		This method actually runs BibTeX with the appropriate environment
 		variables set.
 		"""
-		msg.progress(_("running BibTeX on %s") % msg.simplify(self.base))
+		msg.progress(_("running BibTeX on %s") % self.base)
 		doc = {}
 		if len(self.bib_path) != 1:
 			doc["BIBINPUTS"] = string.join(self.bib_path +
@@ -248,11 +248,7 @@ class Bibliography:
 			cmd = ["bibtex"]
 		else:
 			cmd = ["bibtex", "-min-crossrefs=" + self.crossrefs]
-		# BibTeX comes with a straightjacket in some TeX distros and can't write
-		# to absolute paths.  strip the directory, and change into that dir.
-		workdir = os.path.dirname (self.base)
-		basename = os.path.basename (self.base)
-		if self.doc.env.execute(['bibtex', basename], doc, pwd=workdir):
+		if self.doc.env.execute (['bibtex', self.base], doc):
 			msg.info(_("There were errors making the bibliography."))
 			return False
 		self.run_needed = 0
@@ -328,7 +324,7 @@ class Bibliography:
 			msg.log(_("no undefined citations"), pkg="bibtex")
 			return 0
 
-		log = self.doc.target + ".log"
+		log = self.base + ".log"
 		if getmtime(blg) < getmtime(log):
 			msg.log(_("BibTeX's log is older than the main log"), pkg="bibtex")
 			return 1
@@ -351,16 +347,15 @@ class Bibliography:
 		blg = self.base + ".blg"
 		if not exists(blg):
 			return 0
-		log = open(blg)
-		line = log.readline()
-		while line != "":
-			if line[:16] == "The style file: ":
-				if line.rstrip()[16:-4] != self.style:
-					msg.log(_("the bibliography style was changed"), pkg="bibtex")
-					log.close()
-					return 1
-			line = log.readline()
-		log.close()
+		with open (blg) as log:
+			for line in log:
+				if line.startswith ("The style file: "):
+					if line.rstrip()[16:-4] != self.style:
+						msg.log(_("the bibliography style was changed"), pkg="bibtex")
+						return 1
+					else:
+						return 0
+		msg.warn(_("style file not found in bibtex log"), pkg="bibtex")
 		return 0
 
 	def get_errors (self):
@@ -370,44 +365,40 @@ class Bibliography:
 		blg = self.base + ".blg"
 		if not exists(blg):
 			return
-		log = open(blg)
-		last_line = ""
-		line = log.readline()
-		while line != "":
-			m = re_error.search(line)
-			if m:
-				# TODO: it would be possible to report the offending code.
-				if m.start() == 0:
-					text = string.strip(last_line)
-				else:
-					text = string.strip(line[:m.start()])
-				line = m.group("line")
-				if line: line = int(line)
-				d =	{
-					"pkg": "bibtex",
-					"kind": "error",
-					"text": text
-					}
-				d.update( m.groupdict() )
+		with open(blg) as log:
+			last_line = ""
+			for line in log:
+				m = re_error.search(line)
+				if m:
+					# TODO: it would be possible to report the offending code.
+					if m.start() == 0:
+						text = string.strip(last_line)
+					else:
+						text = string.strip(line[:m.start()])
+					line = m.group("line")
+					if line: line = int(line)
+					d =	{
+						"pkg": "bibtex",
+						"kind": "error",
+						"text": text
+						}
+					d.update( m.groupdict() )
 
-				# BibTeX does not report the path of the database in its log.
+					# BibTeX does not report the path of the database in its log.
 
-				file = d["file"]
-				if file[-4:] == ".bib":
-					file = file[:-4]
-				if self.db.has_key(file):
-					d["file"] = self.db[file]
-				elif self.db.has_key(file + ".bib"):
-					d["file"] = self.db[file + ".bib"]
-				yield d
-			last_line = line
-			line = log.readline()
-		log.close()
-		return
+					file = d["file"]
+					if file[-4:] == ".bib":
+						file = file[:-4]
+					if self.db.has_key(file):
+						d["file"] = self.db[file]
+					elif self.db.has_key(file + ".bib"):
+						d["file"] = self.db[file + ".bib"]
+					yield d
+				last_line = line
 
 def setup (doc, context):
 	global biblio
-	biblio = Bibliography(doc, doc.target)
+	biblio = Bibliography (doc)
 	doc.hook_macro('bibliography', 'a', biblio.hook_bibliography)
 	doc.hook_macro('bibliographystyle', 'a', biblio.hook_bibliographystyle)
 def command (command, args):
