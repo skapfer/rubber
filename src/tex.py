@@ -492,20 +492,6 @@ class Parser (ParserBase):
 			self.pos_line += 1
 			self.pos_char = 1
 
-class ListParser (ParserBase):
-	"""
-	A parser that reads its input from a token list (or any iterable object
-	that contains tokens) instead of parsing anything.
-	"""
-	def __init__ (self, input):
-		ParserBase.__init__(self)
-		self.input = iter(input)
-	def read_token (self):
-		try:
-			return self.input.next()
-		except StopIteration:
-			return Token(EOF)
-
 def parse_string (text):
 	"""
 	Factory function for parsing TeX code from a string.
