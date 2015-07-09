@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2008
+# vim: noet:ts=4
 """
 General-purpose classes for reading TeX code.
 Classes and functions from this module can be used without Rubber.
@@ -189,6 +190,13 @@ class ParserBase:
 		else:
 			token = self.read_token()
 
+		# skip over comment
+		if token.cat == COMMENT:
+			assert len(self.next) == 0
+			assert self.next_char is None
+			self.read_line()
+			return self.read_token()
+
 		if token.cat == MATH:
 			if self.last_is_math:
 				if self.math_mode == 1:
@@ -296,6 +304,7 @@ class ParserBase:
 		Check if a LaTeX-style optional argument is present. If such an
 		argument is present, return it as a token list, otherwise return None.
 		"""
+		self.skip_space()
 		next = self.get_token()
 
 		if next.cat != OTHER or next.raw != '[':
