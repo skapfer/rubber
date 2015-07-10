@@ -24,9 +24,11 @@ def setup (document, context):
 	doc.hook_macro('import', 'a', import_doc)
 
 def begin (loc):
+        global combine_level
 	combine_level += 1
 
 def end (loc):
+        global combine_level
 	if combine_level == 1:
 		raise EndDocument
 	combine_level -= 1
