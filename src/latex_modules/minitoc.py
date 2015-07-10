@@ -9,6 +9,9 @@ producing a lot of auxiliary files, and this module handles the cleaning of
 these.
 
 TODO: handle the shortext option
+
+TODO: use the .maf file instead of searching which files must be deleted.
+The option seems active by default.
 """
 
 import os
@@ -23,8 +26,8 @@ def setup (document, context):
 	doc = document
 
 def clean ():
-	doc.remove_suffixes(['.bmt'])
-	base = doc.target + '.'
+	doc.remove_suffixes (['.bmt', '.maf', '.mtc'])
+	base = os.path.basename (doc.target + '.')
 	ln = len(base)
 	for file in os.listdir('.'):
 		if file[:ln] == base:
