@@ -56,9 +56,12 @@ def setup (document, context):
     global doc
     doc = document
 
-    format = document.products [0] [-4:]
-    assert format in (".dvi", ".pdf")
-    if format == ".dvi":
+    if (document.vars ['engine'] == 'pdfTeX'
+        and document.products [0] [-4:] == '.pdf'):
+        format = ".pdf"
+    elif (document.vars ['engine'] == 'VTeX'):
+        msg ("error", "asymptote module does not know how to handle VTeX")
+    else:
         format = ".eps"
 
     inline = context ['opt'] != None \
@@ -103,6 +106,8 @@ def post_compile ():
 
     if 1 == len (prog):
         return True
+
+    doc.must_compile = True
 
     aux = doc.target + ".aux"
     bak = aux + ".tmp"
