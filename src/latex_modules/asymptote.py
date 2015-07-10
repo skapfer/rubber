@@ -27,16 +27,34 @@ The inline option may be passed with \usepackage[inline]{asymptote} or
 \begin[inline]{asy}, and asks 'asy' to produce and insert TeX output
 instead of .eps/.pdf. As rubber currently fails to report environment
 options, only the former is recognized.
+
+Asymptote insists on replacing the main .aux file with an empty one,
+so we backup its content before running the external tool.
 """
 
-import itertools
 import os.path
 import rubber.util
 
-def setup (document, context):
-    basename = os.path.basename (document.target)
+def msg (level, format, *paths):
+    translated = rubber.util._ (format)
+    substitutions = map (rubber.util.msg.simplify, paths)
+    formatted = translated.format (*substitutions)
+    method = getattr (rubber.util.msg, level)
+    method (formatted, pkg="asy")
 
-    count = itertools.count (start = 1)
+def remove (path):
+    try:
+        os.remove (path)
+        msg ("log", "removing {}", path)
+    except OSError:
+        pass
+
+class Asy_Environment:
+    pass
+
+def setup (document, context):
+    global doc
+    doc = document
 
     format = document.products [0] [-4:]
     assert format in (".dvi", ".pdf")
@@ -51,22 +69,55 @@ def setup (document, context):
     else:
         product_suffixes = (format, )
 
-    document.do_clean (basename + ".pre")
-
     def on_begin_asy (loc):
         # Do not parse between \begin{asy} and \end{asy} as LaTeX.
         document.h_begin_verbatim (loc, env="asy")
 
-        prefix = basename + "-" + str (count.next ())
-        source = prefix + ".asy"
-        document.do_watch (source)
-        # Asy replaces the main .aux file with an empty one.
-        document.do_onchange (
-            source,
-            "mv -n %s.aux %s.aux.tmp && asy %s && mv %s.aux.tmp %s.aux"
-            % (basename, basename, source, basename, basename))
-        document.do_clean (source)
-        document.do_clean (basename + ".aux.tmp")
-        for s in product_suffixes:
-            document.do_clean (prefix + s)
-    document.hook_begin ("asy", on_begin_asy)
+        e = Asy_Environment ()
+        asy_environments.append (e)
+        prefix = doc.target + "-" + str (len (asy_environments))
+        e.source = prefix + ".asy"
+        e.checksum = rubber.util.md5_file (e.source)
+        e.products = (prefix + suffix for suffix in product_suffixes)
+    doc.hook_begin ("asy", on_begin_asy)
+
+asy_environments = []
+
+def post_compile ():
+    prog = ["asy"]
+    for e in asy_environments:
+        new = rubber.util.md5_file (e.source)
+        if new == None:
+            msg ("error", "LaTeX should create {}", e.source)
+            return False
+        if new != e.checksum:
+            msg ("log", "{} has changed", e.source)
+            e.checksum = new
+            prog.append (e.source)
+        else:
+            for p in e.products:
+                if not os.path.exists (p):
+                    msg ("log", "output file {} doesn't exist", p)
+                    prog.append (e.source)
+                    break
+
+    if 1 == len (prog):
+        return True
+
+    aux = doc.target + ".aux"
+    bak = aux + ".tmp"
+    msg ("log", "saving {} to {}", aux, bak)
+    os.rename (aux, bak)
+    ret = doc.env.execute (prog)
+    msg ("log", "restoring {} from {}", aux, bak)
+    os.rename (bak, aux)
+    return ret == 0
+
+def clean ():
+    remove (doc.target + ".aux.tmp")
+    remove (doc.target + ".pre")
+    for e in asy_environments:
+        remove (e.source)
+        e.checksum = None
+        for p in e.products:
+            remove (p)
