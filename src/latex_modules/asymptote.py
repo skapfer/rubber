@@ -52,6 +52,18 @@ def remove (path):
 class Asy_Environment:
     pass
 
+
+# Returns None if inline is unset, else a boolean.
+def inline_option (option_string):
+    if option_string == None:   # No options at all.
+        return None
+    options = rubber.util.parse_keyval (option_string)
+    try:
+        value = options ['inline']
+    except KeyError:            # No inline option.
+        return None
+    return value == None or value == "true"
+
 def setup (document, context):
     global doc
     doc = document
@@ -64,15 +76,13 @@ def setup (document, context):
     else:
         format = ".eps"
 
-    inline = context ['opt'] != None \
-             and rubber.util.parse_keyval (context ['opt']).has_key ('inline')
-
-    if inline:
-        product_suffixes = ("_0" + format, ".pre", ".tex")
-    else:
-        product_suffixes = (format, )
+    global_inline = inline_option (context ['opt'])
 
     def on_begin_asy (loc):
+        environment_options = None
+        # For the moment, I hardly see how to parse optional
+        # environment arguments.
+
         # Do not parse between \begin{asy} and \end{asy} as LaTeX.
         document.h_begin_verbatim (loc, env="asy")
 
@@ -81,7 +91,16 @@ def setup (document, context):
         prefix = doc.target + "-" + str (len (asy_environments))
         e.source = prefix + ".asy"
         e.checksum = rubber.util.md5_file (e.source)
-        e.products = (prefix + suffix for suffix in product_suffixes)
+
+        inline = inline_option (environment_options)
+        if inline == None:
+            inline = global_inline
+            if inline == None:
+                inline = False
+        if inline:
+            e.products = (prefix + suffix for suffix in ("_0" + format, ".pre", ".tex"))
+        else:
+            e.products = (prefix + format, )
     doc.hook_begin ("asy", on_begin_asy)
 
 asy_environments = []
@@ -100,7 +119,7 @@ def post_compile ():
         else:
             for p in e.products:
                 if not os.path.exists (p):
-                    msg ("log", "output file {} doesn't exist", p)
+                    msg ("log", "output file {} doesn't exist")
                     prog.append (e.source)
                     break
 
