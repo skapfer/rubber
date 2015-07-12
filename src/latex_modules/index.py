@@ -155,6 +155,7 @@ class Index:
 		"""
 		if not os.path.exists(self.target):
 			self.md5 = md5_file(self.source)
+			msg.log(_("index %s does not exist") % self.target, pkg="index")
 			return 1
 		if not self.md5:
 			self.md5 = md5_file(self.source)

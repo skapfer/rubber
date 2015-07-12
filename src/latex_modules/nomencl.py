@@ -17,5 +17,8 @@ def setup (document, context):
 def post_compile ():
 	return index.post_compile()
 
+def clean ():
+	index.clean ()
+
 def command (command, args):
 	getattr(index, 'do_' + command)(*args)
