@@ -35,13 +35,19 @@ class Bibliography:
 	"""
 	This class represents a single bibliography for a document.
 	"""
-	def __init__ (self, document):
+	def __init__ (self, document, aux_basename=None):
 		"""
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
 		self.doc = document
-		self.base = os.path.basename (document.target)
+		jobname = os.path.basename (document.target)
+		if aux_basename == None:
+			aux_basename = jobname
+		self.log = jobname + ".log"
+		self.aux = aux_basename + ".aux"
+		self.bbl = aux_basename + ".bbl"
+		self.blg = aux_basename + ".blg"
 
 		cwd = document.vars["cwd"]
 		self.bib_path = [cwd, document.vars["path"]]
@@ -122,7 +128,7 @@ class Bibliography:
 		checks if BibTeX has been run by someone else, and in this case it
 		tells the system that it should recompile the document.
 		"""
-		if os.path.exists (self.base + ".aux"):
+		if os.path.exists (self.aux):
 			self.used_cites, self.prev_dbs = self.parse_aux()
 		else:
 			self.prev_dbs = None
@@ -133,9 +139,8 @@ class Bibliography:
 		if self.run_needed:
 			return self.run()
 
-		bbl = self.base + ".bbl"
-		if exists(bbl):
-			if os.path.getmtime (bbl) > os.path.getmtime (self.base + ".log"):
+		if exists (self.bbl):
+			if os.path.getmtime (self.bbl) > os.path.getmtime (self.log):
 				self.doc.must_compile = 1
 		return True
 
@@ -147,18 +152,18 @@ class Bibliography:
 		the very particular case when the style has changed since last
 		compilation.
 		"""
-		if not os.path.exists (self.base + ".aux"):
+		if not os.path.exists (self.aux):
 			return 0
-		if not os.path.exists (self.base + ".blg"):
+		if not os.path.exists (self.blg):
 			return 1
 
-		dtime = getmtime(self.base + ".blg")
+		dtime = getmtime (self.blg)
 		for db in self.db.values():
 			if getmtime(db) > dtime:
 				msg.log(_("bibliography database %s was modified") % db, pkg="bibtex")
 				return 1
 
-		with open(self.base + ".blg") as blg:
+		with open (self.blg) as blg:
 			for line in blg:
 				if re_error.search(line):
 					msg.log(_("last BibTeXing failed"), pkg="bibtex")
@@ -179,7 +184,11 @@ class Bibliography:
 		last = 0
 		cites = {}
 		dbs = []
-		for auxname in self.doc.aux_files:
+		if self.aux [:-3] == self.log [:-3]: # bib name = job name
+			auxnames = self.doc.aux_files
+		else:
+			auxnames = (self.aux, )
+		for auxname in auxnames:
 			with open(auxname) as aux:
 				for line in aux:
 					match = re_citation.match(line)
@@ -231,7 +240,7 @@ class Bibliography:
 		This method actually runs BibTeX with the appropriate environment
 		variables set.
 		"""
-		msg.progress(_("running BibTeX on %s") % self.base)
+		msg.progress(_("running BibTeX on %s") % self.aux)
 		doc = {}
 		if len(self.bib_path) != 1:
 			doc["BIBINPUTS"] = string.join(self.bib_path +
@@ -243,7 +252,7 @@ class Bibliography:
 			cmd = ["bibtex"]
 		else:
 			cmd = ["bibtex", "-min-crossrefs=" + self.crossrefs]
-		if self.doc.env.execute (['bibtex', self.base], doc):
+		if self.doc.env.execute (['bibtex', self.aux], doc):
 			msg.info(_("There were errors making the bibliography."))
 			return False
 		self.run_needed = 0
@@ -256,7 +265,7 @@ class Bibliography:
 		"""
 		if self.run_needed:
 			return 1
-		msg.log(_("checking if BibTeX must be run..."), pkg="bibtex")
+		msg.log (_ ("checking if {} needs BibTeX...").format (self.aux), pkg="bibtex")
 
 		new, dbs = self.parse_aux()
 
@@ -307,8 +316,7 @@ class Bibliography:
 		# BibTeX has not been run before (i.e. there is no log file) we know
 		# that it has to be run now.
 
-		blg = self.base + ".blg"
-		if not exists(blg):
+		if not exists (self.blg):
 			msg.log(_("no BibTeX log file"), pkg="bibtex")
 			return 1
 
@@ -319,15 +327,19 @@ class Bibliography:
 			msg.log(_("no undefined citations"), pkg="bibtex")
 			return 0
 
-		log = self.base + ".log"
-		if getmtime(blg) < getmtime(log):
+		if getmtime (self.blg) < getmtime (self.log):
 			msg.log(_("BibTeX's log is older than the main log"), pkg="bibtex")
 			return 1
 
 		return 0
 
 	def clean (self):
-		self.doc.remove_suffixes([".bbl", ".blg"])
+		for f in (self.bbl, self.blg):
+			try:
+				os.remove (f)
+				msg.log (_ ("removing {}").format (f), pkg="bibtex")
+			except OSError:
+				pass
 
 	#
 	# The following method extract information from BibTeX log files.
@@ -339,10 +351,9 @@ class Bibliography:
 		specified in the source. This supposes that the style is mentioned on
 		a line with the form 'The style file: foo.bst'.
 		"""
-		blg = self.base + ".blg"
-		if not exists(blg):
+		if not exists (self.blg):
 			return 0
-		with open (blg) as log:
+		with open (self.blg) as log:
 			for line in log:
 				if line.startswith ("The style file: "):
 					if line.rstrip()[16:-4] != self.style:
@@ -357,10 +368,9 @@ class Bibliography:
 		"""
 		Read the log file, identify error messages and report them.
 		"""
-		blg = self.base + ".blg"
-		if not exists(blg):
+		if not exists (self.blg):
 			return
-		with open(blg) as log:
+		with open (self.blg) as log:
 			last_line = ""
 			for line in log:
 				m = re_error.search(line)
