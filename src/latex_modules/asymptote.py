@@ -40,7 +40,7 @@ def msg (level, format, *paths):
     substitutions = map (rubber.util.msg.simplify, paths)
     formatted = translated.format (*substitutions)
     method = getattr (rubber.util.msg, level)
-    method (formatted, pkg="asy")
+    method (formatted, pkg="asymptote")
 
 def remove (path):
     try:
