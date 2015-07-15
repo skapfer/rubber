@@ -26,6 +26,11 @@ for main; do
         exit 1
     }
 
+    [ -e $main/disable ] && {
+        echo Skipping test $main >&2
+        continue
+    }
+
     doc=doc
     [ -e $main/document ] && doc=$(cat $main/document)
 
