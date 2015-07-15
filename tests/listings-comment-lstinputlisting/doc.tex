@@ -1,0 +1,19 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+
+\begin{document}
+
+\lstinputlisting[
+    float,
+    numbers  = left]%aloha
+{lst-depends-wrong-parse.tex}
+
+\lstinputlisting
+[
+    float,
+    numbers  = left]
+{lst-depends-wrong-parse2.tex}
+
+\end{document}
