@@ -29,6 +29,8 @@ for main; do
     doc=doc
     [ -e $main/document ] && doc=$(cat $main/document)
 
+    [ -e $main/arguments ] && arguments=$(cat $main/arguments)
+
     for format in "" "--pdf" "--ps --pdf"; do
         echo Test:$main, format:$format
 
@@ -46,9 +48,9 @@ version = "unreleased"
 moddir = "$SOURCE_DIR/src/rubber/git/data"
 EOF
 
-        python usrbinrubber.py $VERBOSE $format         $doc
-        python usrbinrubber.py $VERBOSE $format         $doc
-        python usrbinrubber.py $VERBOSE $format --clean $doc
+        python usrbinrubber.py $VERBOSE $format $arguments         $doc
+        python usrbinrubber.py $VERBOSE $format $arguments         $doc
+        python usrbinrubber.py $VERBOSE $format $arguments --clean $doc
 
         rm -r rubber
         rm usrbinrubber.py
