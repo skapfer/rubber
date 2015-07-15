@@ -8,9 +8,14 @@ TMPDIR=tmp
 
 set -e                          # Stop at first failure.
 
+KEEP=false
 VERBOSE=
 if test 1 -le $#; then
     case $1 in
+        -k)
+            KEEP=true
+            shift
+            ;;
         -v)
             VERBOSE=$1
             shift
@@ -58,6 +63,12 @@ moddir = "$SOURCE_DIR/src/rubber/git/data"
 EOF
 
         python usrbinrubber.py $VERBOSE $arguments         $doc
+
+        if $KEEP; then
+            echo "keeping tmp." >&2
+            exit 1
+        fi
+
         python usrbinrubber.py $VERBOSE $arguments         $doc
         python usrbinrubber.py $VERBOSE $arguments --clean $doc
 
