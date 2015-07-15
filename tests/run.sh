@@ -31,8 +31,7 @@ for main; do
 
     [ -e $main/arguments ] && arguments=$(cat $main/arguments)
 
-    for format in "" "--pdf" "--ps --pdf"; do
-        echo Test:$main, format:$format
+        echo Test:$main
 
         mkdir $TMPDIR
         cp $main/* $TMPDIR
@@ -48,16 +47,15 @@ version = "unreleased"
 moddir = "$SOURCE_DIR/src/rubber/git/data"
 EOF
 
-        python usrbinrubber.py $VERBOSE $format $arguments         $doc
-        python usrbinrubber.py $VERBOSE $format $arguments         $doc
-        python usrbinrubber.py $VERBOSE $format $arguments --clean $doc
+        python usrbinrubber.py $VERBOSE $arguments         $doc
+        python usrbinrubber.py $VERBOSE $arguments         $doc
+        python usrbinrubber.py $VERBOSE $arguments --clean $doc
 
         rm -r rubber
         rm usrbinrubber.py
         (cd ../$main; find -mindepth 1 -print0) | xargs -0 rm -r
         cd ..
         rmdir $TMPDIR           # Fail if not clean.
-    done
 done
 
 echo OK
