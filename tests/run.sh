@@ -20,6 +20,10 @@ fi
 
 echo "When a test fails, please remove the $TMPDIR directory manually."
 
+list0() {
+    (cd "$1"; find -mindepth 1 -print0)
+}
+
 for main; do
     [ -d $main ] || {
         echo $main must be a directory >&2
@@ -40,6 +44,7 @@ for main; do
 
         mkdir $TMPDIR
         cp $main/* $TMPDIR
+        cp shared/* $TMPDIR
         cd $TMPDIR
 
         cat > usrbinrubber.py <<EOF
@@ -58,7 +63,7 @@ EOF
 
         rm -r rubber
         rm usrbinrubber.py
-        (cd ../$main; find -mindepth 1 -print0) | xargs -0 rm -r
+        (list0 ../$main; list0 ../shared) | xargs -0 rm -r
         cd ..
         rmdir $TMPDIR           # Fail if not clean.
 done
