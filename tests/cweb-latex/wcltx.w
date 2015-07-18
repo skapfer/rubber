@@ -1,34 +1,87 @@
+% $Id: wcltx.w,v 1.4 1995/08/29 17:27:57 schrod Exp $
+%------------------------------------------------------------
+
+%
 % wc: An example of CWEB by Silvio Levy and Donald E. Knuth
+%
+% [LaTeX]
+% (history at end)
 
-\nocon % omit table of contents
-\datethis % print date on listing
+
+%% -js:
+%% should rework it: ANSI C compliance, POSIX.2 compliant option
+%% parsing with getopt(), including *all* required header files (ie,
+%% POSIX.1 compliance), using POSIX return codes and types, etc.
+
+
+
+\documentclass{cweb}
+
+\usepackage{rcs}
+
+
+%
+% some tags for this document
+%
+\def\CEE/{C\spacefactor 1000 }
+\def\cweb{{\tt CWEB\/}}
 \def\SPARC{SPARC\-\kern.1em station}
+\def\UNIX/{{\small UNIX\/}}
+\def\wc{{\tt wc\/}}
+\def\WEB{{\tt WEB\/}}
 
-@* An example of {\tt CWEB}.  This example, based on a program by
-Klaus Guntermann and Joachim Schrod [{\sl TUGboat\/ \bf7} (1986),
-134--137] presents the ``word count'' program from \UNIX/, rewritten in
-\.{CWEB} to demonstrate literate programming in \CEE/.  The level of
-detail in this document is intentionally high, for didactic purposes;
-many of the things spelled out here don't need to be explained in
-other programs.
+\hfuzz=0.5pt
 
-The purpose of \.{wc} is to count lines, words, and/or characters in a
+
+
+
+\begin{document}
+
+
+
+\title{Counting words}
+\author{Silvio Levy\and Donald E. Knuth}
+\begingroup
+\def\thefootnote{\hbox{$^*$}}
+\footnotetext[0]{\LaTeX{} markup by Joachim Schrod.}
+\endgroup
+\RCSdate $Date: 1995/08/29 17:27:57 $
+
+\maketitle
+
+% not very interesting, only one starred section
+% \tableofcontents
+
+
+
+@* An example of \cweb{}.  This example, based on a program by
+Klaus Guntermann and Joachim Schrod~\cite{litprog:schrod:cweb}
+presents the ``word count'' program from \UNIX/, rewritten in
+\cweb{} to demonstrate literate programming in \CEE/.%
+    \footnote{%
+	Incidentally, Klaus Guntermann and Joachim Schrod are now
+using this \cweb{} and have stopped the support for their version.
+Joachim Schrod contributed the \LaTeX{} style used for the markup of
+this document.
+    }
+The level of detail in this document is intentionally high, for
+didactic purposes; many of the things spelled out here don't need to
+be explained in other programs.
+
+The purpose of \wc{} is to count lines, words, and/or characters in a
 list of files. The number of lines in a file is the number of newline
 characters it contains. The number of characters is the file length in bytes.
 A ``word'' is a maximal sequence of consecutive characters other than
 newline, space, or tab, containing at least one visible ASCII code.
 (We assume that the standard ASCII code is in use.)
 
-This version of \.{wc} has a nonstandard ``silent'' option (\.{-s}),
-which suppresses printing except for the grand totals over all files.
-
-@ Most \.{CWEB} programs share a common structure.  It's probably a
+@ Most \cweb{} programs share a common structure.  It's probably a
 good idea to state the overall structure explicitly at the outset,
 even though the various parts could all be introduced in unnamed
 sections of the code if we wanted to add them piecemeal.
 
-Here, then, is an overview of the file \.{wc.c} that is defined
-by this \.{CWEB} program \.{wc.w}:
+Here, then, is an overview of the file \texttt{wcltx.c} that is
+defined by this \cweb{} program \texttt{wcltx.w}:
 
 @c
 @<Header files to include@>@/
@@ -54,7 +107,7 @@ be printed.
 int status=OK; /* exit status of command, initially |OK| */
 char *prog_name; /* who we are */
 
-@ Now we come to the general layout of the |main| function. 
+@ Now we come to the general layout of the |main| function.
 
 @<The main...@>=
 main (argc,argv)
@@ -69,32 +122,23 @@ main (argc,argv)
   exit(status);
 }
 
-@ If the first argument begins with a `\.{-}', the user is choosing
+@ If the first argument begins with a `\texttt{-}', the user is choosing
 the desired counts and specifying the order in which they should be
 displayed.  Each selection is given by the initial character
-(lines, words, or characters).  For example, `\.{-cl}' would cause
+(lines, words, or characters).  For example, `\texttt{-cl}' would cause
 just the number of characters and the number of lines to be printed,
-in that order. The default, if no special argument is given, is `\.{-lwc}'.
+in that order.
 
 We do not process this string now; we simply remember where it is.
-It will be used to control the formatting at output time.
-
-If the `\.{-}' is immediately followed by `\.{s}', only summary totals
-are printed.
+ It will be used to control the formatting at output time.
 
 @<Var...@>=
 int file_count; /* how many files there are */
 char *which; /* which counts to print */
-int silent=0; /* nonzero if the silent option was selected */
 
 @ @<Set up o...@>=
 which="lwc"; /* if no option is given, print all three values */
-if (argc>1 && *argv[1] == '-') {
-  argv[1]++;
-  if (*argv[1]=='s') silent=1,argv[1]++;
-  if (*argv[1]) which=argv[1];
-  argc--; argv++;
-}
+if (argc>1 && *argv[1] == '-') { which=argv[1]+1; argc--; argv++; }
 file_count=argc-1;
 
 @ Now we scan the remaining arguments and try to open a file, if
@@ -139,7 +183,7 @@ close(fd);
 will be read into the |buffer| array before we process them.
 To do this we set up appropriate pointers and counters.
 
-@d buf_size BUFSIZ /* \.{stdio.h}'s |BUFSIZ| is chosen for efficiency*/
+@d buf_size BUFSIZ /* \texttt{stdio.h}'s |BUFSIZ| is chosen for efficiency */
 
 @<Var...@>=
 char buffer[buf_size]; /* we read the input into this array */
@@ -147,7 +191,7 @@ register char *ptr; /* the first unprocessed character in |buffer| */
 register char *buf_end; /* the first unused position in |buffer| */
 register int c; /* current character, or number of characters just read */
 int in_word; /* are we within a word? */
-long word_count, line_count, char_count; /* number of words, lines, 
+long word_count, line_count, char_count; /* number of words, lines,
     and characters found in the file so far */
 
 @ @<Init...@>=
@@ -158,12 +202,14 @@ program. If we made these variables local to |main|, we would have to
 do this initialization explicitly; however, \CEE/'s globals are automatically
 zeroed. (Or rather, ``statically zeroed.'') (Get it?)
 @^Joke@>
+%% -js: The joke would be better if the vars would be static, which
+%%      they aren't in the C sense...
 
 @<Global var...@>=
 long tot_word_count, tot_line_count, tot_char_count;
  /* total number of words, lines, and chars */
 
-@ The present section, which does the counting that is \.{wc}'s {\it raison
+@ The present section, which does the counting that is \wc{}'s \emph{raison
 d'\^etre}, was actually one of the simplest to write. We look at each
 character and change state if it begins or ends a word.
 
@@ -195,25 +241,22 @@ Additionally we must decide here if we know the name of the file
 we have processed or if it was just |stdin|.
 
 @<Write...@>=
-if (!silent) {
-  wc_print(which, char_count, word_count, line_count);
-  if (file_count) printf (" %s\n", *argv); /* not |stdin| */
-  else printf ("\n"); /* |stdin| */
-}
+wc_print(which, char_count, word_count, line_count);
+if (file_count) printf (" %s\n", *argv); /* not |stdin| */
+else printf ("\n"); /* |stdin| */
 
 @ @<Upda...@>=
 tot_line_count+=line_count;
 tot_word_count+=word_count;
 tot_char_count+=char_count;
 
-@ We might as well improve a bit on \UNIX/'s \.{wc} by displaying the
+@ We might as well improve a bit on \UNIX/'s \wc{} by displaying the
 number of files too.
 
 @<Print the...@>=
-if (file_count>1 || silent) {
+if (file_count>1) {
   wc_print(which, tot_char_count, tot_word_count, tot_line_count);
-  if (!file_count) printf("\n");
-  else printf(" total in %d file%s\n",file_count,file_count>1?"s":"");
+  printf(" total in %d files\n",file_count);
 }
 
 @ Here now is the function that prints the values according to the
@@ -229,7 +272,7 @@ wc_print(which, char_count, word_count, line_count)
 char *which; /* which counts to print */
 long char_count, word_count, line_count; /* given totals */
 {
-  while (*which) 
+  while (*which)
     switch (*which++) {
     case 'l': print_count(line_count); break;
     case 'w': print_count(word_count); break;
@@ -242,13 +285,43 @@ long char_count, word_count, line_count; /* given totals */
     }
 }
 
-@ Incidentally, a test of this program against the system \.{wc}
-command on a \SPARC\ showed that the ``official'' \.{wc} was slightly
-slower. Furthermore, although that \.{wc} gave an appropriate error
-message for the options `\.{-abc}', it made no complaints about the
-options `\.{-labc}'! Dare we suggest that the system routine might have been
+@ Incidentally, a test of this program against the system \wc{}
+command on a \SPARC\ showed that the ``official'' \wc{} was slightly
+slower. Furthermore, although that \wc{} gave an appropriate error
+message for the options `\texttt{-abc}', it made no complaints about the
+options `\texttt{-labc}'! Dare we suggest that the system routine
+might have been
 better if its programmer had used a more literate approach?
 
-@* Index.
-Here is a list of the identifiers used, and where they appear. Underlined
-entries indicate the place of definition. Error messages are also shown.
+
+
+\bibliographystyle{plain}
+\bibliography{wcltx}
+
+
+@
+
+\cwebIndexIntro{%
+    Here is a list of the identifiers used, and where they appear.
+Underlined entries indicate the place of definition. Error messages
+are also shown.
+    }
+
+\end{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% $Log: wcltx.w,v $
+% Revision 1.4  1995/08/29  17:27:57  schrod
+%     Recoded to LaTeX2e markup.
+%
+% Revision 1.3  1993/06/15  14:01:14  schrod
+%     Renamed document to wcltx, must change \bibliography tag, too.
+%
+% Revision 1.2  1993/06/15  13:35:12  schrod
+%     `cweb' is now a style, was an option formerly.
+%
+% Revision 1.1  1993/04/09  15:00:37  schrod
+% Initial revision
+%
