@@ -179,8 +179,6 @@ class Node (object):
 				elif source_rv == CHANGED:
 					msg.debug(_("while making %s: changed %s necessitates make") % (primary_product, source_name), pkg="depend")
 					must_make = True
-				else:
-					msg.debug(_("while making %s: %s unchanged") % (primary_product, source_name), pkg="depend")
 
 			if not must_make:
 				return rv
