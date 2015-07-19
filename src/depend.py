@@ -168,6 +168,7 @@ class Node (object):
 				if source.making:
 					# cyclic dependency -- drop for now, we will re-visit
 					# this would happen while trying to remake the .aux in order to make the .bbl, for example
+					print self.sources
 					msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name), pkg="depend")
 					continue
 				source_rv = source.make ()
@@ -181,6 +182,8 @@ class Node (object):
 					must_make = True
 
 			if not must_make:
+				# FIXME convert this to context manager
+				self.making = False
 				return rv
 
 			# record MD5 hash of source files as we now actually start the build
