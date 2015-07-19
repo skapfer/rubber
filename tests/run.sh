@@ -63,7 +63,7 @@ EOF
         cp -a "$SOURCE_DIR/src" rubber
         cat >> rubber/version.py <<EOF
 version = "unreleased"
-moddir = "$SOURCE_DIR/src/rubber/git/data"
+moddir = "$SOURCE_DIR/data"
 EOF
 
         python usrbinrubber.py $VERBOSE $arguments         $doc
