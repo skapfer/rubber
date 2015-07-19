@@ -10,18 +10,20 @@ set -e                          # Stop at first failure.
 
 KEEP=false
 VERBOSE=
-if test 1 -le $#; then
+while [ 1 -le $# ]; do
     case $1 in
         -k)
             KEEP=true
             shift
             ;;
-        -v)
-            VERBOSE=$1
+        -v|-vv|-vvv)
+            VERBOSE="$VERBOSE $1"
             shift
             ;;
+        *)
+            break
     esac
-fi
+done
 
 echo "When a test fails, please remove the $TMPDIR directory manually."
 
@@ -30,6 +32,8 @@ list0() {
 }
 
 for main; do
+    [ "$main" = 'run.sh' ] && continue
+
     [ -d $main ] || {
         echo $main must be a directory >&2
         exit 1
