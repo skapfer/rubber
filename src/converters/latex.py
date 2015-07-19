@@ -1270,9 +1270,6 @@ class LaTeXDep (Node):
 
 		msg.log(_("cleaning additional files..."), pkg='latex')
 
-		for dep in self.source_nodes():
-			dep.clean()
-
 		for mod in self.modules.objects.values():
 			mod.clean()
 

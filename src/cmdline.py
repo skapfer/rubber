@@ -280,7 +280,8 @@ available options:
 			# Compile the document
 
 			if self.clean:
-				env.final.clean()
+				for dep in env.final.set.values():
+					dep.clean ()
 				continue
 
 			if self.force:

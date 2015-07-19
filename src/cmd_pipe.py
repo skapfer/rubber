@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2003--2006
+# vim: noet:ts=4
 """
 This is the command line pipe interface for Rubber.
 """
@@ -164,7 +165,8 @@ available options:
 		# Clean the intermediate files
 
 		if self.clean:
-			env.final.clean()
+			for dep in env.final.set.values ():
+				dep.clean ()
 			os.unlink(src)
 		return 0
 
