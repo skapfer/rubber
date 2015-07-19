@@ -68,7 +68,7 @@ class Node (object):
 		for name in names:
 			self.add_source(name)
 
-	def add_source (self, name, md5=False):
+	def add_source (self, name, track_contents=False):
 		"""
 		Register a new source for this node. If the source is unknown, a leaf
 		node is made for it.
@@ -77,7 +77,7 @@ class Node (object):
 			self.set[name] = Leaf(self.set, name)
 		if name not in self.sources:
 			self.sources.append(name)
-		if md5:
+		if track_contents:
 			# mark as "hash unknown"
 			self.md5_for_source[name] = "UNKNOWN"
 
@@ -184,6 +184,10 @@ class Node (object):
 
 			if not must_make:
 				return rv
+
+			# record MD5 hash of source files as we now actually start the build
+			for source_name in self.md5_for_source.keys ():
+				self.md5_for_source[source_name] = rubber.util.md5_file (source_name)
 
 			# actually make
 			# FIXME fold the two functions
