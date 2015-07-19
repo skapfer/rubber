@@ -5,7 +5,7 @@ This module contains code for handling dependency graphs.
 
 import os, time
 from subprocess import Popen
-
+import rubber.util
 from rubber.util import _, msg, devnull
 
 # constants for the return value of Node.make:
@@ -32,6 +32,7 @@ class Node (object):
 		self.set = set
 		self.products = []
 		self.sources = []
+		self.md5_for_source = {}
 		self.making = False
 		self.failed_dep = None
 		for name in products:
@@ -67,7 +68,7 @@ class Node (object):
 		for name in names:
 			self.add_source(name)
 
-	def add_source (self, name):
+	def add_source (self, name, md5=False):
 		"""
 		Register a new source for this node. If the source is unknown, a leaf
 		node is made for it.
@@ -76,12 +77,17 @@ class Node (object):
 			self.set[name] = Leaf(self.set, name)
 		if name not in self.sources:
 			self.sources.append(name)
+		if md5:
+			# mark as "hash unknown"
+			self.md5_for_source[name] = "UNKNOWN"
 
 	def remove_source (self, name):
 		"""
 		Remove a source for this node.
 		"""
-		self.sources.remove(name)
+		self.sources.remove (name)
+		if self.md5_for_source.has_key (name):
+			del self.md5_for_source[name]
 
 	def reset_products (self, names=[]):
 		"""
@@ -120,8 +126,14 @@ class Node (object):
 		"""
 		if not self.date:
 			return True
-		for source in self.source_nodes():
+		for source_name in self.sources:
+			source = self.set[source_name]
+			# FIXME catch if source has been modified in an unplanned way
 			if source.date > self.date:
+				if self.md5_for_source.has_key (source_name):
+					if self.md5_for_source[source_name] == rubber.util.md5_file (source_name):
+						# file contents is identical, ignore the mtime
+						continue
 				return True
 		return False
 
@@ -139,27 +151,42 @@ class Node (object):
 		called unless an error occurred in dependencies, and in this case
 		UNCHANGED cannot be returned.
 		"""
-		if self.making:
-			print "FIXME: cyclic make"
-			return UNCHANGED
+		# catch if cyclic dependencies have not been detected properly
+		assert not self.making
 		self.making = True
-
-		# Make the sources
-
 		self.failed_dep = None
-		must_make = force
-		for source in self.source_nodes():
-			ret = source.make()
-			if ret == ERROR:
-				self.making = False
-				self.failed_dep = source.failed_dep
-				return ERROR
-			elif ret == CHANGED:
-				must_make = True
 
-		# Make this node if necessary
+		rv = UNCHANGED
+		patience = 3
+		primary_product = self.products[0]
+		while patience > 0:
+			must_make = force or self.should_make ()
 
-		if must_make or self.should_make():
+			# make our sources
+			for source_name in self.sources:
+				source = self.set[source_name]
+				if source.making:
+					# cyclic dependency -- drop for now, we will re-visit
+					# this would happen while trying to remake the .aux in order to make the .bbl, for example
+					msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name), pkg="depend")
+					continue
+				source_rv = source.make ()
+				if source_rv == ERROR:
+					self.making = False
+					self.failed_dep = source.failed_dep
+					msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name), pkg="depend")
+					return ERROR
+				elif source_rv == CHANGED:
+					msg.debug(_("while making %s: changed %s necessitates make") % (primary_product, source_name), pkg="depend")
+					must_make = True
+				else:
+					msg.debug(_("while making %s: %s unchanged") % (primary_product, source_name), pkg="depend")
+
+			if not must_make:
+				return rv
+
+			# actually make
+			# FIXME fold the two functions
 			if force:
 				ok = self.force_run()
 			else:
@@ -169,18 +196,14 @@ class Node (object):
 				self.failed_dep = self
 				return ERROR
 
-			# Here we must take the integer part of the value returned by
-			# time.time() because the modification times for files, returned
-			# by os.path.getmtime(), is an integer. Keeping the fractional
-			# part could lead to errors in time comparison when a compilation
-			# is shorter than one second...
+			self.set_date ()
+			rv = CHANGED
+			force = False
 
-			self.date = int(time.time())
-			self.making = False
-			return CHANGED
+			patience -= 1
 
-		self.making = False
-		return UNCHANGED
+		msg.error(_("while making %s: file contents does not seem to settle") % self.products[0], pkg="depend")
+		return ERROR
 
 	def run (self):
 		"""

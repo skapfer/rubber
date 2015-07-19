@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 Support for the `graphics' package in Rubber.
 
@@ -177,7 +178,10 @@ def pre_compile ():
 	# through the standard dependency mechanism because we do not want to
 	# interrupt compilation when a graphic is not found.
 	for node in files:
-		node.make()
+		if not node.making:
+			node.make()
+		else:
+			msg.log("*** FIXME ***  recursive making in graphics: %s" % str (node.products), pkg="graphics")
 	return True
 
 def clean ():
