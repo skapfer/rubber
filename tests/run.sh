@@ -33,6 +33,7 @@ list0() {
 
 for main; do
     [ "$main" = 'run.sh' ] && continue
+    [ "$main" = 'shared' ] && continue
 
     [ -d $main ] || {
         echo $main must be a directory >&2
