@@ -89,7 +89,6 @@ class Bibliography:
 			if exists(bib):
 				self.db[name] = bib
 				self.doc.add_source(bib)
-				self.doc.not_included.append(bib)
 				return
 
 	def set_style (self, style):

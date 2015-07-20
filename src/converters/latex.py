@@ -601,7 +601,6 @@ class LaTeXDep (Node):
 		self.onchange_md5 = {}
 		self.onchange_cmd = {}
 		self.removed_files = []
-		self.not_included = []  # dependencies that don't trigger latex
 
 		# state of the builder:
 
