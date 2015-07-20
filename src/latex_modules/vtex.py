@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 VTeX support for Rubber.
 
@@ -18,11 +19,11 @@ def setup (doc, context):
 			msg.error(_("there is already a post-processor registered"))
 			sys.exit(2)
 		doc.vars['program'] = 'vlatexp'
-		doc.reset_products([doc.target + '.ps'])
+		doc.set_primary_product_suffix (".ps")
 	else:
 		if doc.env.final != doc and doc.products[0][-4:] != '.pdf':
 			msg.error(_("there is already a post-processor registered"))
 			sys.exit(2)
 		doc.vars['program'] = 'vlatex'
-		doc.reset_products([doc.target + '.pdf'])
+		doc.set_primary_product_suffix (".pdf")
 	doc.cmdline = ['-n1', '@latex', '%s']

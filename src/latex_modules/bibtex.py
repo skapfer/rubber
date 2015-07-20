@@ -131,10 +131,6 @@ class Bibliography:
 			self.undef_cites = self.list_undefs()
 
 		self.run_needed = self.first_run_needed()
-		if self.doc.must_compile:
-			# If a LaTeX compilation is going to happen, it is not necessary
-			# to bother with BibTeX yet.
-			return True
 		if self.run_needed:
 			return self.run()
 
@@ -184,7 +180,7 @@ class Bibliography:
 		last = 0
 		cites = {}
 		dbs = []
-		for auxname in self.doc.aux_md5.keys():
+		for auxname in self.doc.aux_files:
 			with open(auxname) as aux:
 				for line in aux:
 					match = re_citation.match(line)

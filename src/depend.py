@@ -89,16 +89,6 @@ class Node (object):
 		if self.md5_for_source.has_key (name):
 			del self.md5_for_source[name]
 
-	def reset_products (self, names=[]):
-		"""
-		Redefine the set of produced files for this node.
-		"""
-		for name in self.products:
-			del self.set[name]
-		self.products = []
-		for name in names:
-			self.add_product(name)
-
 	def add_product (self, name):
 		"""
 		Register a new product for this node.

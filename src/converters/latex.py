@@ -128,7 +128,6 @@ class Modules:
 #----  Log parser  ----{{{1
 
 re_loghead = re.compile("This is [0-9a-zA-Z-]*")
-re_rerun = re.compile("LaTeX Warning:.*Rerun")
 re_file = re.compile("(\\((?P<file>[^ \n\t(){}]*)|\\))")
 re_badbox = re.compile(r"(Ov|Und)erfull \\[hv]box ")
 re_line = re.compile(r"(l\.(?P<line>[0-9]+)( (?P<code>.*))?$|<\*>)")
@@ -197,15 +196,6 @@ class LogCheck (object):
 
 				if string.find(line, "pdfTeX warning") == -1:
 					return 1
-		return 0
-
-	def run_needed (self):
-		"""
-		Returns true if LaTeX indicated that another compilation is needed.
-		"""
-		for line in self.lines:
-			if re_rerun.match(line):
-				return 1
 		return 0
 
 	#-- Information extraction {{{2
@@ -602,10 +592,11 @@ class LaTeXDep (Node):
 
 		self.include_only = {}
 
+		# FIXME interim solution for BibTeX module -- rewrite it.
+		self.aux_files = []
+
 		# description of the building process:
 
-		self.aux_md5 = {}
-		self.aux_old = {}
 		self.watched_files = {}
 		self.onchange_md5 = {}
 		self.onchange_cmd = {}
@@ -616,7 +607,6 @@ class LaTeXDep (Node):
 
 		self.processed_sources = {}
 
-		self.must_compile = 0
 		self.something_done = 0
 		self.failed_module = None
 
@@ -665,13 +655,29 @@ class LaTeXDep (Node):
 				break
 
 		self.vars['target'] = self.target = os.path.join(prefix, job)
-		self.reset_products([self.target + ".dvi"])
+
+		self.add_product (self.target + ".dvi")
+
+		# always expect a primary aux file
+		self.new_aux_file (self.target + ".aux")
 
 		return 0
 
+	def set_primary_product_suffix (self, suffix=".dvi"):
+		"""Change the suffix of the primary product"""
+		del self.set[self.products[0]]
+		self.products[0] = self.target + suffix
+		self.add_product (self.products[0])
+
+	def new_aux_file (self, aux_file):
+		"""Register a new latex .aux file"""
+		self.add_source (aux_file, track_contents=True)
+		self.add_product (aux_file)
+		self.aux_files.append (aux_file)
+
 	def includeonly (self, files):
 		"""
-		Use partial compilation, by appending a call to \\inlcudeonly on the
+		Use partial compilation, by appending a call to \\includeonly on the
 		command line on compilation.
 		"""
 		if self.vars["engine"] == "VTeX":
@@ -1015,10 +1021,7 @@ class LaTeXDep (Node):
 			return
 		file, _ = self.input_file(filename, loc)
 		if file:
-			aux = filename + ".aux"
-			self.removed_files.append(aux)
-			self.aux_old[aux] = None
-			self.aux_md5[aux] = md5_file(aux)
+			self.new_aux_file (filename + ".aux")
 
 	def h_includeonly (self, loc, files):
 		"""
@@ -1204,27 +1207,14 @@ class LaTeXDep (Node):
 			msg.error(_("Output file `%s' was not produced.") %
 				msg.simplify(self.products[0]))
 			return False
-		for aux, md5 in self.aux_md5.items():
-			self.aux_old[aux] = md5
-			self.aux_md5[aux] = md5_file(aux)
 		return True
 
 	def pre_compile (self, force):
 		"""
 		Prepare the source for compilation using package-specific functions.
-		This function must return False on failure. This function sets
-		`must_compile' to True if we already know that a compilation is
-		needed, because it may avoid some unnecessary preprocessing (e.g.
-		BibTeXing).
+		This function must return False on failure.
 		"""
-		aux = self.target + ".aux"
-		self.aux_md5[aux] = md5_file(aux)
-		self.aux_old[aux] = None
-
 		self.log.read(self.target + ".log")
-
-		self.must_compile = force
-		self.must_compile = self.compile_needed()
 
 		msg.log(_("building additional files..."), pkg='latex')
 
@@ -1294,14 +1284,12 @@ class LaTeXDep (Node):
 		self.failed_dep = self
 		self.failed_module = None
 
-		if force or self.compile_needed():
-			self.must_compile = False
+		if True:
 			if not self.compile():
 				return False
 			if not self.post_compile():
 				return False
 			while self.recompile_needed():
-				self.must_compile = False
 				if not self.compile():
 					return False
 				if not self.post_compile():
@@ -1314,74 +1302,17 @@ class LaTeXDep (Node):
 			self.date = int(time.time())
 		return True
 
-	def compile_needed (self):
-		"""
-		Returns true if a first compilation is needed. This method supposes
-		that no compilation was done (by the script) yet.
-		"""
-		if self.must_compile:
-			return 1
-		msg.log(_("checking if compiling is necessary..."), pkg='latex')
-		if not os.path.exists(self.products[0]):
-			msg.debug(_("the output file doesn't exist"), pkg='latex')
-			return 1
-		if not os.path.exists(self.target + ".log"):
-			msg.debug(_("the log file does not exist"), pkg='latex')
-			return 1
-		if os.path.getmtime(self.products[0]) < os.path.getmtime(self.source()):
-			msg.debug(_("the source is younger than the output file"), pkg='latex')
-			return 1
-		if self.log.read(self.target + ".log"):
-			msg.debug(_("the log file is not produced by TeX"), pkg='latex')
-			return 1
-		return self.recompile_needed()
-
 	def recompile_needed (self):
 		"""
 		Returns true if another compilation is needed. This method is used
 		when a compilation has already been done.
 		"""
-		if self.must_compile:
-			self.update_watches()
-			return 1
-		if self.log.errors():
-			msg.debug(_("last compilation failed"), pkg='latex')
-			self.update_watches()
-			return 1
-		if self.deps_modified(os.path.getmtime(self.products[0])):
-			msg.debug(_("dependencies were modified"), pkg='latex')
-			self.update_watches()
-			return 1
 		suffix = self.update_watches()
 		if suffix:
 			msg.debug(_("the %s file has changed") % suffix, pkg='latex')
 			return 1
-		if self.log.run_needed():
-			msg.debug(_("LaTeX asks to run again"), pkg='latex')
-			aux_changed = 0
-			for aux, md5 in self.aux_md5.items():
-				if md5 is not None and md5 != self.aux_old[aux]:
-					aux_changed = 1
-					break
-			if not aux_changed:
-				msg.debug(_("but the aux files are unchanged"), pkg='latex')
-				return 0
-			return 1
 		msg.debug(_("no new compilation is needed"), pkg='latex')
 		return 0
-
-	def deps_modified (self, date):
-		"""
-		Returns true if any of the dependencies is younger than the specified
-		date.
-		"""
-		for name in self.sources:
-			if name in self.not_included:
-				continue
-			node = self.set[name]
-			if node.date > date:
-				return True
-		return False
 
 	#--  Utility methods  {{{2
 

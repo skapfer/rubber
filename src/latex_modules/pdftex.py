@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# vim: noet:ts=4
 """
 pdfLaTeX support for Rubber.
 
@@ -27,7 +28,7 @@ def mode_pdf ():
 	if doc.env.final != doc and doc.products[0][-4:] != '.pdf':
 		msg.error(_("there is already a post-processor registered"))
 		return
-	doc.reset_products([doc.target + '.pdf'])
+	doc.set_primary_product_suffix (".pdf")
 	doc.cmdline = [
 		opt for opt in doc.cmdline if opt != '\\pdfoutput=0']
 	mode = 'pdf'
@@ -39,6 +40,6 @@ def mode_dvi ():
 	if doc.env.final != doc and doc.products[0][-4:] != '.dvi':
 		msg.error(_("there is already a post-processor registered"))
 		return
-	doc.reset_products([doc.target + '.dvi'])
+	doc.set_primary_product_suffix (".dvi")
 	doc.cmdline.insert(0, '\\pdfoutput=0')
 	mode = 'dvi'

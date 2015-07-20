@@ -9,4 +9,4 @@ def setup(doc, context):
         msg.error(_("there is already a post-processor registered"))
         return
 
-    doc.reset_products([doc.target + '.pdf'])
+    doc.set_primary_product_suffix (".pdf")
