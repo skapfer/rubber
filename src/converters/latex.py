@@ -655,17 +655,20 @@ class LaTeXDep (Node):
 
 		self.vars['target'] = self.target = os.path.join(prefix, job)
 
-		self.add_product (self.target + ".dvi")
+		self.add_product (self.basename (with_suffix=".dvi"))
 
 		# always expect a primary aux file
-		self.new_aux_file (self.target + ".aux")
+		self.new_aux_file (self.basename (with_suffix=".aux"))
 
 		return 0
+
+	def basename (self, with_suffix=""):
+		return self.target + with_suffix
 
 	def set_primary_product_suffix (self, suffix=".dvi"):
 		"""Change the suffix of the primary product"""
 		del self.set[self.products[0]]
-		self.products[0] = self.target + suffix
+		self.products[0] = self.basename (with_suffix=suffix)
 		self.add_product (self.products[0])
 
 	def new_aux_file (self, aux_file):
@@ -1066,11 +1069,11 @@ class LaTeXDep (Node):
 				self.modules.register(name, dict)
 
 	def h_tableofcontents (self, loc):
-		self.watch_file(self.target + ".toc")
+		self.watch_file(self.basename (with_suffix=".toc"))
 	def h_listoffigures (self, loc):
-		self.watch_file(self.target + ".lof")
+		self.watch_file(self.basename (with_suffix=".lof"))
 	def h_listoftables (self, loc):
-		self.watch_file(self.target + ".lot")
+		self.watch_file(self.basename (with_suffix=".lot"))
 
 	def h_bibliography (self, loc, names):
 		"""
@@ -1197,7 +1200,7 @@ class LaTeXDep (Node):
 		self.env.execute(cmd, env, kpse=1)
 		self.something_done = 1
 
-		if self.log.read(self.target + ".log"):
+		if self.log.read(self.basename (with_suffix=".log")):
 			msg.error(_("Could not run %s.") % cmd[0])
 			return False
 		if self.log.errors():
@@ -1213,7 +1216,7 @@ class LaTeXDep (Node):
 		Prepare the source for compilation using package-specific functions.
 		This function must return False on failure.
 		"""
-		self.log.read(self.target + ".log")
+		self.log.read(self.basename (with_suffix=".log"))
 
 		msg.log(_("building additional files..."), pkg='latex')
 
@@ -1348,7 +1351,7 @@ class LaTeXDep (Node):
 		specified suffixes.
 		"""
 		for suffix in list:
-			file = self.target + suffix
+			file = self.basename (with_suffix=suffix)
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='latex')
 				os.unlink(file)
