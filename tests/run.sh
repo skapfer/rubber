@@ -50,7 +50,7 @@ for main; do
 
     [ -e $main/arguments ] && arguments=$(cat $main/arguments)
 
-        echo Test:$main
+    echo Test: $main
 
         mkdir $TMPDIR
         cp $main/* $TMPDIR
