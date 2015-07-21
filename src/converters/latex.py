@@ -605,7 +605,6 @@ class LaTeXDep (Node):
 
 		self.processed_sources = {}
 
-		self.something_done = 0
 		self.failed_module = None
 
 	def set_source (self, path, jobname=None):
@@ -1200,7 +1199,6 @@ class LaTeXDep (Node):
 			env = {"TEXINPUTS": inputs}
 
 		self.env.execute(cmd, env, kpse=1)
-		self.something_done = 1
 
 		if self.log.read(self.basename (with_suffix=".log")):
 			msg.error(_("Could not run %s.") % cmd[0])
@@ -1291,8 +1289,6 @@ class LaTeXDep (Node):
 		# Finally there was no error.
 		self.failed_dep = None
 
-		if self.something_done:
-			self.date = int(time.time())
 		return True
 
 	#--  Utility methods  {{{2
