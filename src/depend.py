@@ -153,7 +153,7 @@ class Node (object):
 		self.failed_dep = None
 
 		rv = UNCHANGED
-		patience = 3
+		patience = 5
 		primary_product = self.products[0]
 		msg.debug(_("entering make for %s") % primary_product, pkg="depend")
 		while patience > 0:
