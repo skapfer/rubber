@@ -119,7 +119,7 @@ def post_compile ():
         else:
             for p in e.products:
                 if not os.path.exists (p):
-                    msg ("log", "output file {} doesn't exist")
+                    msg ("log", "output file {} doesn't exist", p)
                     prog.append (e.source)
                     break
 
