@@ -21,7 +21,7 @@ of theorems. Next LaTeX runs will read it and use the .aux file in a
 more usual way.
 """
 
-import os
+import os.path
 import rubber.util
 
 def msg (level, format):
@@ -31,27 +31,14 @@ def msg (level, format):
     method = getattr (rubber.util.msg, level)
     method (formatted, pkg="ntheorem")
 
-def setup (document, context):
-    global checksum, doc, thm
-    doc = document
-    thm = document.target + ".thm"
-    checksum = rubber.util.md5_file (thm)
+def setup (doc, context):
+    global thm
+    thm = doc.basename (with_suffix=".thm")
+    doc.add_product (thm)
+    doc.watch_file (thm)
 
 def post_compile ():
-    global checksum
-    new = rubber.util.md5_file (thm)
-    if new == None:
-        msg ("error", "LaTeX should create {}")
+    if not os.path.exists (thm):
+        msg ("error", "LaTeX should have created {}")
         return False
-    if new != checksum:
-        checksum = new
-        msg ("log", "{} has changed")
-        doc.must_compile = True
     return True
-
-def clean ():
-    try:
-        os.remove (thm)
-        msg ("log", "removing {}")
-    except OSError:
-        pass
