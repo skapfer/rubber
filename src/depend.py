@@ -125,6 +125,9 @@ class Node (object):
 					if self.md5_for_source[source_name] == rubber.util.md5_file (source_name):
 						# file contents is identical, ignore the mtime
 						continue
+					msg.debug(_("while making %s: contents of dependency %s changed, rebuilding") % (self.products[0], source_name), pkg="depend")
+					return True
+				msg.debug(_("while making %s: timestamp of dependency %s changed, rebuilding") % (self.products[0], source_name), pkg="depend")
 				return True
 		return False
 
@@ -152,6 +155,7 @@ class Node (object):
 		rv = UNCHANGED
 		patience = 3
 		primary_product = self.products[0]
+		msg.debug(_("entering make for %s") % primary_product, pkg="depend")
 		while patience > 0:
 			# make our sources
 			for source_name in self.sources:
@@ -271,6 +275,10 @@ class Leaf (Node):
 		set and the file name.
 		"""
 		Node.__init__(self, set, products=[name])
+
+	def make (self, force=False):
+		# custom version to cut down on debug messages
+		return UNCHANGED if self.run () else ERROR
 
 	def run (self):
 		if self.date is not None:
