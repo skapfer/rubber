@@ -597,7 +597,6 @@ class LaTeXDep (Node):
 
 		# description of the building process:
 
-		self.watched_files = {}
 		self.onchange_md5 = {}
 		self.onchange_cmd = {}
 		self.removed_files = []
@@ -1284,16 +1283,10 @@ class LaTeXDep (Node):
 		self.failed_dep = self
 		self.failed_module = None
 
-		if True:
-			if not self.compile():
-				return False
-			if not self.post_compile():
-				return False
-			while self.recompile_needed():
-				if not self.compile():
-					return False
-				if not self.post_compile():
-					return False
+		if not self.compile():
+			return False
+		if not self.post_compile():
+			return False
 
 		# Finally there was no error.
 		self.failed_dep = None
@@ -1301,18 +1294,6 @@ class LaTeXDep (Node):
 		if self.something_done:
 			self.date = int(time.time())
 		return True
-
-	def recompile_needed (self):
-		"""
-		Returns true if another compilation is needed. This method is used
-		when a compilation has already been done.
-		"""
-		suffix = self.update_watches()
-		if suffix:
-			msg.debug(_("the %s file has changed") % suffix, pkg='latex')
-			return 1
-		msg.debug(_("no new compilation is needed"), pkg='latex')
-		return 0
 
 	#--  Utility methods  {{{2
 
@@ -1329,19 +1310,6 @@ class LaTeXDep (Node):
 		another compilation has to be done.
 		"""
 		self.add_source (filename, track_contents=True)
-
-	def update_watches (self):
-		"""
-		Update the MD5 sums of all files watched, and return the name of one
-		of the files that changed, or None of they didn't change.
-		"""
-		changed = None
-		for file in self.watched_files.keys():
-			new = md5_file(file)
-			if new != None and self.watched_files[file] != new:
-				changed = file
-				self.watched_files[file] = new
-		return changed
 
 	def remove_suffixes (self, list):
 		"""
