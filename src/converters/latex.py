@@ -656,6 +656,7 @@ class LaTeXDep (Node):
 		self.vars['target'] = self.target = os.path.join(prefix, job)
 
 		self.add_product (self.basename (with_suffix=".dvi"))
+		self.add_product (self.basename (with_suffix=".log"))
 
 		# always expect a primary aux file
 		self.new_aux_file (self.basename (with_suffix=".aux"))
@@ -1068,11 +1069,14 @@ class LaTeXDep (Node):
 				self.modules.register(name, dict)
 
 	def h_tableofcontents (self, loc):
-		self.watch_file(self.basename (with_suffix=".toc"))
+		self.add_product(self.basename (with_suffix=".toc"))
+		self.add_source(self.basename (with_suffix=".toc"), track_contents=True)
 	def h_listoffigures (self, loc):
-		self.watch_file(self.basename (with_suffix=".lof"))
+		self.add_product(self.basename (with_suffix=".lof"))
+		self.add_source(self.basename (with_suffix=".lof"), track_contents=True)
 	def h_listoftables (self, loc):
-		self.watch_file(self.basename (with_suffix=".lot"))
+		self.add_product(self.basename (with_suffix=".lot"))
+		self.add_source(self.basename (with_suffix=".lot"), track_contents=True)
 
 	def h_bibliography (self, loc, names):
 		"""
@@ -1252,8 +1256,6 @@ class LaTeXDep (Node):
 		"""
 		Remove all files that are produced by compilation.
 		"""
-		self.remove_suffixes([".log", ".aux", ".toc", ".lof", ".lot"])
-
 		for file in self.products + self.removed_files:
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='latex')
@@ -1320,13 +1322,13 @@ class LaTeXDep (Node):
 		else:
 			return self.failed_module.get_errors()
 
-	def watch_file (self, file):
+	def watch_file (self, filename):
 		"""
 		Register the given file (typically "jobname.toc" or such) to be
 		watched. When the file changes during a compilation, it means that
 		another compilation has to be done.
 		"""
-		self.watched_files[file] = md5_file(file)
+		self.add_source (filename, track_contents=True)
 
 	def update_watches (self):
 		"""
