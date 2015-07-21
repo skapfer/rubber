@@ -187,12 +187,7 @@ class Node (object):
 				self.md5_for_source[source_name] = rubber.util.md5_file (source_name)
 
 			# actually make
-			# FIXME fold the two functions
-			if force:
-				ok = self.force_run()
-			else:
-				ok = self.run()
-			if not ok:
+			if not self.run ():
 				self.making = False
 				self.date = None
 				self.failed_dep = self
@@ -217,13 +212,6 @@ class Node (object):
 		on failure. It must be redefined by derived classes.
 		"""
 		return False
-
-	def force_run (self):
-		"""
-		This method is called instead of 'run' when rebuilding this node was
-		forced. By default it is equivalent to 'run'.
-		"""
-		return self.run()
 
 	def failed (self):
 		"""

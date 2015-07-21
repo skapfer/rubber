@@ -1210,7 +1210,7 @@ class LaTeXDep (Node):
 			return False
 		return True
 
-	def pre_compile (self, force):
+	def pre_compile (self):
 		"""
 		Prepare the source for compilation using package-specific functions.
 		This function must return False on failure.
@@ -1266,10 +1266,7 @@ class LaTeXDep (Node):
 
 	#--  Building routine  {{{2
 
-	def force_run (self):
-		return self.run(True)
-
-	def run (self, force=False):
+	def run (self):
 		"""
 		Run the building process until the last compilation, or stop on error.
 		This method supposes that the inputs were parsed to register packages
@@ -1278,7 +1275,7 @@ class LaTeXDep (Node):
 		class depend.Node, the method returns True on success and False on
 		failure.
 		"""
-		if not self.pre_compile(force):
+		if not self.pre_compile():
 			return False
 
 		# If an error occurs after this point, it will be while LaTeXing.
