@@ -721,7 +721,6 @@ class LaTeXDep (Node):
 			self.process(self.source())
 		except EndDocument:
 			pass
-		self.set_date()
 		msg.log(_("dependencies: %r") % self.sources, pkg='latex')
 
 	def parse_file (self, file):
