@@ -33,6 +33,7 @@ so we backup its content before running the external tool.
 """
 
 import os.path
+import rubber.depend
 import rubber.util
 
 def msg (level, format, *paths):
@@ -41,17 +42,6 @@ def msg (level, format, *paths):
     formatted = translated.format (*substitutions)
     method = getattr (rubber.util.msg, level)
     method (formatted, pkg="asymptote")
-
-def remove (path):
-    try:
-        os.remove (path)
-        msg ("log", "removing {}", path)
-    except OSError:
-        pass
-
-class Asy_Environment:
-    pass
-
 
 # Returns None if inline is unset, else a boolean.
 def inline_option (option_string):
@@ -65,8 +55,11 @@ def inline_option (option_string):
     return value == None or value == "true"
 
 def setup (document, context):
-    global doc
-    doc = document
+    global asy_environments
+    asy_environments = 0
+
+    document.add_product (document.basename (with_suffix = ".pre"))
+    Shell_Restoring_Aux.initialize (document)
 
     if (document.vars ['engine'] == 'pdfTeX'
         and document.products [0] [-4:] == '.pdf'):
@@ -86,11 +79,10 @@ def setup (document, context):
         # Do not parse between \begin{asy} and \end{asy} as LaTeX.
         document.h_begin_verbatim (loc, env="asy")
 
-        e = Asy_Environment ()
-        asy_environments.append (e)
-        prefix = doc.target + "-" + str (len (asy_environments))
-        e.source = prefix + ".asy"
-        e.checksum = rubber.util.md5_file (e.source)
+        global asy_environments
+        asy_environments += 1
+        prefix = document.basename (with_suffix = "-" + str (asy_environments))
+        source = prefix + ".asy"
 
         inline = inline_option (environment_options)
         if inline == None:
@@ -98,50 +90,41 @@ def setup (document, context):
             if inline == None:
                 inline = False
         if inline:
-            e.products = (prefix + suffix for suffix in ("_0" + format, ".pre", ".tex"))
+            products = [prefix + suffix for suffix in ("_0" + format, ".pre", ".tex")]
         else:
-            e.products = (prefix + format, )
-    doc.hook_begin ("asy", on_begin_asy)
+            products = [prefix + format]
 
-asy_environments = []
+        document.add_product (source)
+        node = Shell_Restoring_Aux (set      = document.set,
+                                    command  = ["asy", source],
+                                    products = products,
+                                    sources  = [])
+        node.add_source (source, track_contents=True)
+        document.add_source (products [0])
 
-def post_compile ():
-    prog = ["asy"]
-    for e in asy_environments:
-        new = rubber.util.md5_file (e.source)
-        if new == None:
-            msg ("error", "LaTeX should create {}", e.source)
-            return False
-        if new != e.checksum:
-            msg ("log", "{} has changed", e.source)
-            e.checksum = new
-            prog.append (e.source)
-        else:
-            for p in e.products:
-                if not os.path.exists (p):
-                    msg ("log", "output file {} doesn't exist", p)
-                    prog.append (e.source)
-                    break
+    document.hook_begin ("asy", on_begin_asy)
 
-    if 1 == len (prog):
-        return True
 
-    doc.must_compile = True
+class Shell_Restoring_Aux (rubber.depend.Shell):
+    """This class replaces Shell because of a bug in asymptote. Every run
+of /usr/bin/asy flushes the .aux file.
 
-    aux = doc.target + ".aux"
-    bak = aux + ".tmp"
-    msg ("log", "saving {} to {}", aux, bak)
-    os.rename (aux, bak)
-    ret = doc.env.execute (prog)
-    msg ("log", "restoring {} from {}", aux, bak)
-    os.rename (bak, aux)
-    return ret == 0
+    """
+    @classmethod
+    def initialize (cls, document):
+        cls.aux = document.basename (with_suffix = ".aux")
+        cls.bak = document.basename (with_suffix = ".aux.tmp")
+        # In case we are interrupted, clean bak.
+        document.add_product (cls.bak)
 
-def clean ():
-    remove (doc.target + ".aux.tmp")
-    remove (doc.target + ".pre")
-    for e in asy_environments:
-        remove (e.source)
-        e.checksum = None
-        for p in e.products:
-            remove (p)
+    def run (self):
+        source = self.sources [0]
+        if not os.path.exists (source):
+            msg ("info", "{} not yet generated", source)
+            return True
+        os.rename (self.aux, self.bak)
+        msg ("log", "saving {} to {}", self.aux, self.bak)
+        ret = rubber.depend.Shell.run (self)
+        msg ("log", "restoring {} to {}", self.aux, self.bak)
+        os.rename (self.bak, self.aux)
+        return ret
