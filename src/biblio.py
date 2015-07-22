@@ -27,8 +27,8 @@ def find_resource (name, suffix="", environ_path=None):
 		fullname = os.path.join (path, name)
 		if os.path.exists (fullname):
 			return fullname
-		elif os.path.exists (fullname + suffix):
-			return fullname
+		elif suffix != "" and os.path.exists (fullname + suffix):
+			return fullname + suffix
 
 	msg.warning (_("cannot find %s") % name, pkg="find_resource")
 	return None
@@ -55,7 +55,6 @@ class BibTool (Shell):
 
 		# If the file name looks like it contains a control sequence
 		# or a macro argument, forget about this resource.
-		# FIXME when does this happen?
 		if name.find('\\') > 0 or name.find('#') > 0:
 			return
 
@@ -70,7 +69,7 @@ class BibTool (Shell):
 			self.add_source (filename)
 
 	def add_bibliography (self, doc, names):
-		for bib in files.split (","):
+		for bib in names.split (","):
 			self.add_bib_resource (doc, None, bib.strip ())
 
 	def hook_add_bib_resource (self, *macros):
