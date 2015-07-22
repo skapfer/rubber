@@ -123,7 +123,7 @@ class Node (object):
 			if source.date is not None and source.date >= self.date:
 				if self.md5_for_source.has_key (source_name):
 					if self.md5_for_source[source_name] == rubber.util.md5_file (source_name):
-						# file contents is identical, ignore the mtime
+						msg.debug(_("while making %s: contents of %s unchanged, ignoring mtime") % (self.products[0], source_name), pkg="depend")
 						continue
 					msg.debug(_("while making %s: contents of dependency %s changed, rebuilding") % (self.products[0], source_name), pkg="depend")
 					return True
