@@ -558,8 +558,6 @@ class LaTeXDep (Node):
 
 		# the initial hooks:
 
-		self.comment_mark = "%"
-
 		self.hooks = {
 			"begin": ("a", self.h_begin),
 			"end": ("a", self.h_end),
