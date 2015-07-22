@@ -150,12 +150,21 @@ class Node (object):
 		# catch if cyclic dependencies have not been detected properly
 		assert not self.making
 		self.making = True
-		self.failed_dep = None
+		rv = self.real_make (force)
+		self.making = False
+		if rv == ERROR:
+			self.date = None
+			assert self.failed_dep is not None
+		else:
+			assert self.date is not None
+			self.failed_dep = None
+			return rv
 
+	def real_make (self, force):
 		rv = UNCHANGED
 		patience = 5
 		primary_product = self.products[0]
-		msg.debug(_("entering make for %s") % primary_product, pkg="depend")
+		msg.debug(_("make %s -> %s") % (primary_product, str (self.sources)), pkg="depend")
 		while patience > 0:
 			# make our sources
 			for source_name in self.sources:
@@ -167,8 +176,6 @@ class Node (object):
 					continue
 				source_rv = source.make (force)
 				if source_rv == ERROR:
-					self.making = False
-					self.date = None
 					self.failed_dep = source.failed_dep
 					msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name), pkg="depend")
 					return ERROR
@@ -177,9 +184,6 @@ class Node (object):
 
 			must_make = force or self.should_make ()
 			if not must_make:
-				# FIXME convert this to context manager
-				self.making = False
-				assert self.date is not None
 				return rv
 
 			# record MD5 hash of source files as we now actually start the build
@@ -188,8 +192,6 @@ class Node (object):
 
 			# actually make
 			if not self.run ():
-				self.making = False
-				self.date = None
 				self.failed_dep = self
 				return ERROR
 
@@ -199,8 +201,6 @@ class Node (object):
 
 			patience -= 1
 
-		self.making = False
-		self.date = None
 		self.failed_dep = self
 		msg.error(_("while making %s: file contents does not seem to settle") % self.products[0], pkg="depend")
 		return ERROR
@@ -264,16 +264,20 @@ class Leaf (Node):
 		"""
 		Node.__init__(self, set, products=[name])
 
-	def make (self, force=False):
+	def real_make (self, force):
 		# custom version to cut down on debug messages
-		return UNCHANGED if self.run () else ERROR
+		if not self.run ():
+			self.failed_dep = self
+			return ERROR
+		else:
+			return UNCHANGED
 
 	def run (self):
 		if self.date is not None:
 			return True
-		# FIXME
-		msg.error(_("%r does not exist") % self.products[0], pkg="leaf")
-		return False
+		else:
+			msg.error(_("%r does not exist") % self.products[0], pkg="leaf")
+			return False
 
 	def clean (self):
 		pass
