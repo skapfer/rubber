@@ -1,0 +1,2 @@
+watch $target.thm
+clean $target.thm
