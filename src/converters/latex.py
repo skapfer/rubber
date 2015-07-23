@@ -49,7 +49,7 @@ class Modules:
 		"""
 		return self.objects.has_key(name)
 
-	def register (self, name, dict={}):
+	def register (self, name, context={}):
 		"""
 		Attempt to register a module with the specified name. If the module is
 		already loaded, do nothing. If it is found and not yet loaded, then
@@ -80,7 +80,7 @@ class Modules:
 						rubber.latex_modules.__path__)
 				pymodule = imp.load_module(name, file, path, descr)
 				file.close()
-				mod = PyModule(self.env, pymodule, dict)
+				mod = PyModule(self.env, pymodule, context)
 				msg.log(_("built-in module %s registered") % name, pkg='latex')
 			except ImportError:
 				msg.debug(_("no support found for %s") % name, pkg='latex')
@@ -872,8 +872,7 @@ class LaTeXDep (Node):
 		self.env.conv_set(file, vars)
 
 	def do_module (self, mod, opt=None):
-		dict = { 'arg': mod, 'opt': opt }
-		self.modules.register(mod, dict)
+		self.modules.register (mod, context = {'arg':mod, 'opt':opt})
 
 	def do_onchange (self, file, cmd):
 		file = self.abspath(file)
@@ -1047,8 +1046,8 @@ class LaTeXDep (Node):
 		if file:
 			self.process(file)
 		else:
-			dict = Variables(self.vars, { 'opt': opt })
-			self.modules.register(name, dict)
+			self.modules.register (name,
+				context = Variables (self.vars, {'opt': opt}))
 
 	def h_usepackage (self, loc, opt, names):
 		"""
@@ -1064,8 +1063,8 @@ class LaTeXDep (Node):
 			if file and not os.path.exists(name + ".py"):
 				self.process(file)
 			else:
-				dict = Variables(self.vars, { 'opt': opt })
-				self.modules.register(name, dict)
+				self.modules.register (name,
+					context = Variables (self.vars, {'opt':opt}))
 
 	def h_tableofcontents (self, loc):
 		self.add_product(self.basename (with_suffix=".toc"))
@@ -1083,7 +1082,7 @@ class LaTeXDep (Node):
 		registers the module bibtex (if not already done) and registers the
 		databases.
 		"""
-		self.modules.register("bibtex", dict)
+		self.modules.register ("bibtex")
 		# This registers the actual hooks, so that subsequent occurrences of
 		# \bibliography and \bibliographystyle will be caught by the module.
 		# However, the first time, we have to call the hooks from here. The
@@ -1096,11 +1095,11 @@ class LaTeXDep (Node):
 		bibtex (if not already done) and calls the method set_style() of the
 		module.
 		"""
-		self.modules.register("bibtex", dict)
+		self.modules.register ("bibtex")
 		# The same remark as in 'h_bibliography' applies here.
 		self.hooks['bibliographystyle'][1](loc, name)
 
-	def h_begin_verbatim (self, dict, env="verbatim"):
+	def h_begin_verbatim (self, loc, env="verbatim"):
 		"""
 		Called when \\begin{verbatim} is found. This disables all macro
 		handling and comment parsing until the end of the environment. The
@@ -1109,14 +1108,14 @@ class LaTeXDep (Node):
 		"""
 		self.parser.skip_until(r"[ \t]*\\end\{%s\}.*" % env)
 
-	def h_endinput (self, dict):
+	def h_endinput (self, loc):
 		"""
 		Called when \\endinput is found. This stops the processing of the
 		current input file, thus ignoring any code that appears afterwards.
 		"""
 		raise EndInput
 
-	def h_end_document (self, dict):
+	def h_end_document (self, loc):
 		"""
 		Called when \\end{document} is found. This stops the processing of any
 		input file, thus ignoring any code that appears afterwards.
@@ -1328,10 +1327,10 @@ class Module (object):
 	named 'Module' that derives from this one. The default implementation
 	provides all required methods with no effects.
 	"""
-	def __init__ (self, env, dict):
+	def __init__ (self, env, context):
 		"""
 		The constructor receives two arguments: 'env' is the compiling
-		environment, 'dict' is a dictionary that describes the command that
+		environment, 'context' is a dictionary that describes the command that
 		caused the module to load.
 		"""
 
