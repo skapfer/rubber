@@ -7,6 +7,7 @@ Bibliographies (Biber and BibTeX).
 """
 
 from rubber.util import _, msg
+import rubber.util
 from rubber.depend import Shell
 import os, os.path
 
