@@ -8,31 +8,24 @@ level of chapters, parts and sections. This nice feature has the drawback of
 producing a lot of auxiliary files, and this module handles the cleaning of
 these.
 
-TODO: handle the shortext option
-
-TODO: use the .maf file instead of searching which files must be deleted.
-The option seems active by default.
+It relies on the listfiles option, wich is active by default. Listing
+the produced files is quite complex (see shortext option for example).
 """
 
-import os
-import re
+import os.path
 
 from rubber import _, msg
 
-re_tocext = re.compile("[mps](tc|l[ft])[0-9]+")
-
 def setup (document, context):
-	global doc
-	doc = document
+    global maf
+    maf = document.basename (with_suffix = ".maf")
 
 def clean ():
-	doc.remove_suffixes (['.bmt', '.maf', '.mtc'])
-	base = os.path.basename (doc.target + '.')
-	ln = len(base)
-	for file in os.listdir('.'):
-		if file[:ln] == base:
-			ext = file[ln:]
-			m = re_tocext.match(ext)
-			if m and ext[m.end():] == "":
-				msg.log(_("removing %s") % file, pkg='minitoc')
-				os.unlink(file)
+    if os.path.exists (maf):
+        with open (maf, "r") as list:
+            for name in list:
+                name = name.rstrip ()
+                msg.log (_ ("removing %s") % name, pkg='minitoc')
+                os.remove (name)
+        msg.log (_ ("removing %s") % maf, pkg='minitoc')
+        os.remove (maf)
