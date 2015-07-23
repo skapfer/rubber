@@ -15,11 +15,14 @@ def setup (doc, context):
 	doc.hook_macro ("bibliographystyle", "a", hook_bibliographystyle)
 
 	options = rubber.util.parse_keyval (context ["opt"])
-
-	if "backend" in options and options["backend"] != "biber":
-		rubber.biblio.setup (doc, "bibtex")
-	else:
-		rubber.biblio.setup (doc, "biber")
+	try:
+		backend = options ["backend"]
+	except KeyError:
+		backend = "biber"
+	assert backend in ("biber", "bibtex", "bibtex8", "bibtexu")
+	if backend != "biber":
+		backend = "bibtex"
+	rubber.biblio.setup (doc, backend)
 
 def hook_bibliographystyle (loc, bibs):
 	msg.warn (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"), pkg="biblatex")
