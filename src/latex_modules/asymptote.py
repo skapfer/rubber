@@ -44,12 +44,12 @@ def msg (level, format, *paths):
     method (formatted, pkg="asymptote")
 
 # Returns None if inline is unset, else a boolean.
-def inline_option (option_string):
+def inline_option (option_string, default):
     options = rubber.util.parse_keyval (option_string)
     try:
         value = options ['inline']
     except KeyError:            # No inline option.
-        return None
+        return default
     return value == None or value == "true"
 
 def setup (document, context):
@@ -67,7 +67,7 @@ def setup (document, context):
     else:
         format = ".eps"
 
-    global_inline = inline_option (context ['opt'])
+    global_inline = inline_option (context ['opt'], default=False)
 
     def on_begin_asy (loc):
         environment_options = None
@@ -82,11 +82,7 @@ def setup (document, context):
         prefix = document.basename (with_suffix = "-" + str (asy_environments))
         source = prefix + ".asy"
 
-        inline = inline_option (environment_options)
-        if inline == None:
-            inline = global_inline
-            if inline == None:
-                inline = False
+        inline = inline_option (environment_options, default=global_inline)
         if inline:
             products = [prefix + suffix for suffix in ("_0" + format, ".pre", ".tex")]
         else:
