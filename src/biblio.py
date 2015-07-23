@@ -73,14 +73,6 @@ class BibTool (Shell):
 		for bib in names.split (","):
 			self.add_bib_resource (doc, None, bib.strip ())
 
-	def hook_add_bib_resource (self, *macros):
-		for macro in macros:
-			self.doc.hook_macro (macro, "oa", self.add_bib_resource)
-
-	def hook_bibliography (self, *macros):
-		for macro in macros:
-			self.doc.hook_macro (macro, "a", self.add_bibliography)
-
 	def run (self):
 		# check if the input file exists. if not, refuse to run.
 		if not os.path.exists (self.sources[0]):
@@ -101,7 +93,7 @@ class BibTeX (BibTool):
 	"""Node: make .bbl from .aux using BibTeX"""
 	def __init__ (self, set, doc):
 		BibTool.__init__ (self, set, doc, "bibtex")
-		BibTool.hook_bibliography (self, "bibliography")
+		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".aux"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix="-blx.bib"))
 
@@ -114,8 +106,9 @@ class Biber (BibTool):
 	"""Node: make .bbl from .bcf using Biber"""
 	def __init__ (self, set, doc):
 		BibTool.__init__ (self, set, doc, "biber")
-		BibTool.hook_add_bib_resource (self, "addbibresource", "addglobalbib", "addsectionbib")
-		BibTool.hook_bibliography (self, "bibliography")
+		for macro in ("addbibresource", "addglobalbib", "addsectionbib"):
+			doc.hook_macro (macro, "oa", self.add_bib_resource)
+		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".bcf"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix=".bcf"))
 
