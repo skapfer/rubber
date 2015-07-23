@@ -86,9 +86,6 @@ class BibTool (Shell):
 		msg.warn (_("There were errors running %s.") % self.tool, pkg="biblio")
 		return False
 
-	def clean (self):
-		self.doc.remove_suffixes (self.prod_suffixes)
-
 class BibTeX (BibTool):
 	"""Node: make .bbl from .aux using BibTeX"""
 	def __init__ (self, set, doc):
