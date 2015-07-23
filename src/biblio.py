@@ -52,7 +52,7 @@ class BibTool (Shell):
 	def add_bib_resource (self, doc, opt, name):
 		"""new bib resource discovered"""
 		msg.log (_("bibliography resource discovered: %s" % name), pkg="biblio")
-		options = rubber.util.parse_keyval (opt) if opt != None else {}
+		options = rubber.util.parse_keyval (opt)
 
 		# If the file name looks like it contains a control sequence
 		# or a macro argument, forget about this resource.

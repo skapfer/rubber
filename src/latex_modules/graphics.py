@@ -72,10 +72,7 @@ def setup (document, context):
 	# If the package was loaded with an option that matches the name of a
 	# driver, use that driver instead.
 
-	if 'opt' in context and context['opt']:
-		opts = parse_keyval(context['opt'])
-	else:
-		opts = {}
+	opts = parse_keyval (context ['opt'])
 
 	for opt in opts.keys():
 		if drv_suffixes.has_key(opt):
@@ -90,12 +87,11 @@ def hook_includegraphics (loc, optional, name):
 
 	allowed_suffixes = suffixes
 
-	if optional is not None:
-		options = parse_keyval(optional)
-		if 'ext' in options:
-			allowed_suffixes = ['']
-			if options['ext']:
-				name = name + options['ext']
+	options = parse_keyval (optional)
+	if 'ext' in options:
+		allowed_suffixes = ['']
+		if options['ext']:
+			name = name + options['ext']
 
 	for suffix in suffixes:
 		if name[-len(suffix):] == suffix:

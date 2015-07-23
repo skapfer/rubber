@@ -172,12 +172,13 @@ def parse_keyval (str):
 	standard 'keyval' package. The value returned is simply a dictionary that
 	contains all definitions found in the string. For keys without a value,
 	the dictionary associates the value None.
+	If str is None, consider it as empty.
 	"""
 	dict = {}
-	while 1:
+	while str:
 		m = re_keyval.match(str)
 		if not m:
-			return dict
+			break
 		d = m.groupdict()
 		str = str[m.end():]
 		if not d["val"]:
@@ -187,6 +188,7 @@ def parse_keyval (str):
 			dict[d["key"]] = val
 		else:
 			dict[d["key"]] = string.strip(d["val"])
+	return dict
 
 def match_brace (str):
 	"""

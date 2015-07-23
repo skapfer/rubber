@@ -14,8 +14,7 @@ def setup (doc, context):
 	# overwrite the hook which would load the bibtex module
 	doc.hook_macro ("bibliographystyle", "a", hook_bibliographystyle)
 
-	opt = context["opt"] or None
-	options = rubber.util.parse_keyval(opt) if opt != None else {}
+	options = rubber.util.parse_keyval (context ["opt"])
 
 	if "backend" in options and options["backend"] != "biber":
 		rubber.biblio.setup (doc, "bibtex")

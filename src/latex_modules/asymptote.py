@@ -45,8 +45,6 @@ def msg (level, format, *paths):
 
 # Returns None if inline is unset, else a boolean.
 def inline_option (option_string):
-    if option_string == None:   # No options at all.
-        return None
     options = rubber.util.parse_keyval (option_string)
     try:
         value = options ['inline']
