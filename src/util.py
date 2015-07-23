@@ -149,8 +149,8 @@ def md5_file (fname):
 	try:
 		m = hashlib.md5()
 		with open(fname) as file:
-                        for line in file:
-                                m.update(line)
+			for line in file:
+				m.update(line)
 		return m.digest()
 	except IOError as e:
 		if e.errno == errno.ENOENT:
