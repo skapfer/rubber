@@ -1256,7 +1256,7 @@ class LaTeXDep (Node):
 		for file in self.products + self.removed_files:
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='latex')
-				os.unlink(file)
+				os.remove(file)
 
 		msg.log(_("cleaning additional files..."), pkg='latex')
 
@@ -1316,7 +1316,7 @@ class LaTeXDep (Node):
 			file = self.basename (with_suffix=suffix)
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='latex')
-				os.unlink(file)
+				os.remove(file)
 
 
 #----  Base classes for modules  ----{{{1

@@ -235,7 +235,7 @@ class Node (object):
 		for file in self.products:
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file)
-				os.unlink(file)
+				os.remove(file)
 		for source in self.source_nodes():
 			source.clean()
 		self.date = None

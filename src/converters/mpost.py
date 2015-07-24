@@ -196,7 +196,7 @@ class Dep (Node):
 				m = re_mpext.match(ext)
 				if m and ext[m.end():] == "":
 					msg.log(_("removing %s") % file)
-					os.unlink(file)
+					os.remove(file)
 
 # The `files' dictionary associates dependency nodes to MetaPost sources. It
 # is used to detect when several figures from the same source are included. It

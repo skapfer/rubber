@@ -167,7 +167,7 @@ available options:
 		if self.clean:
 			for dep in env.final.set.values ():
 				dep.clean ()
-			os.unlink(src)
+			os.remove(src)
 		return 0
 
 	def __call__ (self, cmdline):

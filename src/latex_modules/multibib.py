@@ -88,4 +88,4 @@ def clean ():
 			file = bib + suffix
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='multibib')
-				os.unlink(file)
+				os.remove(file)
