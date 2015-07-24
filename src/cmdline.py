@@ -312,7 +312,7 @@ available options:
 
 			if self.warn:
 				log = env.main.log
-				if log.read(env.main.target + ".log"):
+				if log.read (env.main.basename (with_suffix=".log")):
 					msg.error(_("cannot read the log file"))
 					return 1
 				msg.display_all(log.parse(boxes=self.warn_boxes,
