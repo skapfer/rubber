@@ -286,7 +286,7 @@ class Shell (Node):
 	"""
 	This class specializes Node for generating files using shell commands.
 	"""
-	def __init__ (self, set, command, products, sources):
+	def __init__ (self, set, command, products=[], sources=[]):
 		Node.__init__(self, set, products, sources)
 		self.command = command
 		self.stdout = None
@@ -303,7 +303,7 @@ class Pipe (Shell):
 	"""
 	This class specializes Node for generating files using the stdout of shell commands.
 	"""
-	def __init__ (self, set, command, products, sources):
+	def __init__ (self, set, command, products=[], sources=[]):
 		Shell.__init__(self, set, command, products, sources)
 
 	def run (self):

@@ -42,12 +42,9 @@ class BibTool (Shell):
 		self.doc = doc
 		assert tool in [ "biber", "bibtex" ]
 		self.tool = tool
-		prod_suffixes = [ ".bbl", ".blg", ".run.xml" ]
-		Shell.__init__ (self, set,
-			[ None, doc.basename () ],
-			[ doc.basename (with_suffix=suf) for suf in prod_suffixes ],
-			[]
-		)
+		Shell.__init__ (self, set, command=[ None, doc.basename () ])
+		for suf in [ ".bbl", ".blg", ".run.xml" ]:
+			self.add_product (doc.basename (with_suffix=suf))
 
 	def add_bib_resource (self, doc, opt, name):
 		"""new bib resource discovered"""
