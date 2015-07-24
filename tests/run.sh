@@ -55,6 +55,7 @@ for main; do
         mkdir $TMPDIR
         cp $main/* $TMPDIR
         cp shared/* $TMPDIR
+        gzip -c shared/sample.eps > $TMPDIR/compressed.eps.gz
         cd $TMPDIR
 
         cat > usrbinrubber.py <<EOF
@@ -79,6 +80,7 @@ EOF
 
         rm -r rubber
         rm usrbinrubber.py
+        rm compressed.eps.gz
         (list0 ../$main; list0 ../shared) | xargs -0 rm -r
         cd ..
         rmdir $TMPDIR           # Fail if not clean.
