@@ -26,8 +26,7 @@ class CWebDep (Shell):
 
 class KnitrDep (Shell):
 	def __init__ (self, set, target, source):
-		Pipe.__init__(self, set, ['R', '-e', 'library(knitr); knit("%s")' % source])
-		self.add_product (target)
+		Pipe.__init__(self, set, ['R', '-e', 'library(knitr); knit("%s")' % source], target)
 		self.add_source (source)
 
 literate_preprocessors = { ".lhs": LHSDep, ".w": CWebDep, ".Rtex": KnitrDep }
