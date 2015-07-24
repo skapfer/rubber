@@ -83,18 +83,18 @@ def setup (document, context):
         source = prefix + ".asy"
 
         inline = inline_option (environment_options, default=global_inline)
-        if inline:
-            products = [prefix + suffix for suffix in ("_0" + format, ".pre", ".tex")]
-        else:
-            products = [prefix + format]
 
         document.add_product (source)
-        node = Shell_Restoring_Aux (set      = document.set,
-                                    command  = ["asy", source],
-                                    products = products,
-                                    sources  = [])
+        node = Shell_Restoring_Aux (document.set, ["asy", source])
+        if inline:
+            node.add_product (prefix + ".tex")
+            node.add_product (prefix + "_0" + format)
+            node.add_product (prefix + ".pre")
+            document.add_source (prefix + ".tex")
+        else:
+            node.add_product (prefix + format)
+            document.add_source (prefix + format)
         node.add_source (source, track_contents=True)
-        document.add_source (products [0])
 
     document.hook_begin ("asy", on_begin_asy)
 

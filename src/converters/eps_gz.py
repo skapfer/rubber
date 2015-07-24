@@ -14,7 +14,9 @@ re_bbox = re.compile("%[%\w]*BoundingBox:")
 
 class Dep (Node):
 	def __init__ (self, set, target, source):
-		Node.__init__(self, set, [target], [source])
+		Node.__init__(self, set)
+                self.add_product (target)
+                self.add_source (source)
 		self.source = source
 		self.target = target
 

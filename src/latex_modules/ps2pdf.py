@@ -18,5 +18,7 @@ def setup (doc, context):
 	for opt in doc.vars['paper'].split():
 		cmd.append('-sPAPERSIZE=' + opt)
 	cmd.extend([ps, pdf])
-	dep = Shell(doc.env.depends, cmd, [pdf], [ps])
+	dep = Shell (doc.env.depends, cmd)
+	dep.add_product (pdf)
+	dep.add_source (ps)
 	env.final = dep

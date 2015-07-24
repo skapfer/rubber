@@ -20,12 +20,9 @@ class Node (object):
 	functionality of date checking and recursive making, supposing the
 	existence of a method `run()' in the object.
 	"""
-	def __init__ (self, set, products=[], sources=[]):
+	def __init__ (self, set):
 		"""
-		Initialize the object for a given set of output files and a given set
-		of sources. The argument `products' is the list of names for files
-		produced by this node, and the argument `sources' is the list of names
-		for the dependencies. The node registers itself in the dependency set,
+		The node registers itself in the dependency set,
 		and if a given depedency is not known in the set, a leaf node is made
 		for it.
 		"""
@@ -44,11 +41,6 @@ class Node (object):
 		# failed_dep: the Node which caused the build to fail.  can be self
 		# if this Node failed to build, or a dependency.
 		self.failed_dep = None
-
-		for name in products:
-			self.add_product(name)
-		for name in sources:
-			self.add_source(name)
 
 	def reset_sources (self, names=[]):
 		"""
@@ -262,7 +254,8 @@ class Leaf (Node):
 		Initialize the node. The argument of this method are the dependency
 		set and the file name.
 		"""
-		Node.__init__(self, set, products=[name])
+		Node.__init__(self, set)
+		self.add_product (name)
 
 	def real_make (self, force):
 		# custom version to cut down on debug messages
@@ -286,8 +279,8 @@ class Shell (Node):
 	"""
 	This class specializes Node for generating files using shell commands.
 	"""
-	def __init__ (self, set, command, products=[], sources=[]):
-		Node.__init__(self, set, products, sources)
+	def __init__ (self, set, command):
+		Node.__init__(self, set)
 		self.command = command
 		self.stdout = None
 
@@ -302,9 +295,11 @@ class Shell (Node):
 class Pipe (Shell):
 	"""
 	This class specializes Node for generating files using the stdout of shell commands.
+	The 'product' will receive the stdout of 'command'.
 	"""
-	def __init__ (self, set, command, products=[], sources=[]):
-		Shell.__init__(self, set, command, products, sources)
+	def __init__ (self, set, command, product):
+		Shell.__init__(self, set, command)
+		self.add_product (product)
 
 	def run (self):
 		self.stdout = open(self.products[0], 'w')

@@ -20,9 +20,10 @@ def convert (source, target, context, set):
 		# used, that is for eps, pdf and png).
 
 		language = target[target.rfind('.')+1:]
-		return Shell(set,
-			['fig2dev', '-L', language, source, target],
-			[target], [source])
+		result = Shell (set, ['fig2dev', '-L', language, source, target])
+		result.add_product (target)
+		result.add_source (source)
+		return result
 
 	else:
 
@@ -50,10 +51,13 @@ def convert (source, target, context, set):
 			language = 'pstex'
 			image_file = base_name + '.eps'
 
-		Shell(set,
-			['fig2dev', '-L', language, source, image_file],
-			[image_file], [source])
-		return Shell(set,
-			['fig2dev', '-L', language + '_t',
-				'-p', image_reference, source, target],
-			[target], [source, image_file])
+		temp = Shell (set, ['fig2dev', '-L', language, source, image_file])
+		temp.add_product (image_file)
+		temp.add_source (source)
+
+		result = Shell (set, ['fig2dev', '-L', language + '_t',
+				      '-p', image_reference, source, target])
+		result.add_product (target)
+		result.add_source (source)
+		result.add_source (image_file)
+		return result
