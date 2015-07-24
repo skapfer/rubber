@@ -115,11 +115,11 @@ class Dep (Node):
 	sources.
 	"""
 	def __init__ (self, set, target, source, context):
-		sources = []
 		self.cmd_pwd = os.path.dirname(source)
-		self.include(os.path.basename(source), sources)
-		msg.log(_("%s is made from %r") % (target, sources))
-		Node.__init__(self, set, [target], sources)
+		Node.__init__(self, set)
+		self.add_product (target)
+		self.include (os.path.basename (source))
+		msg.log(_("%s is made from %r") % (target, self.sources))
 		self.env = context['_environment']
 		self.base = source[:-3]
 		self.cmd = ["mpost", "\\batchmode;input %s" %
@@ -133,7 +133,7 @@ class Dep (Node):
 				"MPINPUTS": "%s:%s" % (path, os.getenv("MPINPUTS", "")) }
 		self.log = None
 
-	def include (self, source, list):
+	def include (self, source):
 		"""
 		This function tries to find a specified MetaPost source (currently all
 		in the same directory), appends its actual name to the list, and
@@ -144,12 +144,12 @@ class Dep (Node):
 			file = file + ".mp"
 		elif not os.path.exists(file):
 			return
-		list.append(file)
+		self.add_source (file)
 		with open(file) as fd:
 			for line in fd:
 				m = re_input.search(line)
 				if m:
-					self.include(m.group("file"), list)
+					self.include (m.group ("file"))
 
 	def run (self):
 		"""
