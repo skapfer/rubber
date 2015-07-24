@@ -9,6 +9,9 @@ import os.path
 import rubber.depend
 from rubber.util import _, msg
 
+# FIXME: this class may probably be simplified a lot if inheriting
+# from rubber.depend.Shell instead of rubber.depend.Node.
+
 class Index (rubber.depend.Node):
 	"""
 	This class represents a single index.
@@ -22,13 +25,14 @@ class Index (rubber.depend.Node):
 		rubber.depend.Node.__init__ (self, doc.set)
 		src = os.path.basename (doc.basename (with_suffix = "." + source))
 		tgt = os.path.basename (doc.basename (with_suffix = "." + target))
+		log = os.path.basename (doc.basename (with_suffix = "." + transcript))
 		doc.add_product (src)
 		self.add_product (tgt)
-		self.add_product (os.path.basename (doc.basename (with_suffix = "." + transcript)))
+		self.add_product (log)
 		self.add_source (src, track_contents=True)
 		doc.add_source (tgt, track_contents=True)
 		self.doc = doc
-		self.tool = "makeindex"
+		self.cmd = ["makeindex", src, "-q", "-o", tgt, "-t", log]
 		self.lang = None   # only for xindy
 		self.modules = []  # only for xindy
 		self.opts = []
@@ -59,23 +63,22 @@ class Index (rubber.depend.Node):
 	def do_tool (self, tool):
 		if tool not in ("makeindex", "xindy"):
 			msg.error(_("unknown indexing tool '%s'") % tool)
-		self.tool = tool
+		self.cmd [0] = tool
 
 	def run (self):
-		if not os.path.exists (self.sources [0]):
-			msg.info (_ ("%s not yet generated" % self.sources [0]))
+		if not os.path.exists (self.cmd [1]):
+			msg.info (_ ("%s not yet generated" % self.cmd [1]))
 			return True
 
-		cmd = [self.tool, "-q",
-			   self.sources [0],
-			   "-o", self.products [0],
-			   "-t", self.products [1]]
-		if self.tool == "makeindex":
+		# FIXME: all this may be computed only once after all
+		# parsing but not for each run.
+		cmd = self.cmd [:] # do not modify self.cmd directly.
+		if cmd [0] == "makeindex":
 			cmd.extend (self.opts)
 			if self.style:
 				cmd.extend (["-s", self.style])
 			path_var = "INDEXSTYLE"
-		else:				   # self.tool == "texindy"
+		else:				   # cmd [0] == "texindy"
 			for opt in self.opts:
 				if opt == "-g":
 					if self.lang != "":
