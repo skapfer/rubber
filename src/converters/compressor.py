@@ -9,8 +9,8 @@ import rubber.depend
 
 class Node (rubber.depend.Node):
 
-    def __init__ (self, node_dictionnary, constructor, extension, source):
-        rubber.depend.Node.__init__(self, node_dictionnary)
+    def __init__ (self, node_dictionary, constructor, extension, source):
+        rubber.depend.Node.__init__(self, node_dictionary)
         self.constructor = constructor
         self.target = source + extension
         self.source = source
