@@ -228,7 +228,7 @@ available options:
 				return 1
 
 			# Check the source and prepare it for processing
-	
+
 			env = Environment()
 
 			if env.set_source(src, jobname=self.jobname):
@@ -268,14 +268,15 @@ available options:
 			if self.compress is not None:
 				last_node = env.final
 				filename = last_node.products[0]
+				import rubber.converters.compressor
 				if self.compress == 'gzip':
-					from rubber.converters.gz import GzipDep
-					env.final = GzipDep(env.depends,
-							filename + '.gz', filename)
-				elif self.compress == 'bzip2':
-					from rubber.converters.bzip2 import Bzip2Dep
-					env.final = Bzip2Dep(env.depends,
-							filename + '.bz2', filename)
+					import gzip
+					env.final = rubber.converters.compressor.Node (
+						env.depends, gzip.GzipFile, '.gz', filename)
+				else: # self.compress == 'bzip2'
+					import bz2
+					env.final = rubber.converters.compressor.Node (
+						env.depends, bz2.BZ2File, 'bz2', filename)
 
 			# Compile the document
 
