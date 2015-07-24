@@ -932,10 +932,13 @@ class LaTeXDep (Node):
 		except KeyError:
 			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
+	def do_produce (self, *args):
+		for arg in args:
+			self.add_product (self.abspath (arg))
+
 	def do_watch (self, *args):
 		for arg in args:
 			self.watch_file(self.abspath(arg))
-
 
 	#--  Macro handling  {{{2
 

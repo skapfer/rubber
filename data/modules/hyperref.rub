@@ -1,2 +1,3 @@
+produce $target.out
 watch $target.out
-clean $target.out $target.brf
+clean $target.brf
