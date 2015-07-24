@@ -42,10 +42,10 @@ class BibTool (Shell):
 		self.doc = doc
 		assert tool in [ "biber", "bibtex" ]
 		self.tool = tool
-		self.prod_suffixes = [ ".bbl", ".blg", ".run.xml" ]
+		prod_suffixes = [ ".bbl", ".blg", ".run.xml" ]
 		Shell.__init__ (self, set,
 			[ None, doc.basename () ],
-			[ doc.basename (with_suffix=suf) for suf in self.prod_suffixes ],
+			[ doc.basename (with_suffix=suf) for suf in prod_suffixes ],
 			[]
 		)
 
