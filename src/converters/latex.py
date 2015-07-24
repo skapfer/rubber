@@ -617,7 +617,7 @@ class LaTeXDep (Node):
 		if not name:
 			msg.error(_("cannot find %s") % name)
 			return 1
-		self.reset_sources()
+		self.sources = []
 		self.vars['source'] = name
 		(src_path, name) = os.path.split(name)
 		self.vars['path'] = src_path

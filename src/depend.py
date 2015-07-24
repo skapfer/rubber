@@ -42,14 +42,6 @@ class Node (object):
 		# if this Node failed to build, or a dependency.
 		self.failed_dep = None
 
-	def reset_sources (self, names=[]):
-		"""
-		Redefine the set of produced files for this node.
-		"""
-		self.sources = []
-		for name in names:
-			self.add_source(name)
-
 	def add_source (self, name, track_contents=False):
 		"""
 		Register a new source for this node. If the source is unknown, a leaf
