@@ -1,2 +1,2 @@
+produce $target.thm
 watch $target.thm
-clean $target.thm
