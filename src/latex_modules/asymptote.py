@@ -35,13 +35,7 @@ so we backup its content before running the external tool.
 import os.path
 import rubber.depend
 import rubber.util
-
-def msg (level, format, *paths):
-    translated = rubber.util._ (format)
-    substitutions = map (rubber.util.msg.simplify, paths)
-    formatted = translated.format (*substitutions)
-    method = getattr (rubber.util.msg, level)
-    method (formatted, pkg="asymptote")
+from rubber.util import _, msg
 
 # Returns None if inline is unset, else a boolean.
 def inline_option (option_string, default):
@@ -63,7 +57,7 @@ def setup (document, context):
         and document.products [0] [-4:] == '.pdf'):
         format = ".pdf"
     elif (document.vars ['engine'] == 'VTeX'):
-        msg ("error", "asymptote module does not know how to handle VTeX")
+        msg.error(_("does not know how to handle VTeX"), pkg="asymptote")
     else:
         format = ".eps"
 
@@ -114,11 +108,16 @@ of /usr/bin/asy flushes the .aux file.
     def run (self):
         source = self.sources [0]
         if not os.path.exists (source):
-            msg ("info", "{} not yet generated", source)
+            msg.info(_("{} not yet generated").format (msg.simplify (source)),
+                     pkg="asymptote")
             return True
         os.rename (self.aux, self.bak)
-        msg ("log", "saving {} to {}", self.aux, self.bak)
+        msg.log (_ ("saving {} to {}").format (msg.simplify (self.aux),
+                                               msg.simplify (self.bak)),
+                 pkg="asymptote")
         ret = rubber.depend.Shell.run (self)
-        msg ("log", "restoring {} to {}", self.aux, self.bak)
+        msg.log (_ ("restoring {} to {}").format (msg.simplify (self.aux),
+                                                  msg.simplify (self.bak)),
+                pkg="asymptote")
         os.rename (self.bak, self.aux)
         return ret

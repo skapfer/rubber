@@ -25,19 +25,13 @@ interesting .bbl, and also a .bbl log.
 
 import os.path
 import rubber.util
+from rubber.util import _, msg
 import rubber.latex_modules.bibtex
-
-def msg (level, format, *paths):
-    translated = rubber.util._ (format)
-    substitutions = map (rubber.util.msg.simplify, paths)
-    formatted = translated.format (*substitutions)
-    method = getattr (rubber.util.msg, level)
-    method (formatted, pkg="bibtopic")
 
 def remove (path):
     try:
         os.remove (path)
-        msg ("log", "removing {}", path)
+        msg.log(_("removing {}").format(msg.simplify (path)), pkg="bibtopic")
     except OSError:
         pass
 
@@ -63,7 +57,7 @@ def on_begin_btsect (loc):
     btsect_environments.append (e)
 
 def hook_bibliography (loc, bibs):
-    msg ("error", "\\usepackage{bibtopic} forbids \\bibliography")
+    msg.error(_("incompatible with \\bibliography"), pkg="bibtopic")
     sys.exit (2)
 
 def hook_bibliographystyle (loc, name):
