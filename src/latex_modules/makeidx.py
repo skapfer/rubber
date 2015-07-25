@@ -1,11 +1,9 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
 
-from rubber.index import Index
+import rubber.index
+import rubber.module_interface
 
-def setup (document, context):
-	global index
-	index = Index(document, 'idx', 'ind', 'ilg')
-
-def command (command, args):
-	getattr(index, 'do_' + command)(*args)
+class Module (rubber.index.Index, rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        super (Module, self).__init__ (document, 'idx', 'ind', 'ilg')

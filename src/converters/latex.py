@@ -17,6 +17,7 @@ from rubber.util import *
 import rubber.depend
 from rubber.version import moddir
 import rubber.latex_modules
+import rubber.module_interface
 
 from rubber.tex import EOF, OPEN, SPACE, END_LINE
 
@@ -75,16 +76,27 @@ class Modules:
 		# Then look for a Python module
 
 		if not mod:
+			f = None # so finally works even if find_module raises an exception
 			try:
-				file, path, descr = imp.find_module(name,
-						rubber.latex_modules.__path__)
-				pymodule = imp.load_module(name, file, path, descr)
-				file.close()
-				mod = PyModule(self.env, pymodule, context)
-				msg.log(_("built-in module %s registered") % name, pkg='latex')
+				(f, path, (suffix, mode, file_type)) = imp.find_module (
+					name,
+				rubber.latex_modules.__path__)
+				if f == None or suffix != ".py" or file_type != imp.PY_SOURCE:
+					raise ImportError
+				source = imp.load_module (name, f, path, (suffix, mode, file_type))
 			except ImportError:
 				msg.debug(_("no support found for %s") % name, pkg='latex')
 				return 0
+			finally:
+				if f != None:
+					f.close ()
+			if not (hasattr (source, "Module")
+				and issubclass (source.Module, rubber.module_interface.Module)):
+				msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
+				return 0
+
+			mod = source.Module (document=self.env, context=context)
+			msg.log (_("built-in module %s registered") % name, pkg='latex')
 
 		# Run any delayed commands.
 
@@ -987,12 +999,12 @@ class LaTeXDep (rubber.depend.Node):
 
 		if mode == 0:
 			if 'pdftex' in self.modules:
-				self.modules['pdftex'].pymodule.mode_dvi()
+				self.modules['pdftex'].mode_dvi()
 			else:
 				self.modules.register('pdftex', {'opt': 'dvi'})
 		else:
 			if 'pdftex' in self.modules:
-				self.modules['pdftex'].pymodule.mode_pdf()
+				self.modules['pdftex'].mode_pdf()
 			else:
 				self.modules.register('pdftex')
 
@@ -1318,64 +1330,8 @@ class LaTeXDep (rubber.depend.Node):
 				msg.log(_("removing %s") % file, pkg='latex')
 				os.remove(file)
 
-
-#----  Base classes for modules  ----{{{1
-
-class Module (object):
-	"""
-	This is the base class for modules. Each module should define a class
-	named 'Module' that derives from this one. The default implementation
-	provides all required methods with no effects.
-	"""
-	def __init__ (self, env, context):
-		"""
-		The constructor receives two arguments: 'env' is the compiling
-		environment, 'context' is a dictionary that describes the command that
-		caused the module to load.
-		"""
-
-	def pre_compile (self):
-		"""
-		This method is called before the first LaTeX compilation. It is
-		supposed to build any file that LaTeX would require to compile the
-		document correctly. The method must return true on success.
-		"""
-		return True
-
-	def post_compile (self):
-		"""
-		This method is called after each LaTeX compilation. It is supposed to
-		process the compilation results and possibly request a new
-		compilation. The method must return true on success.
-		"""
-		return True
-
-	def clean (self):
-		"""
-		This method is called when cleaning the compiled files. It is supposed
-		to remove all the files that this modules generates.
-		"""
-
-	def command (self, cmd, args):
-		"""
-		This is called when a directive for the module is found in the source.
-		The method can raise 'AttributeError' when the directive does not
-		exist and 'TypeError' if the syntax is wrong. By default, when called
-		with argument "foo" it calls the method "do_foo" if it exists, and
-		fails otherwise.
-		"""
-		getattr(self, "do_" + cmd)(*args)
-
-	def get_errors (self):
-		"""
-		This is called if something has failed during an operation performed
-		by this module. The method returns a generator with items of the same
-		form as in LaTeXDep.get_errors.
-		"""
-		if None:
-			yield None
-
-class ScriptModule (Module):
+class ScriptModule (rubber.module_interface.Module):
+	# TODO: the constructor is not conformant with the one of the parent class.
 	"""
 	This class represents modules that are defined as Rubber scripts.
 	"""
@@ -1393,34 +1349,3 @@ class ScriptModule (Module):
 				vars['line'] = lineno
 				lst = parse_line(line, vars)
 				env.command(lst[0], lst[1:], vars)
-
-class PyModule (Module):
-	def __init__ (self, document, pymodule, context):
-		self.pymodule = pymodule
-		if hasattr(pymodule, 'setup'):
-			pymodule.setup(document, context)
-
-	def pre_compile (self):
-		if hasattr(self.pymodule, 'pre_compile'):
-			return self.pymodule.pre_compile()
-		return True
-
-	def post_compile (self):
-		if hasattr(self.pymodule, 'post_compile'):
-			return self.pymodule.post_compile()
-		return True
-
-	def clean (self):
-		if hasattr(self.pymodule, 'clean'):
-			self.pymodule.clean()
-
-	def command (self, cmd, args):
-		if hasattr(self.pymodule, 'command'):
-			self.pymodule.command(cmd, args)
-		else:
-			getattr(self.pymodule, "do_" + cmd)(*args)
-
-	def get_errors (self):
-		if hasattr(self.pymodule, 'get_errors'):
-			return self.pymodule.get_errors()
-		return []

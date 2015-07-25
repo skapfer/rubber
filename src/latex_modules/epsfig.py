@@ -9,20 +9,21 @@ an EPS figure file.
 """
 
 from rubber.util import parse_keyval
+import rubber.modules_interface
 
-def setup (doc, context):
-	global hook_includegraphics
-	doc.do_module('graphics')
-	_, hook_includegraphics = doc.hooks['includegraphics']
-	# We proceed as if \epsfbox and \includegraphics were equivalent.
-	doc.hook_macro('epsfbox', 'oa', hook_includegraphics)
-	doc.hook_macro('epsffile', 'oa', hook_includegraphics)
-	doc.hook_macro('epsfig', 'a', hook_epsfig)
-	doc.hook_macro('psfig', 'a', hook_epsfig)
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        document.do_module('graphics')
+        _, self.hook_includegraphics = document.hooks['includegraphics']
+        # We proceed as if \epsfbox and \includegraphics were equivalent.
+        document.hook_macro('epsfbox', 'oa', self.hook_includegraphics)
+        document.hook_macro('epsffile', 'oa', self.hook_includegraphics)
+        document.hook_macro('epsfig', 'a', self.hook_epsfig)
+        document.hook_macro('psfig', 'a', self.hook_epsfig)
 
-def hook_epsfig (loc, argument):
-	# We just translate this into an equivalent call to \includegraphics.
-	options = parse_keyval(argument)
-	if 'file' not in options:
-		return
-	hook_includegraphics(loc, argument, options['file'])
+    def hook_epsfig (self, loc, argument):
+        # We just translate this into an equivalent call to \includegraphics.
+        options = parse_keyval(argument)
+        if 'file' not in options:
+            return
+        self.hook_includegraphics(loc, argument, options['file'])

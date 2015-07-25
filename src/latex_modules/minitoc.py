@@ -15,17 +15,18 @@ the produced files is quite complex (see shortext option for example).
 import os.path
 
 from rubber import _, msg
+import rubber.module_interface
 
-def setup (document, context):
-    global maf
-    maf = document.basename (with_suffix = ".maf")
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.maf = document.basename (with_suffix = ".maf")
 
-def clean ():
-    if os.path.exists (maf):
-        with open (maf, "r") as list:
-            for name in list:
-                name = name.rstrip ()
-                msg.log (_ ("removing %s") % name, pkg='minitoc')
-                os.remove (name)
-        msg.log (_ ("removing %s") % maf, pkg='minitoc')
-        os.remove (maf)
+    def clean (self):
+        if os.path.exists (self.maf):
+            with open (self.maf, "r") as list:
+                for name in list:
+                    name = name.rstrip ()
+                    msg.log (_ ("removing %s") % name, pkg='minitoc')
+                    os.remove (name)
+            msg.log (_ ("removing %s") % self.maf, pkg='minitoc')
+            os.remove (self.maf)

@@ -9,18 +9,19 @@ file, so this support package registers these files as dependencies.
 """
 
 from rubber import _, msg
+import rubber.module_interface
 
-def setup (document, context):
-	global doc
-	doc = document
-	doc.hook_macro('externaldocument', 'oa', hook_externaldocument)
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.doc=document
+        document.hook_macro('externaldocument', 'oa', self.hook_externaldocument)
 
-def hook_externaldocument (loc, opt, name):
-	aux = doc.env.find_file(name + '.aux')
-	if aux:
-		doc.add_source(aux)
-		msg.log( _(
-			"dependency %s added for external references") % aux, pkg='xr')
-	else:
-		msg.log(_(
-			"file %s.aux is required by xr package but not found") % name, pkg='xr')
+    def hook_externaldocument (self, loc, opt, name):
+        aux = self.doc.env.find_file(name + '.aux')
+        if aux:
+            self.doc.add_source(aux)
+            msg.log( _(
+                "dependency %s added for external references") % aux, pkg='xr')
+        else:
+            msg.log(_(
+                "file %s.aux is required by xr package but not found") % name, pkg='xr')

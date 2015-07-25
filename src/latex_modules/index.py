@@ -43,60 +43,60 @@ import re
 
 from rubber.index import Index
 from rubber.util import _, msg
+import rubber.module_interface
 
 re_optarg = re.compile(r'\((?P<list>[^()]*)\) *')
 
-def setup (document, context):
-	global doc, indices, defaults, commands
-	doc = document
-	indices = {}
-	defaults = []
-	commands = {}
-	doc.hook_macro('makeindex', '', hook_makeindex)
-	doc.hook_macro('newindex', 'aaa', hook_newindex)
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.doc = document
+        self.indices = {}
+        self.defaults = []
+        self.commands = {}
+        document.hook_macro('makeindex', '', self.hook_makeindex)
+        document.hook_macro('newindex', 'aaa', self.hook_newindex)
 
-def register (name, idx, ind, ilg):
-	"""
-	Register a new index.
-	"""
-	index = indices[name] = Index(doc, idx, ind, ilg)
-	for command in defaults:
-		index.command(*command)
-	if name in commands:
-		for command in commands[name]:
-			index.command(*command)
+    def register (self, name, idx, ind, ilg):
+        """
+        Register a new index.
+        """
+        index = self.indices[name] = Index(self.doc, idx, ind, ilg)
+        for command in self.defaults:
+            index.command(*command)
+        if name in self.commands:
+            for command in self.commands [name]:
+                index.command(*command)
 
-def hook_makeindex (loc):
-	register('default', 'idx', 'ind', 'ilg')
+    def hook_makeindex (self, loc):
+        self.register('default', 'idx', 'ind', 'ilg')
 
-def hook_newindex (loc, index, idx, ind):
-	register(index, idx, ind, 'ilg')
-	msg.log(_("index %s registered") % index, pkg='index')
+    def hook_newindex (self, loc, index, idx, ind):
+        self.register(index, idx, ind, 'ilg')
+        msg.log(_("index %s registered") % index, pkg='index')
+    def command (self, cmd, args):
+        names = None
 
-def command (cmd, args):
-	names = None
+        # Check if there is the optional argument.
 
-	# Check if there is the optional argument.
+        if len(args) > 0:
+            match = re_optarg.match(args[0])
+            if match:
+                names = match.group('list').split(',')
+                args = args[1:]
 
-	if len(args) > 0:
-		match = re_optarg.match(args[0])
-		if match:
-			names = match.group('list').split(',')
-			args = args[1:]
+        # If not, this command will also be executed for newly created indices
+        # later on.
 
-	# If not, this command will also be executed for newly created indices
-	# later on.
+        if names is None:
+            self.defaults.append([cmd, args])
+            names = self.indices.keys()
 
-	if names is None:
-		defaults.append([cmd, args])
-		names = indices.keys()
+        # Then run the command for each index it concerns.
 
-	# Then run the command for each index it concerns.
-
-	for name in names:
-		if name in indices:
-			indices[name].command(cmd, args)
-		elif name in commands:
-			commands[name].append([cmd, args])
-		else:
-			commands[name] = [[cmd, args]]
+        for name in names:
+            if name in self.indices:
+                self.indices[name].command(cmd, args)
+            elif name in self.commands:
+                self.commands[name].append([cmd, args])
+            else:
+                self.commands[name] = [[cmd, args]]

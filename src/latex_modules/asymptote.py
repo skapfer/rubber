@@ -34,6 +34,7 @@ so we backup its content before running the external tool.
 
 import os.path
 import rubber.depend
+import rubber.module_interface
 import rubber.util
 from rubber.util import _, msg
 
@@ -46,52 +47,51 @@ def inline_option (option_string, default):
         return default
     return value == None or value == "true"
 
-def setup (document, context):
-    global asy_environments
-    asy_environments = 0
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.asy_environments = 0
+        self.doc = document
 
-    document.add_product (document.basename (with_suffix = ".pre"))
-    Shell_Restoring_Aux.initialize (document)
+        document.add_product (document.basename (with_suffix = ".pre"))
+        Shell_Restoring_Aux.initialize (document)
 
-    if (document.vars ['engine'] == 'pdfTeX'
-        and document.products [0] [-4:] == '.pdf'):
-        format = ".pdf"
-    elif (document.vars ['engine'] == 'VTeX'):
-        msg.error(_("does not know how to handle VTeX"), pkg="asymptote")
-    else:
-        format = ".eps"
+        if (document.vars ['engine'] == 'pdfTeX'
+            and document.products [0] [-4:] == '.pdf'):
+            self.format = ".pdf"
+        elif (document.vars ['engine'] == 'VTeX'):
+            msg.error(_("does not know how to handle VTeX"), pkg="asymptote")
+        else:
+            self.format = ".eps"
 
-    global_inline = inline_option (context ['opt'], default=False)
+        self.global_inline = inline_option (context ['opt'], default=False)
 
-    def on_begin_asy (loc):
+        document.hook_begin ("asy", self.on_begin_asy)
+
+    def on_begin_asy (self, loc):
         environment_options = None
         # For the moment, I hardly see how to parse optional
         # environment arguments.
 
         # Do not parse between \begin{asy} and \end{asy} as LaTeX.
-        document.h_begin_verbatim (loc, env="asy")
+        self.doc.h_begin_verbatim (loc, env="asy")
 
-        global asy_environments
-        asy_environments += 1
-        prefix = document.basename (with_suffix = "-" + str (asy_environments))
+        self.asy_environments += 1
+        prefix = self.doc.basename (with_suffix = "-" + str (self.asy_environments))
         source = prefix + ".asy"
 
-        inline = inline_option (environment_options, default=global_inline)
+        inline = inline_option (environment_options, default=self.global_inline)
 
-        document.add_product (source)
-        node = Shell_Restoring_Aux (document.set, ["asy", source])
+        self.doc.add_product (source)
+        node = Shell_Restoring_Aux (self.doc.set, ["asy", source])
         if inline:
             node.add_product (prefix + ".tex")
-            node.add_product (prefix + "_0" + format)
+            node.add_product (prefix + "_0" + self.format)
             node.add_product (prefix + ".pre")
-            document.add_source (prefix + ".tex")
+            self.doc.add_source (prefix + ".tex")
         else:
-            node.add_product (prefix + format)
-            document.add_source (prefix + format)
+            node.add_product (prefix + self.format)
+            self.doc.add_source (prefix + self.format)
         node.add_source (source, track_contents=True)
-
-    document.hook_begin ("asy", on_begin_asy)
-
 
 class Shell_Restoring_Aux (rubber.depend.Shell):
     """This class replaces Shell because of a bug in asymptote. Every run

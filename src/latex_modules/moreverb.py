@@ -4,20 +4,21 @@
 Dependency analysis and environment parsing for package 'moreverb' in Rubber.
 """
 
-def setup (document, context):
-	global doc
-	doc = document
-	doc.hook_macro('verbatimtabinput', 'oa', hook_verbatimtabinput)
-	doc.hook_macro('listinginput', 'oaa', hook_listinginput)
-	for env in [
-		'verbatimtab', 'verbatimwrite', 'boxedverbatim', 'comment',
-		'listing', 'listing*', 'listingcont', 'listingcont*']:
-		doc.hook_begin(env, lambda loc: doc.h_begin_verbatim(loc, env=env))
+import rubber.module_interface
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.doc = document
+        document.hook_macro('verbatimtabinput', 'oa', self.hook_verbatimtabinput)
+        document.hook_macro('listinginput', 'oaa', self.hook_listinginput)
+        for env in [
+                'verbatimtab', 'verbatimwrite', 'boxedverbatim', 'comment',
+                'listing', 'listing*', 'listingcont', 'listingcont*']:
+            document.hook_begin(env, lambda loc: document.h_begin_verbatim(loc, env=env))
 
-def hook_verbatimtabinput (loc, tabwidth, file):
-	if file.find('\\') < 0 and file.find('#') < 0:
-		doc.add_source(file)
+    def hook_verbatimtabinput (self, loc, tabwidth, file):
+        if file.find('\\') < 0 and file.find('#') < 0:
+            self.doc.add_source(file)
 
-def hook_listinginput (loc, interval, start, file):
-	if file.find('\\') < 0 and file.find('#') < 0:
-		doc.add_source(file)
+    def hook_listinginput (self, loc, interval, start, file):
+        if file.find('\\') < 0 and file.find('#') < 0:
+            self.doc.add_source(file)

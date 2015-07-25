@@ -8,19 +8,21 @@ PostScript to PDF conversion using GhostScript.
 import sys
 from rubber.depend import Shell
 from rubber.util import _, msg
+import rubber.module_interface
 
-def setup (doc, context):
-	env = doc.env
-	if env.final.products[0][-3:] != '.ps':
-		msg.error(_("I can't use ps2pdf when not producing a PS"))
-		sys.exit(2)
-	ps = env.final.products[0]
-	pdf = ps[:-2] + 'pdf'
-	cmd = ['ps2pdf']
-	for opt in doc.vars['paper'].split():
-		cmd.append('-sPAPERSIZE=' + opt)
-	cmd.extend([ps, pdf])
-	dep = Shell (doc.env.depends, cmd)
-	dep.add_product (pdf)
-	dep.add_source (ps)
-	env.final = dep
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        env = document.env
+        if env.final.products[0][-3:] != '.ps':
+             msg.error(_("I can't use ps2pdf when not producing a PS"))
+             sys.exit(2)
+        ps = env.final.products[0]
+        pdf = ps[:-2] + 'pdf'
+        cmd = ['ps2pdf']
+        for opt in document.vars['paper'].split():
+            cmd.append('-sPAPERSIZE=' + opt)
+        cmd.extend([ps, pdf])
+        dep = Shell (env.depends, cmd)
+        dep.add_product (pdf)
+        dep.add_source (ps)
+        env.final = dep

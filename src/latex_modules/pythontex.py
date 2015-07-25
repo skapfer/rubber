@@ -11,10 +11,12 @@ import os.path
 import shutil
 import subprocess
 
+import rubber.module_interface
 
-class PythonTeX (object):
-	def __init__ (self, doc, context):
-		self.doc = doc
+class Module (rubber.module_interface.Module):
+
+	def __init__ (self, document, context):
+		self.doc = document
 
 	def pre_compile (self):
 		if not os.path.exists(self.doc.target + '.pytxcode'):
@@ -42,12 +44,3 @@ class PythonTeX (object):
 
 	def force_compilation(self):
 		self.doc.compile()
-
-def setup (doc, context):
-	global pytex
-	pytex = PythonTeX(doc, context)
-def pre_compile ():
-	return pytex.pre_compile()
-def clean ():
-	pytex.clean()
-

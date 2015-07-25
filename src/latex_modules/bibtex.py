@@ -12,18 +12,11 @@ The module provides the following commands:
   stylepath <dir> = adds <dir> to the search path for styles
 """
 
-from rubber.biblio import Bibliography
+import rubber.biblio
+import rubber.module_interface
 
-def setup (doc, context):
-	global biblio
-	biblio = Bibliography (doc)
-	doc.hook_macro('bibliography', 'a', biblio.hook_bibliography)
-	doc.hook_macro('bibliographystyle', 'a', biblio.hook_bibliographystyle)
-def command (command, args):
-	getattr(biblio, 'do_' + command)(*args)
-def pre_compile ():
-	return biblio.pre_compile()
-def get_errors ():
-	return biblio.get_errors()
-def clean ():
-	biblio.clean()
+class Module (rubber.biblio.Bibliography, rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        super (Module, self).__init__ (document)
+        document.hook_macro('bibliography', 'a', self.hook_bibliography)
+        document.hook_macro('bibliographystyle', 'a', self.hook_bibliographystyle)

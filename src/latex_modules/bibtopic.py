@@ -35,44 +35,43 @@ def remove (path):
     except OSError:
         pass
 
-def setup (document, context):
-    global basename, btsect_environments, current_style, doc
-    basename = os.path.basename (document.target)
-    btsect_environments = []
-    current_style = "plain"
-    doc = document
+class Module (rubber.module_interface.Module):
+    def __init__ (self, document, context):
+        self.basename = os.path.basename (document.target)
+        self.btsect_environments = []
+        self.current_style = "plain"
+        self.doc = document
 
-    document.hook_begin ("btSect", on_begin_btsect)
+        document.hook_begin ("btSect", self.on_begin_btsect)
 
-    # Replacing these two default hooks avoids that bibtex.py is
-    # loaded automatically as a rubber module (it is loaded as a
-    # python module at the beginning of this source).
-    document.hook_macro ('bibliography', 'a', hook_bibliography)
-    document.hook_macro ('bibliographystyle', 'a', hook_bibliographystyle)
+        # Replacing these two default hooks avoids that bibtex.py is
+        # loaded automatically as a rubber module (it is loaded as a
+        # python module at the beginning of this source).
+        document.hook_macro ('bibliography', 'a', self.hook_bibliography)
+        document.hook_macro ('bibliographystyle', 'a', self.hook_bibliographystyle)
 
-def on_begin_btsect (loc):
-    name = basename + str (len (btsect_environments) + 1)
-    e = Bibliography (doc, name)
-    e.set_style (current_style)
-    btsect_environments.append (e)
+    def on_begin_btsect (self, loc):
+        name = self.basename + str (len (self.btsect_environments) + 1)
+        e = Bibliography (self.doc, name)
+        e.set_style (self.current_style)
+        self.btsect_environments.append (e)
 
-def hook_bibliography (loc, bibs):
-    msg.error(_("incompatible with \\bibliography"), pkg="bibtopic")
-    sys.exit (2)
+    def hook_bibliography (self, loc, bibs):
+        msg.error(_("incompatible with \\bibliography"), pkg="bibtopic")
+        sys.exit (2)
 
-def hook_bibliographystyle (loc, name):
-    global current_style
-    current_style = name
+    def hook_bibliographystyle (self, loc, name):
+        self.current_style = name
 
-def pre_compile ():
-    for bib in btsect_environments:
-	if not bib.pre_compile ():
-	    return False
-    return True
+    def pre_compile (self):
+        for bib in self.btsect_environments:
+            if not bib.pre_compile ():
+                return False
+        return True
 
-def clean ():
-    remove ("btaux.aux")
-    remove ("btbbl.aux")
-    for e in btsect_environments:
-        e.clean ()
-        remove (e.aux)
+    def clean (self):
+        remove ("btaux.aux")
+        remove ("btbbl.aux")
+        for e in self.btsect_environments:
+            e.clean ()
+            remove (e.aux)
