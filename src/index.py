@@ -38,7 +38,7 @@ class Index (rubber.depend.Node):
 		self.opts = []
 		self.path = []
 		self.style = None  # only for makeindex
-
+		self.command_env = None
 
 	def do_language (self, lang):
 		self.lang = lang
@@ -70,34 +70,36 @@ class Index (rubber.depend.Node):
 			msg.info (_ ("%s not yet generated" % self.cmd [1]))
 			return True
 
-		# FIXME: all this may be computed only once after all
-		# parsing but not for each run.
-		cmd = self.cmd [:] # do not modify self.cmd directly.
-		if cmd [0] == "makeindex":
-			cmd.extend (self.opts)
-			if self.style:
-				cmd.extend (["-s", self.style])
-			path_var = "INDEXSTYLE"
-		else:				   # cmd [0] == "texindy"
-			for opt in self.opts:
-				if opt == "-g":
-					if self.lang != "":
-						msg.warn(_("'language' overrides 'order german'"),
-							pkg="index")
-					else:
-						self.lang = "german-din"
-				else:		   # opt == "-l"
-					self.modules.append("letter-ordering")
-					msg.warn(_("use 'module letter-ordering' instead of 'order letter'"),
-						pkg="index")
-			for mod in self.modules:
-				cmd.extend(["--module", mod])
-			if self.lang:
-				cmd.extend(["--language", self.lang])
-			path_var = "XINDY_SEARCHPATH"
+		# No more settings are expected, we compute the
+		# command once and for all.
+		if self.command_env == None:
+			if self.cmd [0] == "makeindex":
+				self.cmd.extend (self.opts)
+				if self.style:
+					self.cmd.extend (["-s", self.style])
+				path_var = "INDEXSTYLE"
+			else:   # self.cmd [0] == "texindy"
+				for opt in self.opts:
+					if opt == "-g":
+						if self.lang != "":
+							msg.warn(_("'language' overrides 'order german'"),
+								 pkg="index")
+						else:
+							self.lang = "german-din"
+					else: # opt == "-l"
+						self.modules.append("letter-ordering")
+						msg.warn(_("use 'module letter-ordering' instead of 'order letter'"),
+							 pkg="index")
+				for mod in self.modules:
+					self.cmd.extend(["--module", mod])
+				if self.lang:
+					self.cmd.extend(["--language", self.lang])
+				path_var = "XINDY_SEARCHPATH"
 
-		if self.path != []:
-			env = { path_var: ':'.join(self.path + [os.getenv(path_var, '')]) }
-		else:
-			env = {}
-		return self.doc.env.execute(cmd, env) == 0
+			if self.path != []:
+				self.command_env = { path_var: ':'.join(self.path + [os.getenv(path_var, '')]) }
+			else:
+				self.command_env = {}
+
+		# The actual run.
+		return self.doc.env.execute(self.cmd, self.command_env) == 0
