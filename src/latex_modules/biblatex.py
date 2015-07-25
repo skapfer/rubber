@@ -19,10 +19,11 @@ def setup (doc, context):
 		backend = options ["backend"]
 	except KeyError:
 		backend = "biber"
-	assert backend in ("biber", "bibtex", "bibtex8", "bibtexu")
-	if backend != "biber":
-		backend = "bibtex"
-	rubber.biblio.setup (doc, backend)
+	if backend == "biber":
+		rubber.biblio.Biber (doc.set, doc)
+	else:
+		assert backend in ("bibtex", "bibtex8", "bibtexu")
+		rubber.biblio.BibTeX (doc.set, doc)
 
 def hook_bibliographystyle (loc, bibs):
 	msg.warn (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"), pkg="biblatex")

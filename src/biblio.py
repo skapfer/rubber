@@ -90,6 +90,7 @@ class BibTeX (BibTool):
 		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".aux"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix="-blx.bib"))
+		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
 
 	def run (self):
 		# strip abspath, to allow BibTeX to write the bbl.
@@ -105,7 +106,4 @@ class Biber (BibTool):
 		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".bcf"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix=".bcf"))
-
-def setup (doc, what="biber"):
-	(Biber if what=="biber" else BibTeX) (doc.set, doc)
-	doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
+		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
