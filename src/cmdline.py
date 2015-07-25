@@ -276,7 +276,7 @@ available options:
 				else: # self.compress == 'bzip2'
 					import bz2
 					env.final = rubber.converters.compressor.Node (
-						env.depends, bz2.BZ2File, 'bz2', filename)
+						env.depends, bz2.BZ2File, '.bz2', filename)
 
 			# Compile the document
 

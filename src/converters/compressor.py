@@ -20,10 +20,9 @@ class Node (rubber.depend.Node):
     def run (self):
         msg.progress (_ ("compressing %s into %s") % (self.source, self.target))
         try:
-            with open (self.source) as f:
-                contents = f.read ()
-            with self.constructor (self.target, 'w') as f:
-                f.write (contents)
+            with open (self.source, 'rb') as f_in:
+                with self.constructor (self.target, 'wb') as f_out:
+                    f_out.writelines (f_in)
         except:
             msg.error (_ ("compression failed"))
             return False
