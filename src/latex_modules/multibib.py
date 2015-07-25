@@ -17,7 +17,7 @@ argument, they apply to all bibliographies.
 import os, os.path, re
 
 from rubber import _, msg
-from rubber.latex_modules.bibtex import Bibliography
+from rubber.biblio import Bibliography
 
 re_optarg = re.compile(r'\((?P<list>[^()]*)\) *')
 

@@ -26,7 +26,7 @@ interesting .bbl, and also a .bbl log.
 import os.path
 import rubber.util
 from rubber.util import _, msg
-import rubber.latex_modules.bibtex
+from rubber.biblio import Bibliography
 
 def remove (path):
     try:
@@ -52,7 +52,7 @@ def setup (document, context):
 
 def on_begin_btsect (loc):
     name = basename + str (len (btsect_environments) + 1)
-    e = rubber.latex_modules.bibtex.Bibliography (doc, name)
+    e = Bibliography (doc, name)
     e.set_style (current_style)
     btsect_environments.append (e)
 
