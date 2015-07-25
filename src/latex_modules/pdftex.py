@@ -16,7 +16,11 @@ def setup (document, context):
 	mode = None
 	doc.vars['program'] = 'pdflatex'
 	doc.vars['engine'] = 'pdfTeX'
-	if 'opt' in context and context['opt'] == 'dvi':
+	try:
+		opt = context['opt']
+	except KeyError:
+		opt = None
+	if opt == 'dvi':
 		mode_dvi()
 	else:
 		mode_pdf()
