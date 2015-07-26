@@ -150,23 +150,6 @@ def hook_declareRule (loc, ext, type, read, command):
 	msg.log("*** FIXME ***  rule %s -> %s [%s]" % (
 		string.strip(ext), read, type), pkg='graphics')
 
-#  auxiliary method
-
-def find_input (name):
-	"""
-	Look for a source file with the given name and one of the registered
-	suffixes, and return either the	complete path to the actual file or
-	None if the file is not found.
-	"""
-	for prefix in prefixes:
-		test = prefix + name
-		if exists(test):
-			return test
-		for suffix in suffixes:
-			if exists(test + suffix):
-				return test + suffix
-	return None
-
 #  module interface
 
 def pre_compile ():
