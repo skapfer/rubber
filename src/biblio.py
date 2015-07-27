@@ -90,9 +90,12 @@ class BibTool (Shell):
 		return False
 
 class BibTeX (BibTool):
-	"""Node: make .bbl from .aux using BibTeX"""
-	def __init__ (self, set, doc):
-		BibTool.__init__ (self, set, doc, "bibtex")
+	"""
+	Node: make .bbl from .aux using BibTeX (or BibTeX8, or BibTeXu) for use
+	with BibLaTeX
+	"""
+	def __init__ (self, set, doc, tool):
+		BibTool.__init__ (self, set, doc, tool)
 		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".aux"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix="-blx.bib"))

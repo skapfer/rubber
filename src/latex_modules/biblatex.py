@@ -9,21 +9,23 @@ BibLaTeX support for Rubber
 from rubber.util import _, msg
 import rubber.util
 import rubber.biblio
+import sys
 
 def setup (doc, context):
 	# overwrite the hook which would load the bibtex module
 	doc.hook_macro ("bibliographystyle", "a", hook_bibliographystyle)
 
-	options = rubber.util.parse_keyval (context ["opt"])
-	try:
-		backend = options ["backend"]
-	except KeyError:
-		backend = "biber"
+	options = rubber.util.parse_keyval (context["opt"])
+	backend = options.setdefault ("backend", "biber")
+
+	if backend not in ("biber", "bibtex", "bibtex8", "bibtexu"):
+		msg.error (_("Garbled biblatex backend: backend=%s (aborting)") % backend)
+		sys.exit (1)  # abort rather than guess
+
 	if backend == "biber":
 		rubber.biblio.Biber (doc.set, doc)
 	else:
-		assert backend in ("bibtex", "bibtex8", "bibtexu")
-		rubber.biblio.BibTeX (doc.set, doc)
+		rubber.biblio.BibTeX (doc.set, doc, tool=backend)
 
 def hook_bibliographystyle (loc, bibs):
 	msg.warn (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"), pkg="biblatex")
