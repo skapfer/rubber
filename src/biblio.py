@@ -31,7 +31,7 @@ def find_resource (name, suffix="", environ_path=None):
 		elif suffix != "" and os.path.exists (fullname + suffix):
 			return fullname + suffix
 
-	msg.warning (_("cannot find %s") % name, pkg="find_resource")
+	msg.warn (_("cannot find %s") % name, pkg="find_resource")
 	return None
 
 class BibTool (Shell):
