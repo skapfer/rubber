@@ -23,4 +23,4 @@ def hook_externaldocument (loc, opt, name):
 			"dependency %s added for external references") % aux, pkg='xr')
 	else:
 		msg.log(_(
-			"file %s is required by xr package but not found") % aux, pkg='xr')
+			"file %s.aux is required by xr package but not found") % name, pkg='xr')
