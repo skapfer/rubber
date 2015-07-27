@@ -238,9 +238,6 @@ class Bibliography:
 		if self.run_needed:
 			return self.run()
 
-		if exists (self.bbl):
-			if os.path.getmtime (self.bbl) > os.path.getmtime (self.log):
-				self.doc.must_compile = 1
 		return True
 
 	def first_run_needed (self):
