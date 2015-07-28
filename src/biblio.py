@@ -8,12 +8,10 @@ Bibliographies (Biber and BibTeX).
 
 from rubber.util import _, msg
 import rubber.util
-from rubber.depend import Shell
+from rubber.depend import Node, Shell
 import os, os.path
-from os.path import exists, getmtime, join
 import re
 import string
-import sys
 
 # TODO: merge these classes if it makes sense.
 
@@ -24,6 +22,7 @@ def find_resource (name, suffix="", environ_path=None):
 	or looking in paths (set environ_path to things like "BIBINPUTS")
 	if unsuccessful, returns None.
 	"""
+	name = name.strip ()
 	from_environ = []
 	if environ_path is not None:
 		environ_path = os.getenv (environ_path)
@@ -130,7 +129,7 @@ re_undef = re.compile("LaTeX Warning: Citation `(?P<cite>.*)' .*undefined.*")
 re_error = re.compile(
 	"---(line (?P<line>[0-9]+) of|while reading) file (?P<file>.*)")
 
-class Bibliography:
+class Bibliography (Node):
 	"""
 	This class represents a single bibliography for a document.
 	"""
@@ -139,6 +138,7 @@ class Bibliography:
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
+		Node.__init__ (self, document.set)
 		self.doc = document
 		jobname = os.path.basename (document.target)
 		if aux_basename == None:
@@ -147,6 +147,9 @@ class Bibliography:
 		self.aux = aux_basename + ".aux"
 		self.bbl = aux_basename + ".bbl"
 		self.blg = aux_basename + ".blg"
+		self.add_product (self.bbl)
+		self.add_product (self.blg)
+		self.add_source (self.aux, track_contents=True)
 
 		cwd = document.vars["cwd"]
 		self.bib_path = [cwd, document.vars["path"]]
@@ -154,11 +157,10 @@ class Bibliography:
 
 		self.undef_cites = None
 		self.used_cites = None
-		self.style = None
-		self.set_style("plain")
+		self.bst_file = None
+		self.set_style ("plain")
 		self.db = {}
 		self.sorted = 1
-		self.run_needed = 0
 		self.crossrefs = None
 
 	#
@@ -179,42 +181,29 @@ class Bibliography:
 		self.sorted = mode in ("true", "yes", "1")
 
 	def hook_bibliography (self, loc, bibs):
-		for bib in string.split(bibs, ","):
-			self.add_db(bib.strip())
+		for name in string.split (bibs, ","):
+			filename = find_resource (name, suffix=".bib", environ_path="BIBINPUTS")
+			if filename is not None:
+				self.db[name] = filename
+				self.add_source (filename, track_contents=True)
 
-	def hook_bibliographystyle (self, loc, style):
-		self.set_style(style)
-
-	def add_db (self, name):
-		"""
-		Register a bibliography database file.
-		"""
-		for dir in self.bib_path:
-			bib = join(dir, name + ".bib")
-			if exists(bib):
-				self.db[name] = bib
-				self.doc.add_source(bib)
-				return
-
-	def set_style (self, style):
+	def hook_bibliographystyle (self, loc, name):
 		"""
 		Define the bibliography style used. This method is called when
 		\\bibliographystyle is found. If the style file is found in the
 		current directory, it is considered a dependency.
 		"""
-		if self.style:
-			old_bst = self.style + ".bst"
-			if exists(old_bst) and self.doc.sources.has_key(old_bst):
-				self.doc.remove_source(old_bst)
+		self.set_style (name)
 
-		self.style = style
-		for dir in self.bst_path:
-			new_bst = join(dir, style + ".bst")
-			if exists(new_bst):
-				self.bst_file = new_bst
-				self.doc.add_source(new_bst)
-				return
-		self.bst_file = None
+	def set_style (self, name):
+		if self.bst_file is not None:
+			self.remove_source (self.bst_file)
+			self.bst_file = None
+
+		filename = find_resource (name, suffix=".bst", environ_path="BSTINPUTS")
+		if filename is not None:
+			self.bst_file = filename
+			self.add_source (filename, track_contents=True)
 
 	#
 	# The following methods are responsible of detecting when running BibTeX
@@ -234,43 +223,7 @@ class Bibliography:
 		if self.doc.log.lines:
 			self.undef_cites = self.list_undefs()
 
-		self.run_needed = self.first_run_needed()
-		if self.run_needed:
-			return self.run()
-
 		return True
-
-	def first_run_needed (self):
-		"""
-		The condition is only on the database files' modification dates, but
-		it would be more clever to check if the results have changed.
-		BibTeXing is also needed when the last run of BibTeX failed, and in
-		the very particular case when the style has changed since last
-		compilation.
-		"""
-		if not os.path.exists (self.aux):
-			return 0
-		if not os.path.exists (self.blg):
-			return 1
-
-		dtime = getmtime (self.blg)
-		for db in self.db.values():
-			if getmtime(db) > dtime:
-				msg.log(_("bibliography database %s was modified") % db, pkg="bibtex")
-				return 1
-
-		with open (self.blg) as blg:
-			for line in blg:
-				if re_error.search(line):
-					msg.log(_("last BibTeXing failed"), pkg="bibtex")
-					return 1
-
-		if self.style_changed():
-			return 1
-		if self.bst_file and getmtime(self.bst_file) > dtime:
-			msg.log(_("the bibliography style file was modified"), pkg="bibtex")
-			return 1
-		return 0
 
 	def parse_aux (self):
 		"""
@@ -321,16 +274,6 @@ class Bibliography:
 		list.sort()
 		return list
 
-	def post_compile (self):
-		"""
-		This method runs BibTeX if needed to solve undefined citations. If it
-		was run, then force a new LaTeX compilation.
-		"""
-		if not self.bibtex_needed():
-			msg.log(_("no BibTeXing needed"), pkg="bibtex")
-			return True
-		return self.run()
-
 	def run (self):
 		"""
 		This method actually runs BibTeX with the appropriate environment
@@ -351,120 +294,17 @@ class Bibliography:
 		if self.doc.env.execute (['bibtex', self.aux], doc):
 			msg.info(_("There were errors making the bibliography."))
 			return False
-		self.run_needed = 0
-		self.doc.must_compile = 1
 		return True
-
-	def bibtex_needed (self):
-		"""
-		Return true if BibTeX must be run.
-		"""
-		if self.run_needed:
-			return 1
-		msg.log (_ ("checking if {} needs BibTeX...").format (self.aux), pkg="bibtex")
-
-		new, dbs = self.parse_aux()
-
-		# If there was a list of used citations, we check if it has
-		# changed. If it has, we have to rerun.
-
-		if self.prev_dbs is not None and self.prev_dbs != dbs:
-			msg.log(_("the set of databases changed"), pkg="bibtex")
-			self.prev_dbs = dbs
-			self.used_cites = new
-			self.undef_cites = self.list_undefs()
-			return 1
-		self.prev_dbs = dbs
-
-		# If there was a list of used citations, we check if it has
-		# changed. If it has, we have to rerun.
-
-		if self.used_cites:
-			if new != self.used_cites:
-				msg.log(_("the list of citations changed"), pkg="bibtex")
-				self.used_cites = new
-				self.undef_cites = self.list_undefs()
-				return 1
-		self.used_cites = new
-
-		# If there was a list of undefined citations, we check if it has
-		# changed. If it has and it is not empty, we have to rerun.
-
-		if self.undef_cites:
-			new = self.list_undefs()
-			if new == []:
-				msg.log(_("no more undefined citations"), pkg="bibtex")
-				self.undef_cites = new
-			else:
-				for cite in new:
-					if cite in self.undef_cites:
-						continue
-					msg.log(_("there are new undefined citations"), pkg="bibtex")
-					self.undef_cites = new
-					return 1
-				msg.log(_("there is no new undefined citation"), pkg="bibtex")
-				self.undef_cites = new
-				return 0
-		else:
-			self.undef_cites = self.list_undefs()
-
-		# At this point we don't know if undefined citations changed. If
-		# BibTeX has not been run before (i.e. there is no log file) we know
-		# that it has to be run now.
-
-		if not exists (self.blg):
-			msg.log(_("no BibTeX log file"), pkg="bibtex")
-			return 1
-
-		# Here, BibTeX has been run before but we don't know if undefined
-		# citations changed.
-
-		if self.undef_cites == []:
-			msg.log(_("no undefined citations"), pkg="bibtex")
-			return 0
-
-		if getmtime (self.blg) < getmtime (self.log):
-			msg.log(_("BibTeX's log is older than the main log"), pkg="bibtex")
-			return 1
-
-		return 0
-
-	def clean (self):
-		for f in (self.bbl, self.blg):
-			try:
-				os.remove (f)
-				msg.log (_ ("removing {}").format (f), pkg="bibtex")
-			except OSError:
-				pass
 
 	#
 	# The following method extract information from BibTeX log files.
 	#
 
-	def style_changed (self):
-		"""
-		Read the log file if it exists and check if the style used is the one
-		specified in the source. This supposes that the style is mentioned on
-		a line with the form 'The style file: foo.bst'.
-		"""
-		if not exists (self.blg):
-			return 0
-		with open (self.blg) as log:
-			for line in log:
-				if line.startswith ("The style file: "):
-					if line.rstrip()[16:-4] != self.style:
-						msg.log(_("the bibliography style was changed"), pkg="bibtex")
-						return 1
-					else:
-						return 0
-		msg.warn(_("style file not found in bibtex log"), pkg="bibtex")
-		return 0
-
 	def get_errors (self):
 		"""
 		Read the log file, identify error messages and report them.
 		"""
-		if not exists (self.blg):
+		if not os.path.exists (self.blg):
 			return
 		with open (self.blg) as log:
 			last_line = ""

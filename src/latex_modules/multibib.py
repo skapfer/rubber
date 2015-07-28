@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2004--2006
+# vim: noet:ts=4
 """
 Multibib support for Rubber
 
@@ -73,12 +74,6 @@ def hook_newcites (loc, name):
 def pre_compile ():
 	for bib in bibs.values():
 		if not bib.pre_compile():
-			return False
-	return True
-
-def post_compile ():
-	for bib in bibs.values():
-		if not bib.post_compile():
 			return False
 	return True
 

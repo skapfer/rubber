@@ -70,12 +70,6 @@ def pre_compile ():
 	    return False
     return True
 
-def post_compile ():
-    for bib in btsect_environments:
-	if not bib.post_compile ():
-	    return False
-    return True
-
 def clean ():
     remove ("btaux.aux")
     remove ("btbbl.aux")

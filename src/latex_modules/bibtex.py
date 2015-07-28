@@ -23,8 +23,6 @@ def command (command, args):
 	getattr(biblio, 'do_' + command)(*args)
 def pre_compile ():
 	return biblio.pre_compile()
-def post_compile ():
-	return biblio.post_compile()
 def get_errors ():
 	return biblio.get_errors()
 def clean ():
