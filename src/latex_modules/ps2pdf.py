@@ -1,3 +1,4 @@
+# vim: noet:ts=4
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2004--2006
 """
@@ -6,6 +7,7 @@ PostScript to PDF conversion using GhostScript.
 
 import sys
 from rubber.depend import Shell
+from rubber.util import _, msg
 
 def setup (doc, context):
 	env = doc.env
