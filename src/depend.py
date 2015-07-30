@@ -142,7 +142,7 @@ class Node (object):
 		else:
 			assert self.date is not None
 			self.failed_dep = None
-			return rv
+		return rv
 
 	def real_make (self, force):
 		rv = UNCHANGED
