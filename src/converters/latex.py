@@ -1261,17 +1261,18 @@ class LaTeXDep (rubber.depend.Node):
 				return False
 		return True
 
-	def clean (self, all=0):
+	def clean (self):
 		"""
 		Remove all files that are produced by compilation.
 		"""
-		for file in self.products + self.removed_files:
+		if self.already_cleaning:
+			return
+		super (LaTeXDep, self).clean ()
+		for file in self.removed_files:
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file, pkg='latex')
 				os.remove(file)
-
 		msg.log(_("cleaning additional files..."), pkg='latex')
-
 		for mod in self.modules.objects.values():
 			mod.clean()
 

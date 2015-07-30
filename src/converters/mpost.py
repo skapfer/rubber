@@ -182,6 +182,9 @@ class Dep (rubber.depend.Node):
 		have created. It is required because the compilation may produce more
 		files than just the figures used by the document.
 		"""
+		if self.already_cleaning ():
+			return
+		super (Dep, self).clean ()
 		base = self.base + "."
 		ln = len(base)
 		dir = os.path.dirname(base)
