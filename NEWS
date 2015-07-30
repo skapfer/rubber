@@ -2,18 +2,33 @@ Version 1.3 (2015-xx-xx)
 
   This version of rubber has changes in the dependency management.
   As a result, it may call LaTeX more often than it used to.
-  On the other hand, there are less corner cases when LaTeX should
-  have been called, but wasn't.
+  On the other hand, there are less corner cases when LaTeX or
+  BibTeX should have been called, but wasn't.
 
   Thanks to Nicolas Boulenguez for helping with lots of patches.
 
   Features:
     - Rewriting dependency management code with the aims of
       simplicity, correctness and reduced lines of code.
+    - New directive: "produce" which implies that a file is being
+      generated during LaTeXing and must be cleaned up afterwards.
+      Example:
+        % rubber: produce doc.toc
+      Indicates that during LaTeXing, .toc will be written (produce).
+      Example 2:
+        % rubber: produce doc.toc
+        % rubber: source doc.toc
+      Indicates that doc.toc will be read (source) and updated (produce).
+      This also tells rubber to recompile the LaTeX document until
+      doc.toc no longer changes.  "produce" implies "clean", i.e. the
+      file will be disposed of when rubber is invoked with --clean.
     - Support for ltxtable, glossaries and biblatex, contributed
       by Sebastian Reichel.  Please test and report any problems!
       https://bugs.launchpad.net/rubber/+bug/860661
     - Support for asymptote, contributed by Nicolas Boulenguez.
+    - Beginnings of a test suite.
+
+  Bugfixes:
     - Fix ntheorem support.
       https://bugs.debian.org/328107
     - Fix TeX parser to handle spaces and comments between the macro
@@ -25,9 +40,9 @@ Version 1.3 (2015-xx-xx)
       https://bugs.debian.org/682892
     - Fix read directive.  Patch by Lionel Vaux.
       https://bugs.debian.org/701898
-    - Fix dvipdfm.
-    - Beginnings of a test suite.
-    - Typos and clarifications in the docs, some cleanup in the code.
+    - Fix dvipdfm, backref and hyperref support.
+    - Typos and clarifications in the docs, lots of cleanup and minor
+      fixes in the code.
 
 Version 1.2 (2015-06-25)
 
