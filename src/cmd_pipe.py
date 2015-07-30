@@ -42,7 +42,7 @@ def dump_file (f_in, f_out):
 
 class Main (rubber.cmdline.Main):
 	def __init__ (self):
-		rubber.cmdline.Main.__init__(self)
+		super (Main, self).__init__()
 		msg.level = 0
 
 	def help (self):
@@ -77,11 +77,11 @@ available options:
 """) % version
 
 	def parse_opts (self, cmdline):
-		args = rubber.cmdline.Main.parse_opts(self, cmdline)
+		args = super (Main, self).parse_opts(cmdline)
 		if len(args) > 0:
 			msg.warn(_("the following options were ignored: %s")
 				% string.join(args, " "))
-				
+
 	def main (self, cmdline):
 		"""
 		Run Rubber as a pipe for the specified command line. This dumps the

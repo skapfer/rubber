@@ -115,7 +115,7 @@ of /usr/bin/asy flushes the .aux file.
         msg.log (_ ("saving {} to {}").format (msg.simplify (self.aux),
                                                msg.simplify (self.bak)),
                  pkg="asymptote")
-        ret = rubber.depend.Shell.run (self)
+        ret = super (Shell_Restoring_Aux, self).run ()
         msg.log (_ ("restoring {} to {}").format (msg.simplify (self.aux),
                                                   msg.simplify (self.bak)),
                 pkg="asymptote")

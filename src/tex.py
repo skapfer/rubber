@@ -118,7 +118,7 @@ class TokenList (list):
 	some extra functionality.
 	"""
 	def __init__ (self, data=[], pos=None):
-		list.__init__(self, data)
+		super (TokenList, self).__init__(data)
 		if pos is None and len(data) > 0:
 			self.pos = data[0].pos
 		else:
@@ -134,7 +134,7 @@ class TokenList (list):
 			text += token.raw
 		return text
 
-class ParserBase:
+class ParserBase (object):
 	"""
 	This is the base class for parsers. It holds state information like
 	catcodes, handles the push-back buffer, and leaves it to derived classes
@@ -380,7 +380,7 @@ class Parser (ParserBase):
 		before parsing. If 'input' is None, then input can only be provided by
 		the 'put_token' and 'put_list' methods.
 		"""
-		ParserBase.__init__(self)
+		super (Parser, self).__init__()
 		if coding is None:
 			self.input = input
 		else:

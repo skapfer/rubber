@@ -16,7 +16,7 @@ import rubber.cmdline
 
 class Main (rubber.cmdline.Main):
 	def __init__ (self):
-		rubber.cmdline.Main.__init__(self)
+		super (Main, self).__init__()
 		msg.write = self.stdout_write
 
 	def stdout_write (self, text, level=0):
@@ -51,7 +51,7 @@ actions:
 			long =  [ "module=", "readopts=", "short", "verbose", "boxes",
 				"check", "deps", "errors", "help", "refs", "rules", "version",
 				"warnings" ]
-			args = rubber.cmdline.Main.parse_opts(self, cmdline, long=long)
+			args = super (Main, self).parse_opts(cmdline, long=long)
 			opts, args = getopt(args, "", long)
 			self.max_errors = -1
 		except GetoptError, e:

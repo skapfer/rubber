@@ -246,7 +246,7 @@ class Leaf (Node):
 		Initialize the node. The argument of this method are the dependency
 		set and the file name.
 		"""
-		Node.__init__(self, set)
+		super (Leaf, self).__init__(set)
 		self.add_product (name)
 
 	def real_make (self, force):
@@ -272,7 +272,7 @@ class Shell (Node):
 	This class specializes Node for generating files using shell commands.
 	"""
 	def __init__ (self, set, command):
-		Node.__init__(self, set)
+		super (Shell, self).__init__ (set)
 		self.command = command
 		self.stdout = None
 
@@ -290,11 +290,11 @@ class Pipe (Shell):
 	The 'product' will receive the stdout of 'command'.
 	"""
 	def __init__ (self, set, command, product):
-		Shell.__init__(self, set, command)
+		super (Pipe, self).__init__(set, command)
 		self.add_product (product)
 
 	def run (self):
 		self.stdout = open(self.products[0], 'w')
-		ret = Shell.run(self)
+		ret = super (Pipe, self).run ()
 		self.stdout.close()
 		return ret

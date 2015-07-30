@@ -6,7 +6,8 @@ rule management.
 import re, imp, os.path
 from ConfigParser import *
 
-from rubber.util import _, msg, Variables
+from rubber.util import _, msg
+import rubber.util
 import rubber.converters
 
 re_variable = re.compile('[a-zA-Z]+')
@@ -83,14 +84,15 @@ def expand_cases (string, vars):
 	suffix = string[start:]
 	return cases + [s + suffix for s in current], pos
 
-class Rule (Variables):
+class Rule (rubber.util.Variables):
 	"""
 	This class represents a single rule, as described in rules.ini. It is
 	essentially a dictionary, but also includes a compiled form of the regular
 	expression for the target.
 	"""
 	def __init__ (self, context, dict):
-		Variables.__init__(self, context, dict)
+		# We do not inherit from object, no super() available.
+		rubber.util.Variables.__init__ (self, context, dict)
 		self.cost = dict['cost']
 		self.re_target = re.compile(dict['target'] + '$')
 
@@ -215,7 +217,7 @@ class Converter (object):
 
 		candidates.sort()
 		for cost, source, target, rule in candidates:
-			instance = Variables(context, dict(rule))
+			instance = rubber.util.Variables(context, dict(rule))
 			instance['source'] = source
 			instance['target'] = target
 			if check is not None and not check(instance):

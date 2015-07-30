@@ -8,7 +8,7 @@ Bibliographies (Biber and BibTeX).
 
 from rubber.util import _, msg
 import rubber.util
-from rubber.depend import Node, Shell
+import rubber.depend
 import os, os.path
 import re
 import string
@@ -39,7 +39,7 @@ def find_resource (name, suffix="", environ_path=None):
 	msg.warn (_("cannot find %s") % name, pkg="find_resource")
 	return None
 
-class BibTool (Shell):
+class BibTool (rubber.depend.Shell):
 	"""
 	Shared code between bibtex and biber support.
 	"""
@@ -47,7 +47,7 @@ class BibTool (Shell):
 		self.doc = doc
 		assert tool in [ "biber", "bibtex" ]
 		self.tool = tool
-		Shell.__init__ (self, set, command=[ None, doc.basename () ])
+		super (BibTool, self).__init__ (set, command=[ None, doc.basename () ])
 		for suf in [ ".bbl", ".blg", ".run.xml" ]:
 			self.add_product (doc.basename (with_suffix=suf))
 
@@ -83,7 +83,7 @@ class BibTool (Shell):
 		# command might have been updated in the mean time, so get it now
 		# FIXME make tool configurable
 		self.command[0] = self.tool
-		if Shell.run (self):
+		if super (BibTool, self).run ():
 			return True
 		msg.warn (_("There were errors running %s.") % self.tool, pkg="biblio")
 		return False
@@ -94,7 +94,7 @@ class BibTeX (BibTool):
 	with BibLaTeX
 	"""
 	def __init__ (self, set, doc, tool):
-		BibTool.__init__ (self, set, doc, tool)
+		super (BibTeX, self).__init__ (set, doc, tool)
 		doc.hook_macro ("bibliography", "a", self.add_bibliography)
 		self.add_source (doc.basename (with_suffix=".aux"), track_contents=True)
 		doc.add_product (doc.basename (with_suffix="-blx.bib"))
@@ -103,12 +103,12 @@ class BibTeX (BibTool):
 	def run (self):
 		# strip abspath, to allow BibTeX to write the bbl.
 		self.command[1] = os.path.basename (self.sources[0])
-		return BibTool.run (self)
+		return super (BibTeX, self).run ()
 
 class Biber (BibTool):
 	"""Node: make .bbl from .bcf using Biber"""
 	def __init__ (self, set, doc):
-		BibTool.__init__ (self, set, doc, "biber")
+		super (Biber, self).__init__ (set, doc, "biber")
 		for macro in ("addbibresource", "addglobalbib", "addsectionbib"):
 			doc.hook_macro (macro, "oa", self.add_bib_resource)
 		doc.hook_macro ("bibliography", "a", self.add_bibliography)
@@ -129,7 +129,7 @@ re_undef = re.compile("LaTeX Warning: Citation `(?P<cite>.*)' .*undefined.*")
 re_error = re.compile(
 	"---(line (?P<line>[0-9]+) of|while reading) file (?P<file>.*)")
 
-class Bibliography (Node):
+class Bibliography (rubber.depend.Node):
 	"""
 	This class represents a single bibliography for a document.
 	"""
@@ -138,7 +138,7 @@ class Bibliography (Node):
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
-		Node.__init__ (self, document.set)
+		super (Node, self).__init__ (self, document.set)
 		self.doc = document
 		jobname = os.path.basename (document.target)
 		if aux_basename == None:

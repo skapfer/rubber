@@ -12,8 +12,8 @@ import re, string
 
 from rubber.util import _
 from rubber.util import *
-from rubber.depend import Node
-from rubber.converters.latex import LogCheck
+import rubber.depend
+import rubber.converters.latex
 
 def check (source, target, context):
 	return prog_available('mpost')
@@ -23,13 +23,13 @@ re_input = re.compile("input\\s+(?P<file>[^\\s;]+)")
 re_mpext = re.compile("[0-9]+|mpx|log")
 re_mpxerr = re.compile("% line (?P<line>[0-9]+) (?P<file>.*)$")
 
-class MPLogCheck (LogCheck):
+class MPLogCheck (rubber.converters.latex.LogCheck):
 	"""
 	This class adapats the LogCheck class from the main program to the case of
 	MetaPost log files, which are very similar to TeX log files.
 	"""
 	def __init__ (self, pwd):
-		LogCheck.__init__(self)
+		super (MPLogCheck, self).__init__ ()
 		self.pwd = pwd
 
 	def read (self, name):
@@ -61,7 +61,7 @@ class MPLogCheck (LogCheck):
 		is that of TeX errors in Metapost labels, which requires parsing
 		another TeX log file.
 		"""
-		for err in LogCheck.get_errors(self):
+		for err in super (MPLogCheck, self).get_errors():
 			if (err["kind"] != "error"
 				or err["text"] != "Unable to make mpx file."):
 				yield err
@@ -69,7 +69,7 @@ class MPLogCheck (LogCheck):
 
 			# a TeX error was found: parse mpxerr.log
 
-			log = LogCheck()
+			log = rubber.converter.latex.LogCheck()
 			if log.read(os.path.join(self.pwd, "mpxerr.log")):
 				yield err
 				continue
@@ -108,7 +108,7 @@ class MPLogCheck (LogCheck):
 					yield err
 
 
-class Dep (Node):
+class Dep (rubber.depend.Node):
 	"""
 	This class represents dependency nodes for MetaPost figures. The __init__
 	method simply creates one node for the figures and one leaf node for all
@@ -116,7 +116,7 @@ class Dep (Node):
 	"""
 	def __init__ (self, set, target, source, context):
 		self.cmd_pwd = os.path.dirname(source)
-		Node.__init__(self, set)
+		super (Dep, self).__init__(set)
 		self.add_product (target)
 		self.include (os.path.basename (source))
 		msg.log(_("%s is made from %r") % (target, self.sources))

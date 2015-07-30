@@ -7,26 +7,26 @@ Literate programming support for Rubber.
 Nodes to make the main TeX file.
 """
 
-from rubber.depend import Pipe, Shell
+import rubber.depend
 
-class LHSDep (Pipe):
+class LHSDep (rubber.depend.Pipe):
 	def __init__ (self, set, target, source):
-		Pipe.__init__(self, set, ['lhs2tex', '--poly', source], target)
+		super (LHSDep, self).__init__(set, ['lhs2tex', '--poly', source], target)
 		self.add_source (source)
 
-class CWebDep (Shell):
+class CWebDep (rubber.depend.Shell):
 	def __init__ (self, set, target, source):
 		assert target[-4:] == '.tex'
 		base = target[:-4]
-		Shell.__init__(self, set, ["cweave", source, target])
+		super (CWebDep, self).__init__(set, ["cweave", source, target])
 		self.add_product (target)
 		self.add_product (base + ".idx")
 		self.add_product (base + ".scn")
 		self.add_source (source)
 
-class KnitrDep (Shell):
+class KnitrDep (rubber.depend.Shell):
 	def __init__ (self, set, target, source):
-		Pipe.__init__(self, set, ['R', '-e', 'library(knitr); knit("%s")' % source], target)
+		super (KnitrDep, self).__init__(set, ['R', '-e', 'library(knitr); knit("%s")' % source], target)
 		self.add_source (source)
 
 literate_preprocessors = { ".lhs": LHSDep, ".w": CWebDep, ".Rtex": KnitrDep }

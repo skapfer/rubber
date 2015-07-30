@@ -5,16 +5,16 @@ Extraction of bounding box information from gzipped PostScript figures.
 """
 
 from rubber import _, msg
-from rubber.depend import Node
+import rubber.depend
 
 from gzip import GzipFile
 import re
 
 re_bbox = re.compile("%[%\w]*BoundingBox:")
 
-class Dep (Node):
+class Dep (rubber.depend.Node):
 	def __init__ (self, set, target, source):
-		Node.__init__(self, set)
+		super (Dep, self).__init__(set)
                 self.add_product (target)
                 self.add_source (source)
 		self.source = source

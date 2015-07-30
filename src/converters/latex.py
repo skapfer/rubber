@@ -14,11 +14,11 @@ import string
 
 from rubber import _
 from rubber.util import *
-from rubber.depend import Node
+import rubber.depend
 from rubber.version import moddir
 import rubber.latex_modules
 
-from rubber.tex import Parser, EOF, OPEN, SPACE, END_LINE
+from rubber.tex import EOF, OPEN, SPACE, END_LINE
 
 #----  Module handler  ----{{{1
 
@@ -471,17 +471,17 @@ class LogCheck (object):
 
 re_command = re.compile("%[% ]*rubber: *(?P<cmd>[^ ]*) *(?P<arg>.*).*")
 
-class SourceParser (Parser):
+class SourceParser (rubber.tex.Parser):
 	"""
 	Extends the general-purpose TeX parser to handle Rubber directives in the
 	comment lines.
 	"""
 	def __init__ (self, file, dep):
-		Parser.__init__(self, file)
+		super (SourceParser, self).__init__(file)
 		self.latex_dep = dep
 
 	def read_line (self):
-		while Parser.read_line(self):
+		while rubber.tex.Parser.read_line(self):
 			match = re_command.match(self.line.strip())
 			if match is None:
 				return True
@@ -495,7 +495,7 @@ class SourceParser (Parser):
 
 	def skip_until (self, expr):
 		regexp = re.compile(expr)
-		while Parser.read_line(self):
+		while rubber.tex.Parser.read_line(self):
 			match = regexp.match(self.line)
 			if match is None:
 				continue
@@ -511,7 +511,7 @@ class EndInput:
 	""" This is the exception raised when \\endinput is found. """
 	pass
 
-class LaTeXDep (Node):
+class LaTeXDep (rubber.depend.Node):
 	"""
 	This class represents dependency nodes for LaTeX compilation. It handles
 	the cyclic LaTeX compilation until a stable output, including actual
@@ -534,7 +534,7 @@ class LaTeXDep (Node):
 		given file (all steps are initialized empty) and sets the regular
 		expressions and the hook dictionary.
 		"""
-		Node.__init__(self, env.depends)
+		super (LaTeXDep, self).__init__(env.depends)
 		self.env = env
 
 		self.log = LogCheck()
@@ -1271,7 +1271,7 @@ class LaTeXDep (Node):
 		This method supposes that the inputs were parsed to register packages
 		and that the LaTeX source is ready. If the second (optional) argument
 		is true, then at least one compilation is done. As specified by the
-		class depend.Node, the method returns True on success and False on
+		parent class, the method returns True on success and False on
 		failure.
 		"""
 		if not self.pre_compile():
