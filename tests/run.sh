@@ -4,7 +4,7 @@
 # directory, and run rubber on the file.
 
 SOURCE_DIR="$(cd ..; pwd)"
-TMPDIR=tmp
+tmpdir=tmp
 
 set -e                          # Stop at first failure.
 
@@ -12,6 +12,10 @@ KEEP=false
 VERBOSE=
 while [ 1 -le $# ]; do
     case $1 in
+        --rmtmp)
+            rm -rf $tmpdir
+            shift
+            ;;
         -k)
             KEEP=true
             shift
@@ -25,7 +29,7 @@ while [ 1 -le $# ]; do
     esac
 done
 
-echo "When a test fails, please remove the $TMPDIR directory manually."
+echo "When a test fails, please remove the $tmpdir directory manually."
 
 list0() {
     (cd "$1"; find -mindepth 1 -print0)
@@ -36,54 +40,71 @@ for main; do
     [ "$main" = 'shared' ] && continue
 
     [ -d $main ] || {
-        echo $main must be a directory >&2
+        echo "$main must be a directory"
         exit 1
     }
 
     [ -e $main/disable ] && {
-        echo Skipping test $main >&2
+        echo "Skipping test $main"
         continue
     }
 
-    doc=doc
-    [ -e $main/document ] && doc=$(cat $main/document)
+    echo "Test: $main"
 
-    [ -e $main/arguments ] && arguments=$(cat $main/arguments)
+    mkdir $tmpdir
+    cp $main/* $tmpdir
+    cp shared/* $tmpdir
+    gzip -c shared/sample.eps > $tmpdir/compressed.eps.gz
+    cd $tmpdir
 
-    echo Test: $main
+    cp -a "$SOURCE_DIR/src" rubber
 
-        mkdir $TMPDIR
-        cp $main/* $TMPDIR
-        cp shared/* $TMPDIR
-        gzip -c shared/sample.eps > $TMPDIR/compressed.eps.gz
-        cd $TMPDIR
-
-        cat > usrbinrubber.py <<EOF
+    cat > usrbinrubber.py <<EOF
 import sys, rubber.cmdline
 sys.exit (rubber.cmdline.Main () (sys.argv [1:]))
 EOF
-        cp -a "$SOURCE_DIR/src" rubber
-        cat >> rubber/version.py <<EOF
+
+    cat >> rubber/version.py <<EOF
 version = "unreleased"
 moddir = "$SOURCE_DIR/data"
 EOF
 
-        python usrbinrubber.py $VERBOSE $arguments         $doc
+    rubber="python usrbinrubber.py $VERBOSE"
+
+    if [ -e fragment ]; then
+        # test brings their own code
+        . ./fragment
+    else
+        # default test code:  try to build two times, clean up.
+        read doc <document || doc=doc
+        read arguments <arguments || true
+
+        echo Running rubber $arguments $doc ...
+
+        $rubber $arguments         $doc
 
         if $KEEP; then
-            echo "keeping tmp." >&2
+            echo "Keeping ${tmpdir}."
             exit 1
         fi
 
-        python usrbinrubber.py $VERBOSE $arguments         $doc
-        python usrbinrubber.py $VERBOSE $arguments --clean $doc
+        $rubber $arguments         $doc
+        $rubber $arguments --clean $doc
 
-        rm -r rubber
-        rm usrbinrubber.py
-        rm compressed.eps.gz
-        (list0 ../$main; list0 ../shared) | xargs -0 rm -r
-        cd ..
-        rmdir $TMPDIR           # Fail if not clean.
+        unset doc arguments
+    fi
+
+    rm -r rubber
+    rm usrbinrubber.py
+    rm compressed.eps.gz
+    (list0 ../$main; list0 ../shared) | xargs -0 rm -r
+    cd ..
+
+    rmdir $tmpdir || {
+        echo "Directory $tmpdir is not left clean:"
+        ls $tmpdir
+        exit 1
+    }
 done
 
 echo OK
