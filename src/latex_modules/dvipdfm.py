@@ -18,16 +18,19 @@ class Dep (Node):
 		self.add_product (target)
 		self.add_source (source)
 		self.env = doc.env
-		self.cmd = ['dvipdfm', source, '-o', target]
+		self.cmd = ['dvipdfm', '-o', target]
 		for opt in doc.vars['paper'].split():
 			self.cmd.extend (('-p', opt))
+		self.cmd.append (source)
 
 	def do_options (self, args):
-		self.cmd.extend (args)
+		cmd = self.cmd [:-1]
+		cmd.extend (args)
+		cmd.append (self.cmd [-1])
+		self.cmd = cmd
 
 	def run (self):
-		msg.progress(_("running dvipdfm on %s") % self.cmd [1])
-		if self.env.execute (self.cmd, kpse=1):
+		if self.env.execute (self.cmd, kpse=1) != 0:
 			msg.error(_("dvipdfm failed on %s") % self.cmd [1])
 			return False
 		return True
