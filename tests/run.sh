@@ -76,8 +76,14 @@ EOF
         . ./fragment
     else
         # default test code:  try to build two times, clean up.
-        read doc <document || doc=doc
-        read arguments <arguments || true
+        if test -r document; then
+            read doc < document
+        else
+            doc=doc
+        fi
+        if test -r arguments; then
+            read arguments < arguments
+        fi
 
         echo Running rubber $arguments $doc ...
 
