@@ -11,25 +11,28 @@ is "Omega" (instead of "TeX" for instance), then "odvips" is used instead of
 import sys
 
 from rubber import _, msg
-from rubber.depend import Node
+import rubber.depend
 
 # FIXME: this class may probably be simplified a lot if inheriting
 # from rubber.depend.Shell instead of rubber.depend.Node.
 
-class Dep (Node):
-	def __init__ (self, doc, target, source):
-		Node.__init__(self, doc.env.depends)
-		self.add_product (target)
+class Dep (rubber.depend.Node):
+	def __init__ (self, doc, source):
+		super (Dep, self).__init__ (doc.env.depends)
+		self.add_product (source [:-3] + 'ps')
 		self.add_source (source)
 		self.env = doc.env
 		if doc.vars['engine'] == 'Omega':
 			tool = 'odvips'
 		else:
 			tool = 'dvips'
-		self.cmd = [tool, '-o', target]
+		self.cmd = [tool]
 		for opt in doc.vars ['paper'].split ():
 			self.cmd.extend (('-t', opt))
 		self.cmd.append (source)
+		if source[-4:] != '.dvi':
+			msg.error(_("I can't use %s when not producing a DVI")%tool)
+			sys.exit(2)
 
 	def do_options (self, args):
 		cmd = self.cmd [:-1]
@@ -45,12 +48,8 @@ class Dep (Node):
 
 def setup (doc, context):
 	dvi = doc.env.final.products[0]
-	if dvi[-4:] != '.dvi':
-		msg.error(_("I can't use dvips when not producing a DVI"))
-		sys.exit(2)
-	ps = dvi[:-3] + 'ps'
 	global dep
-	dep = Dep(doc, ps, dvi)
+	dep = Dep(doc, dvi)
 	doc.env.final = dep
 
 def do_options (*args):
