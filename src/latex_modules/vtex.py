@@ -10,8 +10,6 @@ produces a PDF or PostScript file directly. The PDF version is used by
 default, switching to PS is possible by using the module option "ps".
 """
 
-import rubber
-
 def setup (doc, context):
 	doc.vars['engine'] = 'VTeX'
 	if context['opt'] == 'ps':
