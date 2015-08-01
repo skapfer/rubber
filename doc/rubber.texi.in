@@ -843,9 +843,6 @@ The following modules are used to change the LaTeX compiler:
 Use the Aleph compiler instead of TeX, i.e. compile with @command{lamed}
 instead of @command{latex}.
 
-@item etex
-Instructs Rubber to use @command{elatex} instead of @command{latex}.
-
 @item omega
 Use the Omega compiler instead of TeX, i.e. compiles the document using
 @command{lambda} instead of @command{latex}. If the module @command{dvips} is
