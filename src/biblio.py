@@ -138,7 +138,7 @@ class Bibliography (rubber.depend.Node):
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
-		super (Node, self).__init__ (self, document.set)
+		super (Bibliography, self).__init__ (document.set)
 		self.doc = document
 		jobname = os.path.basename (document.target)
 		if aux_basename == None:
