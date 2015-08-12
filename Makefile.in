@@ -17,8 +17,8 @@ clean: clean-local
 	cd doc && $(MAKE) clean
 
 clean-local:
-	rm -rf build dist MANIFEST
-	find . \( -name '*~' -or -name '*.py[co]' \) -exec rm {} \;
+	rm -rf build dist MANIFEST tests/tmp
+	find . \( -name '*~' -or -name '*.py[co]' \) -delete
 
 distclean: clean-local
 	rm -f rubber.spec Makefile settings.py src/version.py doc/rubber.texi
