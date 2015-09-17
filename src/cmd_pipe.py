@@ -92,7 +92,7 @@ available options:
 		"""
 		self.prologue = []
 		self.epilogue = []
-		self.clean = 1
+		self.clean = True
 		self.place = "."
 		self.path = []
 		self.parse_opts(cmdline)

@@ -85,7 +85,7 @@ available options:
 			sys.exit(1)
 
 		extra = []
-		using_dvips = 0
+		using_dvips = False
 
 		for (opt,arg) in opts:
 			if opt in ("-b", "--bzip2"):
@@ -96,13 +96,13 @@ available options:
 			elif opt == "--cache":
 				print 'warning: cache is currently disabled'
 			elif opt == "--clean":
-				self.clean = 1
+				self.clean = True
 			elif opt in ("-c", "--command"):
 				self.prologue.append(arg)
 			elif opt in ("-e", "--epilogue"):
 				self.epilogue.append(arg)
 			elif opt in ("-f", "--force"):
-				self.force = 1
+				self.force = True
 			elif opt in ("-z", "--gzip"):
 				if self.compress is not None and self.compress != "gz":
 					msg.warn(_("warning: ignoring option %s") % opt)
@@ -118,7 +118,7 @@ available options:
 			elif opt == "--jobname":
 				self.jobname = arg
 			elif opt in ("-k", "--keep"):
-				self.clean = 0
+				self.clean = False
 			elif opt in ("-l", "--landscape"):
 				self.prologue.append("paper landscape")
 			elif opt in ("-n", "--maxerr"):
@@ -138,7 +138,7 @@ available options:
 					self.prologue.append("module pdftex")
 			elif opt in ("-p", "--ps"):
 				self.epilogue.append("module dvips")
-				using_dvips = 1
+				using_dvips = True
 			elif opt in ("-q", "--quiet"):
 				msg.level = msg.level - 1
 			# we continue to accept --shell-escape for now
@@ -188,8 +188,8 @@ available options:
 		self.jobname = None
 		self.prologue = []
 		self.epilogue = []
-		self.clean = 0
-		self.force = 0
+		self.clean = False
+		self.force = False
 		self.unsafe = False
 
 		self.warn = 0
