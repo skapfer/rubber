@@ -41,7 +41,6 @@ class Node (object):
 		# failed_dep: the Node which caused the build to fail.  can be self
 		# if this Node failed to build, or a dependency.
 		self.failed_dep = None
-		self.already_cleaning = False
 
 	def add_source (self, name, track_contents=False):
 		"""
@@ -214,23 +213,17 @@ class Node (object):
 
 	def clean (self):
 		"""
-		Remove the files produced by this rule and recursively clean all
-		dependencies.
+		Remove the files produced by this rule.  Note that cleaning is not
+		done recursively; rather, all dependency nodes are cleaned in no
+		particular order (see cmdline.py / cmd_pipe.py)
 
                 Each override should start with
-                if self.already_cleaning:
-                    return
                 super (class, self).clean ()
 		"""
-		if self.already_cleaning:
-			return
-		self.already_cleaning = True
 		for file in self.products:
 			if os.path.exists(file):
 				msg.log(_("removing %s") % file)
 				os.remove(file)
-		for source in self.source_nodes():
-			source.clean()
 		self.date = None
 
 	def leaves (self):

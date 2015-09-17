@@ -1265,8 +1265,6 @@ class LaTeXDep (rubber.depend.Node):
 		"""
 		Remove all files that are produced by compilation.
 		"""
-		if self.already_cleaning:
-			return
 		super (LaTeXDep, self).clean ()
 		for file in self.removed_files:
 			if os.path.exists(file):
