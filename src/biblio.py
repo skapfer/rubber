@@ -35,8 +35,6 @@ def find_resource (name, suffix="", environ_path=None):
 			return fullname
 		elif suffix != "" and os.path.exists (fullname + suffix):
 			return fullname + suffix
-
-	msg.warn (_("cannot find %s") % name, pkg="find_resource")
 	return None
 
 class BibTool (rubber.depend.Shell):
@@ -186,6 +184,8 @@ class Bibliography (rubber.depend.Node):
 			if filename is not None:
 				self.db[name] = filename
 				self.add_source (filename, track_contents=True)
+			else:
+				msg.error (_ ("cannot find bibliography resource %s") % name, pkg="biblio")
 
 	def hook_bibliographystyle (self, loc, name):
 		"""
@@ -204,6 +204,8 @@ class Bibliography (rubber.depend.Node):
 		if filename is not None:
 			self.bst_file = filename
 			self.add_source (filename, track_contents=True)
+		elif name != "plain": # default style coming with bibtex
+			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
 
 	#
 	# The following methods are responsible of detecting when running BibTeX
