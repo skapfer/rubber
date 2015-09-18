@@ -83,7 +83,7 @@ class Module (rubber.module_interface.Module):
 
     # Supported macros
 
-    def hook_includegraphics (self, loc, optional, name):
+    def hook_includegraphics (self, loc, starred, optional, name):
         # no suffixes are tried when the extension is explicit
 
         allowed_suffixes = self.suffixes
