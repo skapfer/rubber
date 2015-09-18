@@ -51,6 +51,7 @@ class Environment:
 
 		self.is_in_unsafe_mode_ = False
 		self.doc_requires_shell_ = False
+		self.synctex = False
 		self.main = None
 		self.final = None
 

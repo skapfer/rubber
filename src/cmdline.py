@@ -63,6 +63,7 @@ available options:
   -q, --quiet              suppress messages
   -r, --read=FILE          read additional directives from FILE
   -S, --src-specials       enable insertion of source specials
+      --synctex            enable SyncTeX support
       --unsafe             permits the document to run external commands
   -s, --short              display errors in a compact form
   -I, --texpath=DIR        add DIR to the search path for LaTeX
@@ -78,7 +79,7 @@ available options:
 				["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
 				 "help", "inplace", "into=", "jobname=", "keep", "landcape", "maxerr=",
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
-				 "src-specials", "shell-escape", "unsafe", "short", "texpath=", "verbose", "version",
+				 "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
 				 "warn="] + long)
 		except GetoptError, e:
 			print e
@@ -150,6 +151,8 @@ available options:
 				self.prologue.append("set src-specials yes")
 			elif opt in ("-s", "--short"):
 				msg.short = 1
+			elif opt in ("--synctex"):
+				self.prologue.append("synctex")
 			elif opt in ("-I", "--texpath"):
 				self.path.append(arg)
 			elif opt in ("-v", "--verbose"):

@@ -574,6 +574,7 @@ class LaTeXDep (rubber.depend.Node):
 			"begin": ("a", self.h_begin),
 			"end": ("a", self.h_end),
 			"pdfoutput": ("", self.h_pdfoutput),
+			"synctex": ("", self.h_synctex),
 			"input" : ("", self.h_input),
 			"include" : ("a", self.h_include),
 			"includeonly": ("a", self.h_includeonly),
@@ -668,6 +669,10 @@ class LaTeXDep (rubber.depend.Node):
 
 		# always expect a primary aux file
 		self.new_aux_file (self.basename (with_suffix=".aux"))
+
+		# if SyncTeX support was requested on the command-line, there is nothing in
+		# in the source which would tell us.  add a product for SyncTeX.
+		self.h_synctex ()
 
 		return 0
 
@@ -937,6 +942,9 @@ class LaTeXDep (rubber.depend.Node):
 	def do_shell_escape (self):
 		self.env.doc_requires_shell_ = True
 
+	def do_synctex (self):
+		self.env.synctex = True
+
 	def do_setlist (self, name, *val):
 		try:
 			self.vars[name] = list(val)
@@ -1007,6 +1015,13 @@ class LaTeXDep (rubber.depend.Node):
 				self.modules['pdftex'].mode_pdf()
 			else:
 				self.modules.register('pdftex')
+
+	def h_synctex (self, loc=None):
+		"""
+		Called when \\synctex=1 is found.  Make sure rubber cleans up after
+		SyncTeX in case of --clean.
+		"""
+		self.add_product (self.basename (with_suffix=".synctex.gz"))
 
 	def h_input (self, loc):
 		"""
@@ -1175,6 +1190,9 @@ class LaTeXDep (rubber.depend.Node):
 			cmd += [ '--shell-escape' ]
 		elif self.env.doc_requires_shell_:
 			msg.error (_("the document tries to run external programs which could be dangerous.  use rubber --unsafe if the document is trusted."))
+
+		if self.env.synctex:
+			cmd += [ "-synctex=1" ]
 
 		# make sure the arguments actually are a list, otherwise the
 		# characters of the string might be passed as individual arguments
