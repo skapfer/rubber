@@ -339,6 +339,18 @@ class ParserBase (object):
 			return None
 		return list.raw_text()
 
+	def get_latex_star (self):
+		"""
+		Check if the command is a starred one.  If so, eat the star,
+		and return True.  Otherwise, return False.
+		"""
+		nextt = self.peek_token()
+		if (nextt.cat, nextt.raw) == (OTHER, '*'):
+			self.get_token()
+			return True
+		else:
+			return False
+
 def re_set (set, complement=False):
 	"""
 	Returns a string that contains a regular expression matching a given set

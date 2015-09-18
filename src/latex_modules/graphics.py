@@ -53,7 +53,7 @@ class Module (rubber.module_interface.Module):
 
     def __init__ (self, document, context):
         self.doc = document
-        document.hook_macro ('includegraphics', 'oa', self.hook_includegraphics)
+        document.hook_macro ('includegraphics', '*oa', self.hook_includegraphics)
         document.hook_macro ('graphicspath', 'a', self.hook_graphicspath)
         document.hook_macro ('DeclareGraphicsExtensions', 'a', self.hook_declareExtensions)
         document.hook_macro ('DeclareGraphicsRule', 'aaaa', self.hook_declareRule)

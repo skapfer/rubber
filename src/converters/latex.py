@@ -756,7 +756,9 @@ class LaTeXDep (rubber.depend.Node):
 			format, function = self.hooks[token.val]
 			args = []
 			for arg in format:
-				if arg == 'a':
+				if arg == '*':
+					args.append(parser.get_latex_star())
+				elif arg == 'a':
 					args.append(parser.get_argument_text())
 				elif arg == 'o':
 					args.append(parser.get_latex_optional_text())
