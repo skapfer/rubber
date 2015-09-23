@@ -204,7 +204,8 @@ class Bibliography (rubber.depend.Node):
 		if filename is not None:
 			self.bst_file = filename
 			self.add_source (filename, track_contents=True)
-		elif name != "plain": # default style coming with bibtex
+		elif name not in [ "plain", "alpha" ]:
+			# do not complain about default styles coming with bibtex
 			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
 
 	#
