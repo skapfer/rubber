@@ -13,8 +13,6 @@ import os, os.path
 import re
 import string
 
-# TODO: merge these classes if it makes sense.
-
 def find_resource (name, suffix="", environ_path=None):
 	"""
 	find the indicated file, mimicking what latex would do:
@@ -115,10 +113,6 @@ class Biber (BibLatexTool):
 		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
 
 
-re_bibdata = re.compile(r"\\bibdata{(?P<data>.*)}")
-re_citation = re.compile(r"\\citation{(?P<cite>.*)}")
-re_undef = re.compile("LaTeX Warning: Citation `(?P<cite>.*)' .*undefined.*")
-
 # The regular expression that identifies errors in BibTeX log files is heavily
 # heuristic. The remark is that all error messages end with a text of the form
 # "---line xxx of file yyy" or "---while reading file zzz". The actual error
@@ -153,12 +147,9 @@ class Bibliography (rubber.depend.Node):
 		self.bib_path = [cwd, document.vars["path"]]
 		self.bst_path = [cwd]
 
-		self.undef_cites = None
-		self.used_cites = None
 		self.bst_file = None
 		self.set_style ("plain")
 		self.db = {}
-		self.sorted = 1
 		self.crossrefs = None
 
 	#
@@ -176,7 +167,8 @@ class Bibliography (rubber.depend.Node):
 		self.bst_path.append(self.doc.abspath(path))
 
 	def do_sorted (self, mode):
-		self.sorted = mode in ("true", "yes", "1")
+		# ignored option
+		pass
 
 	def hook_bibliography (self, loc, bibs):
 		for name in string.split (bibs, ","):
@@ -208,74 +200,8 @@ class Bibliography (rubber.depend.Node):
 			# do not complain about default styles coming with bibtex
 			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
 
-	#
-	# The following methods are responsible of detecting when running BibTeX
-	# is needed and actually running it.
-	#
-
 	def pre_compile (self):
-		"""
-		Run BibTeX if needed before the first compilation. This function also
-		checks if BibTeX has been run by someone else, and in this case it
-		tells the system that it should recompile the document.
-		"""
-		if os.path.exists (self.aux):
-			self.used_cites, self.prev_dbs = self.parse_aux()
-		else:
-			self.prev_dbs = None
-		if self.doc.log.lines:
-			self.undef_cites = self.list_undefs()
-
 		return True
-
-	def parse_aux (self):
-		"""
-		Parse the aux files and return the list of all defined citations and
-		the list of databases used.
-		"""
-		last = 0
-		cites = {}
-		dbs = []
-		if self.aux [:-3] == self.log [:-3]: # bib name = job name
-			auxnames = self.doc.aux_files
-		else:
-			auxnames = (self.aux, )
-		for auxname in auxnames:
-			with open(auxname) as aux:
-				for line in aux:
-					match = re_citation.match(line)
-					if match:
-						cite = match.group("cite")
-						if not cites.has_key(cite):
-							last = last + 1
-							cites[cite] = last
-						continue
-					match = re_bibdata.match(line)
-					if match:
-						dbs.extend(match.group("data").split(","))
-		dbs.sort()
-
-		if self.sorted:
-			list = cites.keys()
-			list.sort()
-			return list, dbs
-		else:
-			list = [(n,c) for (c,n) in cites.items()]
-			list.sort()
-			return [c for (n,c) in list], dbs
-
-	def list_undefs (self):
-		"""
-		Return the list of all undefined citations.
-		"""
-		cites = {}
-		for line in self.doc.log.lines:
-			match = re_undef.match(line)
-			if match:
-				cites[match.group("cite")] = None
-		list = cites.keys()
-		list.sort()
-		return list
 
 	def run (self):
 		"""
