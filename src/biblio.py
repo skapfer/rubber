@@ -37,7 +37,7 @@ def find_resource (name, suffix="", environ_path=None):
 			return fullname + suffix
 	return None
 
-class BibTool (rubber.depend.Shell):
+class BibLatexTool (rubber.depend.Shell):
 	"""
 	Shared code between bibtex and biber support.
 	"""
@@ -45,7 +45,7 @@ class BibTool (rubber.depend.Shell):
 		self.doc = doc
 		assert tool in [ "biber", "bibtex" ]
 		self.tool = tool
-		super (BibTool, self).__init__ (set, command=[ None, doc.basename () ])
+		super (BibLatexTool, self).__init__ (set, command=[ None, doc.basename () ])
 		for suf in [ ".bbl", ".blg", ".run.xml" ]:
 			self.add_product (doc.basename (with_suffix=suf))
 
@@ -81,12 +81,12 @@ class BibTool (rubber.depend.Shell):
 		# command might have been updated in the mean time, so get it now
 		# FIXME make tool configurable
 		self.command[0] = self.tool
-		if super (BibTool, self).run ():
+		if super (BibLatexTool, self).run ():
 			return True
 		msg.warn (_("There were errors running %s.") % self.tool, pkg="biblio")
 		return False
 
-class BibTeX (BibTool):
+class BibTeX (BibLatexTool):
 	"""
 	Node: make .bbl from .aux using BibTeX (or BibTeX8, or BibTeXu) for use
 	with BibLaTeX
@@ -103,7 +103,7 @@ class BibTeX (BibTool):
 		self.command[1] = os.path.basename (self.sources[0])
 		return super (BibTeX, self).run ()
 
-class Biber (BibTool):
+class Biber (BibLatexTool):
 	"""Node: make .bbl from .bcf using Biber"""
 	def __init__ (self, set, doc):
 		super (Biber, self).__init__ (set, doc, "biber")
