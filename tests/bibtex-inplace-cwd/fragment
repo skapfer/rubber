@@ -1,0 +1,2 @@
+$rubber --inplace         doc.tex
+$rubber --inplace --clean doc.tex

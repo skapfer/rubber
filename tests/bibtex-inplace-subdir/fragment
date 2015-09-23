@@ -1,0 +1,6 @@
+mkdir inplace
+mv doc.tex biblio.bib inplace
+$rubber --inplace         inplace/doc.tex
+$rubber --inplace --clean inplace/doc.tex
+mv inplace/doc.tex inplace/biblio.bib .
+rmdir inplace
