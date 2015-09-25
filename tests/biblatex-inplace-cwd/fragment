@@ -1,2 +1,3 @@
 $rubber --inplace         doc.tex
+[ -r doc.bbl ]
 $rubber --inplace --clean doc.tex

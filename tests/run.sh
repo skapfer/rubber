@@ -95,6 +95,13 @@ EOF
         exit 1
     fi
 
+    ([ -r expected ] && cat expected ) | while read f; do
+        [ -e "$f" ] || {
+            echo "Expected file $f was not produced."
+            exit 1
+        }
+    done
+
     if ! [ -e fragment ]; then
         # default test code:  try to build two times, clean up.
         $rubber $arguments         $doc
