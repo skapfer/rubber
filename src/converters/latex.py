@@ -639,6 +639,8 @@ class LaTeXDep (rubber.depend.Node):
 			self.set_job = 1
 			job = jobname
 		self.vars['job'] = job
+		# also set target for backwards compatibility (FIXME remove at some point)
+		#self.vars['target'] = job
 		# FIXME what is base supposed to do?
 		if src_path == "":
 			src_path = "."
@@ -660,9 +662,6 @@ class LaTeXDep (rubber.depend.Node):
 			if source.find(c) >= 0:
 				msg.warn(_("Source path uses special characters, error tracking might get confused."))
 				break
-
-		# FIXME rename self.target -> self.jobname
-		self.vars['target'] = self.target = job
 
 		self.add_product (self.basename (with_suffix=".dvi"))
 		self.add_product (self.basename (with_suffix=".log"))

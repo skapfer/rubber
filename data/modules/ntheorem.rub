@@ -1,2 +1,2 @@
-produce $target.thm
-watch $target.thm
+produce $job.thm
+watch $job.thm

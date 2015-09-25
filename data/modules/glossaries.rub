@@ -1,2 +1,2 @@
-watch $target.glo
-onchange $target.glo "cd `dirname $target` && makeglossaries `basename $target`"
+watch $job.glo
+onchange $job.glo "cd `dirname $job` && makeglossaries `basename $job`"

@@ -1,2 +1,2 @@
-produce $target.brf
-watch $target.brf
+produce $job.brf
+watch $job.brf
