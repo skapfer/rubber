@@ -23,9 +23,9 @@ class Index (rubber.depend.Node):
 		(e.g. .ilg) file.  Transcript is used by glosstex.py.
 		"""
 		super (Index, self).__init__ (doc.set)
-		src = os.path.basename (doc.basename (with_suffix = "." + source))
-		tgt = os.path.basename (doc.basename (with_suffix = "." + target))
-		log = os.path.basename (doc.basename (with_suffix = "." + transcript))
+		src = doc.basename (with_suffix = "." + source)
+		tgt = doc.basename (with_suffix = "." + target)
+		log = doc.basename (with_suffix = "." + transcript)
 		doc.add_product (src)
 		self.add_product (tgt)
 		self.add_product (log)
@@ -55,7 +55,7 @@ class Index (rubber.depend.Node):
 				_("unknown option '%s' for 'makeidx.order'") % opt)
 
 	def do_path (self, path):
-		self.path.append(self.doc.abspath(path))
+		self.path.append(path)
 
 	def do_style (self, style):
 		self.style = style

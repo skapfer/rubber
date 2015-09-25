@@ -207,14 +207,17 @@ available options:
 		initial_dir = os.getcwd()
 		msg.cwd = os.path.join(initial_dir, "")
 
-		if self.place != "." and self.place is not None:
+		if self.place == ".":
+			self.place = initial_dir
+
+		if self.place is not None:
 			msg.path = self.place
 			self.place = os.path.abspath(self.place)
 
 		msg.log(_("This is Rubber version %s.") % version)
 
 		for srcname in args:
-			src = os.path.abspath(os.path.join(initial_dir, srcname))
+			src = os.path.join(initial_dir, srcname)
 
 			# Go to the appropriate directory
 
@@ -223,7 +226,6 @@ available options:
 					if self.place is None:
 						msg.path = os.path.dirname(src)
 						os.chdir(os.path.dirname(src))
-						src = os.path.basename(src)
 					else:
 						os.chdir(self.place)
 			except OSError as e:

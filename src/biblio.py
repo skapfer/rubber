@@ -97,8 +97,7 @@ class BibTeX (BibLatexTool):
 		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
 
 	def run (self):
-		# strip abspath, to allow BibTeX to write the bbl.
-		self.command[1] = os.path.basename (self.sources[0])
+		self.command[1] = self.sources[0]
 		return super (BibTeX, self).run ()
 
 class Biber (BibLatexTool):
@@ -132,16 +131,16 @@ class Bibliography (rubber.depend.Node):
 		"""
 		super (Bibliography, self).__init__ (document.set)
 		self.doc = document
-		jobname = os.path.basename (document.target)
 		if aux_basename == None:
-			aux_basename = jobname
-		self.log = jobname + ".log"
+			aux_basename = document.basename()
+		self.log = document.basename(with_suffix=".log")
 		self.aux = aux_basename + ".aux"
 		self.bbl = aux_basename + ".bbl"
 		self.blg = aux_basename + ".blg"
 		self.add_product (self.bbl)
 		self.add_product (self.blg)
 		self.add_source (self.aux, track_contents=True)
+		document.add_source (self.bbl, track_contents=True)
 
 		cwd = document.vars["cwd"]
 		self.bib_path = [cwd, document.vars["path"]]
@@ -161,10 +160,10 @@ class Bibliography (rubber.depend.Node):
 		self.crossrefs = number
 
 	def do_path (self, path):
-		self.bib_path.append(self.doc.abspath(path))
+		self.bib_path.append(path)
 
 	def do_stylepath (self, path):
-		self.bst_path.append(self.doc.abspath(path))
+		self.bst_path.append(path)
 
 	def do_sorted (self, mode):
 		# ignored option

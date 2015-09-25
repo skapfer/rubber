@@ -37,7 +37,6 @@ def remove (path):
 
 class Module (rubber.module_interface.Module):
     def __init__ (self, document, context):
-        self.basename = os.path.basename (document.target)
         self.btsect_environments = []
         self.current_style = "plain"
         self.doc = document
@@ -51,7 +50,7 @@ class Module (rubber.module_interface.Module):
         document.hook_macro ('bibliographystyle', 'a', self.hook_bibliographystyle)
 
     def on_begin_btsect (self, loc):
-        name = self.basename + str (len (self.btsect_environments) + 1)
+        name = self.doc.basename() + str (len (self.btsect_environments) + 1)
         e = Bibliography (self.doc, name)
         e.set_style (self.current_style)
         self.btsect_environments.append (e)

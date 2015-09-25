@@ -176,17 +176,6 @@ class Environment:
 		"""
 		return self.converter.may_produce(name)
 
-	def file_name (self, path):
-		"""
-		Return a path equivalent to the one passed as argument, but relative
-		to the reference working directory.
-		"""
-		full_path = os.path.abspath(path)
-		cwd = os.path.join(self.vars['cwd'], '')
-		if full_path[:len(cwd)] == cwd:
-			return full_path[len(cwd):]
-		return full_path
-
 	def execute (self, prog, env={}, pwd=None, out=None, kpse=0):
 		"""
 		Silently execute an external program. The `prog' argument is the list

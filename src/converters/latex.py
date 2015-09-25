@@ -626,14 +626,12 @@ class LaTeXDep (rubber.depend.Node):
 		'jobname' can be used to specify the job name to something else that
 		the base of the file name.
 		"""
-		name = self.env.find_file(path, ".tex")
-		if not name:
-			msg.error(_("cannot find %s") % name)
-			return 1
+		assert os.path.exists(path)
 		self.sources = []
-		self.vars['source'] = name
-		(src_path, name) = os.path.split(name)
+		self.vars['source'] = path
+		(src_path, name) = os.path.split(path)
 		self.vars['path'] = src_path
+		# derive jobname, which latex uses as the basename for all output
 		(job, self.vars['ext']) = os.path.splitext(name)
 		if jobname is None:
 			self.set_job = 0
@@ -641,6 +639,7 @@ class LaTeXDep (rubber.depend.Node):
 			self.set_job = 1
 			job = jobname
 		self.vars['job'] = job
+		# FIXME what is base supposed to do?
 		if src_path == "":
 			src_path = "."
 			self.vars['base'] = job
@@ -648,7 +647,7 @@ class LaTeXDep (rubber.depend.Node):
 			self.env.path.append(src_path)
 			self.vars['base'] = os.path.join(src_path, job)
 
-		source = self.source()
+		source = path
 		prefix = os.path.join(self.vars["cwd"], "")
 		if source[:len(prefix)] == prefix:
 			comp_name = source[len(prefix):]
@@ -662,7 +661,8 @@ class LaTeXDep (rubber.depend.Node):
 				msg.warn(_("Source path uses special characters, error tracking might get confused."))
 				break
 
-		self.vars['target'] = self.target = os.path.join(prefix, job)
+		# FIXME rename self.target -> self.jobname
+		self.vars['target'] = self.target = job
 
 		self.add_product (self.basename (with_suffix=".dvi"))
 		self.add_product (self.basename (with_suffix=".log"))
@@ -672,12 +672,13 @@ class LaTeXDep (rubber.depend.Node):
 
 		# if SyncTeX support was requested on the command-line, there is nothing in
 		# in the source which would tell us.  add a product for SyncTeX.
+		# FIXME this should not be here
 		self.h_synctex ()
 
 		return 0
 
 	def basename (self, with_suffix=""):
-		return self.target + with_suffix
+		return self.vars["job"] + with_suffix
 
 	def set_primary_product_suffix (self, suffix=".dvi"):
 		"""Change the suffix of the primary product"""
@@ -711,19 +712,6 @@ class LaTeXDep (rubber.depend.Node):
 		Return the main source's complete filename.
 		"""
 		return self.vars['source']
-
-	def abspath (self, name, ref=None):
-		"""
-		Return the absolute path of a given filename. Relative paths are
-		considered relative to the file currently processed, the optional
-		argument "ref" can be used to override the reference file name.
-		"""
-		path = self.vars["cwd"]
-		if ref is None and self.vars.has_key("file"):
-			ref = self.vars["file"]
-		if ref is not None:
-			path = os.path.join(path, os.path.dirname(ref))
-		return os.path.abspath(os.path.join(path, os.path.expanduser(name)))
 
 	#--  LaTeX source parsing  {{{2
 
@@ -864,7 +852,7 @@ class LaTeXDep (rubber.depend.Node):
 
 	def do_clean (self, *args):
 		for file in args:
-			self.removed_files.append(self.abspath(file))
+			self.removed_files.append(file)
 
 	def do_depend (self, *args):
 		for arg in args:
@@ -875,11 +863,10 @@ class LaTeXDep (rubber.depend.Node):
 				msg.warn(_("dependency '%s' not found") % arg, **self.vars)
 
 	def do_make (self, file, *args):
-		file = self.abspath(file)
 		vars = { "target": file }
 		while len(args) > 1:
 			if args[0] == "from":
-				vars["source"] = self.abspath(args[1])
+				vars["source"] = args[1]
 			elif args[0] == "with":
 				vars["name"] = args[1]
 			else:
@@ -894,7 +881,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.modules.register (mod, context = {'arg':mod, 'opt':opt})
 
 	def do_onchange (self, file, cmd):
-		file = self.abspath(file)
 		self.onchange_cmd[file] = cmd
 		self.onchange_md5[file] = md5_file(file)
 
@@ -902,15 +888,14 @@ class LaTeXDep (rubber.depend.Node):
 		self.vars["paper"] = arg
 
 	def do_path (self, name):
-		self.env.path.append(self.abspath(name))
+		self.env.path.append(name)
 
 	def do_read (self, name):
-		path = self.abspath(name)
 		saved_vars = self.vars
 		try:
 			self.vars = Variables (self.vars,
-					{'file':path, 'line':None})
-			with open(path) as file:
+					{ "file": name, "line": None })
+			with open(name) as file:
 				lineno = 0
 				for line in file:
 					lineno += 1
@@ -955,11 +940,11 @@ class LaTeXDep (rubber.depend.Node):
 
 	def do_produce (self, *args):
 		for arg in args:
-			self.add_product (self.abspath (arg))
+			self.add_product(arg)
 
 	def do_watch (self, *args):
 		for arg in args:
-			self.watch_file(self.abspath(arg))
+			self.watch_file(arg)
 
 	#--  Macro handling  {{{2
 
