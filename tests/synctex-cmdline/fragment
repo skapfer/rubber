@@ -1,2 +1,0 @@
-$rubber --synctex doc
-$rubber --synctex --clean doc
