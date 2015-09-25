@@ -71,34 +71,37 @@ EOF
 
     rubber="python usrbinrubber.py $VERBOSE"
 
+    if test -r document; then
+        read doc < document
+    else
+        doc=doc
+    fi
+    if test -r arguments; then
+        read arguments < arguments
+    fi
+
     if [ -e fragment ]; then
         # test brings their own code
         . ./fragment
     else
         # default test code:  try to build two times, clean up.
-        if test -r document; then
-            read doc < document
-        else
-            doc=doc
-        fi
-        if test -r arguments; then
-            read arguments < arguments
-        fi
-
         echo Running rubber $arguments $doc ...
 
         $rubber $arguments         $doc
+    fi
 
-        if $KEEP; then
-            echo "Keeping ${tmpdir}."
-            exit 1
-        fi
+    if $KEEP; then
+        echo "Keeping ${tmpdir}."
+        exit 1
+    fi
 
+    if ! [ -e fragment ]; then
+        # default test code:  try to build two times, clean up.
         $rubber $arguments         $doc
         $rubber $arguments --clean $doc
-
-        unset doc arguments
     fi
+
+    unset doc arguments
 
     rm -r rubber
     rm usrbinrubber.py
