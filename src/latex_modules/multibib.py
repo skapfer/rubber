@@ -64,6 +64,7 @@ class Module (rubber.module_interface.Module):
 
     def hook_newcites (self, loc, name):
         bib = self.bibs [name] = Bibliography (self.doc, name)
+        self.doc.add_product (name + ".aux")
         self.doc.hook_macro('bibliography' + name, 'a',
                             bib.hook_bibliography)
         self.doc.hook_macro('bibliographystyle' + name, 'a',

@@ -51,6 +51,7 @@ class Module (rubber.module_interface.Module):
 
     def on_begin_btsect (self, loc):
         name = self.doc.basename() + str (len (self.btsect_environments) + 1)
+        self.doc.add_product (name + ".aux")
         e = Bibliography (self.doc, name)
         e.set_style (self.current_style)
         self.btsect_environments.append (e)

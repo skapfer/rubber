@@ -207,6 +207,9 @@ class Bibliography (rubber.depend.Node):
 		This method actually runs BibTeX with the appropriate environment
 		variables set.
 		"""
+		if not os.path.exists(self.aux):
+			msg.info (_("Input file for BibTeX does not yet exist."), pkg="biblio")
+			return True
 		msg.progress(_("running BibTeX on %s") % self.aux)
 		doc = {}
 		if len(self.bib_path) != 1:
