@@ -574,7 +574,6 @@ class LaTeXDep (rubber.depend.Node):
 			"begin": ("a", self.h_begin),
 			"end": ("a", self.h_end),
 			"pdfoutput": ("", self.h_pdfoutput),
-			"synctex": ("", self.h_synctex),
 			"input" : ("", self.h_input),
 			"include" : ("a", self.h_include),
 			"includeonly": ("a", self.h_includeonly),
@@ -668,11 +667,7 @@ class LaTeXDep (rubber.depend.Node):
 
 		# always expect a primary aux file
 		self.new_aux_file (self.basename (with_suffix=".aux"))
-
-		# if SyncTeX support was requested on the command-line, there is nothing in
-		# in the source which would tell us.  add a product for SyncTeX.
-		# FIXME this should not be here
-		self.h_synctex ()
+		self.add_product (self.basename (with_suffix=".synctex.gz"))
 
 		return 0
 
@@ -1001,13 +996,6 @@ class LaTeXDep (rubber.depend.Node):
 				self.modules['pdftex'].mode_pdf()
 			else:
 				self.modules.register('pdftex')
-
-	def h_synctex (self, loc=None):
-		"""
-		Called when \\synctex=1 is found.  Make sure rubber cleans up after
-		SyncTeX in case of --clean.
-		"""
-		self.add_product (self.basename (with_suffix=".synctex.gz"))
 
 	def h_input (self, loc):
 		"""
