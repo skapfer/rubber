@@ -26,7 +26,7 @@ interesting .bbl, and also a .bbl log.
 import os.path
 import rubber.util
 from rubber.util import _, msg
-from rubber.biblio import Bibliography
+import rubber.biblio
 
 class Module (rubber.module_interface.Module):
     def __init__ (self, document, context):
@@ -45,7 +45,7 @@ class Module (rubber.module_interface.Module):
     def on_begin_btsect (self, loc):
         name = self.doc.basename() + str (len (self.btsect_environments) + 1)
         self.doc.add_product (name + ".aux")
-        e = Bibliography (self.doc, name)
+        e = rubber.biblio.BibTeXDep (self.doc, name)
         e.set_style (self.current_style)
         self.btsect_environments.append (e)
 
@@ -60,5 +60,4 @@ class Module (rubber.module_interface.Module):
         rubber.util.verbose_remove ("btaux.aux", pkg = "bibtopic")
         rubber.util.verbose_remove ("btbbl.aux", pkg = "bibtopic")
         for e in self.btsect_environments:
-            e.clean ()
             rubber.util.verbose_remove (e.aux, pkg = "bibtopic")

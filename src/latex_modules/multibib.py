@@ -16,13 +16,10 @@ argument, they apply to all bibliographies.
 """
 
 import os, os.path, re
-
 from rubber import _, msg
 import rubber.util
-from rubber.biblio import Bibliography
+import rubber.biblio
 import rubber.module_interface
-
-# FIXME: will be very simplified by the new depend process
 
 re_optarg = re.compile(r'\((?P<list>[^()]*)\) *')
 
@@ -57,27 +54,22 @@ class Module (rubber.module_interface.Module):
 
         for name in names:
             if name in self.bibs:
-                self.bibs [name].command (cmd, args)
+                self.bibs[name].bib_command (cmd, args)
             elif name in self.commands:
                 self.commands [name].append ([cmd, args])
             else:
                 self.commands [name] = [[cmd, args]]
 
     def hook_newcites (self, loc, name):
-        bib = self.bibs [name] = Bibliography (self.doc, name)
         self.doc.add_product (name + ".aux")
+        bib = self.bibs [name] = rubber.biblio.BibTeXDep (self.doc, name)
         self.doc.hook_macro('bibliography' + name, 'a',
                             bib.hook_bibliography)
         self.doc.hook_macro('bibliographystyle' + name, 'a',
                             bib.hook_bibliographystyle)
         for cmd in self.defaults:
-            bib.command(*cmd)
+            bib.bib_command (*cmd)
         if name in self.commands:
             for cmd in self.commands [name]:
-                bib.command(*cmd)
+                bib.bib_command (*cmd)
         msg.log(_("bibliography %s registered") % name, pkg='multibib')
-
-    def clean (self):
-        for bib in self.bibs.keys ():
-            for suffix in '.aux', '.bbl', '.blg':
-                rubber.util.verbose_remove (bib + suffix, pkg='multibib')

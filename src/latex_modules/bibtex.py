@@ -8,15 +8,21 @@ This module is a special one: it is triggered by the macros \\bibliography and
 \\bibliographystyle and not as a package, so the main system knows about it.
 The module provides the following commands:
 
+  crossrefs FIXME
   path <dir> = adds <dir> to the search path for databases
   stylepath <dir> = adds <dir> to the search path for styles
+  tool FIXME
 """
 
 import rubber.biblio
 import rubber.module_interface
 
-class Module (rubber.biblio.Bibliography, rubber.module_interface.Module):
-    def __init__ (self, document, context):
-        super (Module, self).__init__ (document)
-        document.hook_macro('bibliography', 'a', self.hook_bibliography)
-        document.hook_macro('bibliographystyle', 'a', self.hook_bibliographystyle)
+class Module (rubber.module_interface.Module):
+	def __init__ (self, document, context):
+		self.dep = rubber.biblio.BibTeXDep (document, document.basename ())
+
+		document.hook_macro ("bibliography", "a", self.dep.hook_bibliography)
+		document.hook_macro ("bibliographystyle", "a", self.dep.hook_bibliographystyle)
+
+	def command (self, cmd, args):
+		self.dep.bib_command (cmd, args)

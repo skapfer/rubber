@@ -1,0 +1,22 @@
+% rubber: module bibtex
+% rubber: bibtex.path m
+% rubber: module multibib
+% rubber: multibib.path (multibiba) a
+% rubber: multibib.path (multibibb) b
+\documentclass{article}
+\usepackage{multibib}
+\newcites{multibiba}{bibA title}
+\newcites{multibibb}{bibB title}
+\begin{document}
+Normal cite: \cite{ref}.
+\bibliographystyle{alpha}
+\bibliography{biblio.bib}
+
+\bibliographystylemultibiba{plain}
+\bibliographymultibiba{biblioa.bib}
+Cite from bib A: \citemultibiba{refa}.
+
+\bibliographystylemultibibb{alpha}
+\bibliographymultibibb{bibliob.bib}
+Cite from bib B: \citemultibibb{refb}.
+\end{document}

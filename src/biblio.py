@@ -23,6 +23,9 @@ class BibToolDep (rubber.depend.Node):
 		self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
 		self.devnull = rubber.util.devnull ()
 
+	def bib_command (self, cmd, args):
+		getattr (self, "do_"+cmd) (*args)
+
 	def do_path (self, path):
 		self.bib_paths.insert (0, path)
 
@@ -55,19 +58,17 @@ class BibToolDep (rubber.depend.Node):
 re_error = re.compile(
 	"---(line (?P<line>[0-9]+) of|while reading) file (?P<file>.*)")
 
-class Bibliography (BibToolDep):
+class BibTeXDep (BibToolDep):
 	"""
 	This class represents a single bibliography for a document.
 	"""
-	def __init__ (self, document, aux_basename=None):
+	def __init__ (self, document, aux_basename):
 		"""
 		Initialise the bibiliography for the given document. The base name is
 		that of the aux file from which citations are taken.
 		"""
-		super (Bibliography, self).__init__ (document.set)
+		super (BibTeXDep, self).__init__ (document.set)
 
-		if aux_basename == None:
-			aux_basename = document.basename()
 		self.log = document.basename(with_suffix=".log")
 		self.aux = aux_basename + ".aux"
 		self.bbl = aux_basename + ".bbl"
@@ -100,11 +101,11 @@ class Bibliography (BibToolDep):
 		self.bst_paths.insert (0, path)
 
 	def do_sorted (self, mode):
-		# ignored option
+		# this option is ignored for backwards compatibility
 		pass
 
 	def do_tool (self, tool):
-		# FIXME document this
+		# FIXME document this in user documentation
 		self.tool = tool
 
 	def hook_bibliography (self, loc, bibs):
