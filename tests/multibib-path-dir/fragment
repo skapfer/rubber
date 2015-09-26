@@ -3,8 +3,8 @@ mv biblioa.bib a
 mv bibliob.bib b
 mv biblio.bib m
 $rubber doc.tex
-[ -r biblioa.bbl ]
-[ -r bibliob.bbl ]
+[ -r multibiba.bbl ]
+[ -r multibibb.bbl ]
 [ -r doc.bbl ]
 $rubber --clean doc.tex
 mv ?/*.bib .
