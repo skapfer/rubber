@@ -1,0 +1,7 @@
+mkdir sub
+mv biblio.bib sub
+$rubber doc.tex
+[ -r doc.bbl ]
+$rubber --clean doc.tex
+mv sub/biblio.bib .
+rmdir sub

@@ -63,12 +63,6 @@ class Module (rubber.module_interface.Module):
     def hook_bibliographystyle (self, loc, name):
         self.current_style = name
 
-    def pre_compile (self):
-        for bib in self.btsect_environments:
-            if not bib.pre_compile ():
-                return False
-        return True
-
     def clean (self):
         remove ("btaux.aux")
         remove ("btbbl.aux")

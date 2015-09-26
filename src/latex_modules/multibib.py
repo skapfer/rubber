@@ -76,12 +76,6 @@ class Module (rubber.module_interface.Module):
                 bib.command(*cmd)
         msg.log(_("bibliography %s registered") % name, pkg='multibib')
 
-    def pre_compile (self):
-        for bib in self.bibs.values ():
-            if not bib.pre_compile():
-                return False
-        return True
-
     def clean (self):
         for bib in self.bibs.keys ():
             for suffix in '.aux', '.bbl', '.blg':

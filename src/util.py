@@ -426,3 +426,35 @@ def devnull ():
 	if not devnull_fp:
 		devnull_fp = open(os.devnull, 'rw')
 	return devnull_fp
+
+def explode_path (name = "PATH"):
+	"""
+	Parse an environment variable into a list of paths, and return it as an array.
+	"""
+	path = os.getenv (name)
+	if path is not None:
+		return path.split (":")
+	else:
+		return []
+
+def find_resource (name, suffix = "", paths = []):
+	"""
+	find the indicated file, mimicking what latex would do:
+	tries adding a suffix such as ".bib", or looking in the specified paths.
+	if unsuccessful, returns None.
+	"""
+	name = name.strip ()
+
+	if os.path.exists (name):
+		return name
+	elif suffix != "" and os.path.exists (name + suffix):
+		return name + suffix
+
+	for path in paths:
+		fullname = os.path.join (path, name)
+		if os.path.exists (fullname):
+			return fullname
+		elif suffix != "" and os.path.exists (fullname + suffix):
+			return fullname + suffix
+
+	return None

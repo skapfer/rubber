@@ -12,104 +12,39 @@ import rubber.depend
 import os, os.path
 import re
 import string
+import subprocess
 
-def find_resource (name, suffix="", environ_path=None):
-	"""
-	find the indicated file, mimicking what latex would do:
-	tries adding a suffix such as ".bib",
-	or looking in paths (set environ_path to things like "BIBINPUTS")
-	if unsuccessful, returns None.
-	"""
-	name = name.strip ()
-	from_environ = []
-	if environ_path is not None:
-		environ_path = os.getenv (environ_path)
-		if environ_path is not None:
-			from_environ = environ_path.split (":")
+class BibToolDep (rubber.depend.Node):
+	def __init__ (self, set):
+		super (BibToolDep, self).__init__ (set)
+		self.tool = "bibtex"
+		self.environ = os.environ.copy ()
+		self.bib_paths = rubber.util.explode_path ("BIBINPUTS")
+		self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
+		self.devnull = rubber.util.devnull ()
 
-	for path in [ "." ] + from_environ:
-		fullname = os.path.join (path, name)
-		if os.path.exists (fullname):
-			return fullname
-		elif suffix != "" and os.path.exists (fullname + suffix):
-			return fullname + suffix
-	return None
-
-class BibLatexTool (rubber.depend.Shell):
-	"""
-	Shared code between bibtex and biber support.
-	"""
-	def __init__ (self, set, doc, tool):
-		self.doc = doc
-		assert tool in [ "biber", "bibtex" ]
-		self.tool = tool
-		super (BibLatexTool, self).__init__ (set, command=[ None, doc.basename () ])
-		for suf in [ ".bbl", ".blg", ".run.xml" ]:
-			self.add_product (doc.basename (with_suffix=suf))
-
-	def add_bib_resource (self, doc, opt, name):
-		"""new bib resource discovered"""
-		msg.log (_("bibliography resource discovered: %s" % name), pkg="biblio")
-		options = rubber.util.parse_keyval (opt)
-
-		# If the file name looks like it contains a control sequence
-		# or a macro argument, forget about this resource.
-		if name.find('\\') > 0 or name.find('#') > 0:
-			return
-
-		# skip Biber remote resources
-		if "location" in options and options["location"] == "remote":
-			return
-
-		filename = find_resource (name, suffix=".bib", environ_path="BIBINPUTS")
-		if filename is None:
-			msg.error (_ ("cannot find bibliography resource %s") % name, pkg="biblio")
-		else:
-			self.add_source (filename)
-
-	def add_bibliography (self, doc, names):
-		for bib in names.split (","):
-			self.add_bib_resource (doc, None, bib.strip ())
+	def do_path (self, path):
+		self.bib_paths.insert (0, path)
 
 	def run (self):
 		# check if the input file exists. if not, refuse to run.
 		if not os.path.exists (self.sources[0]):
-			msg.info (_("Input file for %s does not yet exist.") % self.tool, pkg="biblio")
+			msg.info (_("input file for %s does not yet exist, deferring")
+				% self.tool, pkg="biblio")
 			return True
+
 		# command might have been updated in the mean time, so get it now
-		# FIXME make tool configurable
-		self.command[0] = self.tool
-		if super (BibLatexTool, self).run ():
-			return True
-		msg.warn (_("There were errors running %s.") % self.tool, pkg="biblio")
-		return False
+		self.environ["BIBINPUTS"] = ":".join (self.bib_paths)
+		self.environ["BSTINPUTS"] = ":".join (self.bst_paths)
+		command = self.build_command ()
 
-class BibTeX (BibLatexTool):
-	"""
-	Node: make .bbl from .aux using BibTeX (or BibTeX8, or BibTeXu) for use
-	with BibLaTeX
-	"""
-	def __init__ (self, set, doc, tool):
-		super (BibTeX, self).__init__ (set, doc, tool)
-		doc.hook_macro ("bibliography", "a", self.add_bibliography)
-		self.add_source (doc.basename (with_suffix=".aux"), track_contents=True)
-		doc.add_product (doc.basename (with_suffix="-blx.bib"))
-		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
-
-	def run (self):
-		self.command[1] = self.sources[0]
-		return super (BibTeX, self).run ()
-
-class Biber (BibLatexTool):
-	"""Node: make .bbl from .bcf using Biber"""
-	def __init__ (self, set, doc):
-		super (Biber, self).__init__ (set, doc, "biber")
-		for macro in ("addbibresource", "addglobalbib", "addsectionbib"):
-			doc.hook_macro (macro, "oa", self.add_bib_resource)
-		doc.hook_macro ("bibliography", "a", self.add_bibliography)
-		self.add_source (doc.basename (with_suffix=".bcf"), track_contents=True)
-		doc.add_product (doc.basename (with_suffix=".bcf"))
-		doc.add_source (doc.basename (with_suffix=".bbl"), track_contents=True)
+		msg.progress (_("running: %s") % " ".join (command))
+		process = subprocess.Popen (command, stdin = self.devnull,
+			stdout = self.devnull, env = self.environ)
+		if process.wait() != 0:
+			msg.error (_("There were errors running %s.") % self.tool, pkg="biblio")
+			return False
+		return True
 
 
 # The regular expression that identifies errors in BibTeX log files is heavily
@@ -120,7 +55,7 @@ class Biber (BibLatexTool):
 re_error = re.compile(
 	"---(line (?P<line>[0-9]+) of|while reading) file (?P<file>.*)")
 
-class Bibliography (rubber.depend.Node):
+class Bibliography (BibToolDep):
 	"""
 	This class represents a single bibliography for a document.
 	"""
@@ -130,7 +65,7 @@ class Bibliography (rubber.depend.Node):
 		that of the aux file from which citations are taken.
 		"""
 		super (Bibliography, self).__init__ (document.set)
-		self.doc = document
+
 		if aux_basename == None:
 			aux_basename = document.basename()
 		self.log = document.basename(with_suffix=".log")
@@ -142,14 +77,16 @@ class Bibliography (rubber.depend.Node):
 		self.add_source (self.aux, track_contents=True)
 		document.add_source (self.bbl, track_contents=True)
 
-		cwd = document.vars["cwd"]
-		self.bib_path = [cwd, document.vars["path"]]
-		self.bst_path = [cwd]
-
 		self.bst_file = None
 		self.set_style ("plain")
 		self.db = {}
 		self.crossrefs = None
+
+	def build_command (self):
+		ret = [ self.tool ]
+		if self.crossrefs is not None:
+			ret += [ "-min-crossrefs=" + self.crossrefs ]
+		return ret + [ self.aux ]
 
 	#
 	# The following method are used to specify the various datafiles that
@@ -159,19 +96,20 @@ class Bibliography (rubber.depend.Node):
 	def do_crossrefs (self, number):
 		self.crossrefs = number
 
-	def do_path (self, path):
-		self.bib_path.append(path)
-
 	def do_stylepath (self, path):
-		self.bst_path.append(path)
+		self.bst_paths.insert (0, path)
 
 	def do_sorted (self, mode):
 		# ignored option
 		pass
 
+	def do_tool (self, tool):
+		# FIXME document this
+		self.tool = tool
+
 	def hook_bibliography (self, loc, bibs):
 		for name in string.split (bibs, ","):
-			filename = find_resource (name, suffix=".bib", environ_path="BIBINPUTS")
+			filename = rubber.util.find_resource (name, suffix = ".bib", paths = self.bib_paths)
 			if filename is not None:
 				self.db[name] = filename
 				self.add_source (filename, track_contents=True)
@@ -191,41 +129,13 @@ class Bibliography (rubber.depend.Node):
 			self.remove_source (self.bst_file)
 			self.bst_file = None
 
-		filename = find_resource (name, suffix=".bst", environ_path="BSTINPUTS")
+		filename = rubber.util.find_resource (name, suffix = ".bst", paths = self.bst_paths)
 		if filename is not None:
 			self.bst_file = filename
 			self.add_source (filename, track_contents=True)
 		elif name not in [ "plain", "alpha" ]:
 			# do not complain about default styles coming with bibtex
 			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
-
-	def pre_compile (self):
-		return True
-
-	def run (self):
-		"""
-		This method actually runs BibTeX with the appropriate environment
-		variables set.
-		"""
-		if not os.path.exists(self.aux):
-			msg.info (_("Input file for BibTeX does not yet exist."), pkg="biblio")
-			return True
-		msg.progress(_("running BibTeX on %s") % self.aux)
-		doc = {}
-		if len(self.bib_path) != 1:
-			doc["BIBINPUTS"] = string.join(self.bib_path +
-				[os.getenv("BIBINPUTS", "")], ":")
-		if len(self.bst_path) != 1:
-			doc["BSTINPUTS"] = string.join(self.bst_path +
-				[os.getenv("BSTINPUTS", "")], ":")
-		if self.crossrefs is None:
-			cmd = ["bibtex"]
-		else:
-			cmd = ["bibtex", "-min-crossrefs=" + self.crossrefs]
-		if self.doc.env.execute (['bibtex', self.aux], doc):
-			msg.info(_("There were errors making the bibliography."))
-			return False
-		return True
 
 	#
 	# The following method extract information from BibTeX log files.
