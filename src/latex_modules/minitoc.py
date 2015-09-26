@@ -15,6 +15,7 @@ the produced files is quite complex (see shortext option for example).
 import os.path
 
 from rubber import _, msg
+from rubber.util import verbose_remove
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
@@ -26,7 +27,5 @@ class Module (rubber.module_interface.Module):
             with open (self.maf, "r") as list:
                 for name in list:
                     name = name.rstrip ()
-                    msg.log (_ ("removing %s") % name, pkg='minitoc')
-                    os.remove (name)
-            msg.log (_ ("removing %s") % self.maf, pkg='minitoc')
-            os.remove (self.maf)
+                    verbose_remove (name, pkg = "minitoc")
+            verbose_remove (self.maf, pkg = "minitoc")

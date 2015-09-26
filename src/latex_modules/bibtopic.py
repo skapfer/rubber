@@ -28,13 +28,6 @@ import rubber.util
 from rubber.util import _, msg
 from rubber.biblio import Bibliography
 
-def remove (path):
-    try:
-        os.remove (path)
-        msg.log(_("removing {}").format(msg.simplify (path)), pkg="bibtopic")
-    except OSError:
-        pass
-
 class Module (rubber.module_interface.Module):
     def __init__ (self, document, context):
         self.btsect_environments = []
@@ -64,8 +57,8 @@ class Module (rubber.module_interface.Module):
         self.current_style = name
 
     def clean (self):
-        remove ("btaux.aux")
-        remove ("btbbl.aux")
+        rubber.util.verbose_remove ("btaux.aux", pkg = "bibtopic")
+        rubber.util.verbose_remove ("btbbl.aux", pkg = "bibtopic")
         for e in self.btsect_environments:
             e.clean ()
-            remove (e.aux)
+            rubber.util.verbose_remove (e.aux, pkg = "bibtopic")

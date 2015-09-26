@@ -221,9 +221,7 @@ class Node (object):
                 super (class, self).clean ()
 		"""
 		for file in self.products:
-			if os.path.exists(file):
-				msg.log(_("removing %s") % file)
-				os.remove(file)
+			rubber.util.verbose_remove (file)
 		self.date = None
 
 	def leaves (self):

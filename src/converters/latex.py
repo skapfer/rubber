@@ -1271,9 +1271,7 @@ class LaTeXDep (rubber.depend.Node):
 		"""
 		super (LaTeXDep, self).clean ()
 		for file in self.removed_files:
-			if os.path.exists(file):
-				msg.log(_("removing %s") % file, pkg='latex')
-				os.remove(file)
+			rubber.util.verbose_remove (file, pkg = "latex")
 		msg.log(_("cleaning additional files..."), pkg='latex')
 		for mod in self.modules.objects.values():
 			mod.clean()
@@ -1329,9 +1327,7 @@ class LaTeXDep (rubber.depend.Node):
 		"""
 		for suffix in list:
 			file = self.basename (with_suffix=suffix)
-			if os.path.exists(file):
-				msg.log(_("removing %s") % file, pkg='latex')
-				os.remove(file)
+			rubber.util.verbose_remove (file, pkg = "latex")
 
 class ScriptModule (rubber.module_interface.Module):
 	# TODO: the constructor is not conformant with the one of the parent class.

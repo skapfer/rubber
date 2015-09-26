@@ -458,3 +458,10 @@ def find_resource (name, suffix = "", paths = []):
 			return fullname + suffix
 
 	return None
+
+def verbose_remove (path, **kwargs):
+	try:
+		os.remove (path)
+		msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
+	except OSError:
+		pass

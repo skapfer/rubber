@@ -18,6 +18,7 @@ argument, they apply to all bibliographies.
 import os, os.path, re
 
 from rubber import _, msg
+import rubber.util
 from rubber.biblio import Bibliography
 import rubber.module_interface
 
@@ -79,7 +80,4 @@ class Module (rubber.module_interface.Module):
     def clean (self):
         for bib in self.bibs.keys ():
             for suffix in '.aux', '.bbl', '.blg':
-                file = bib + suffix
-                if os.path.exists(file):
-                    msg.log(_("removing %s") % file, pkg='multibib')
-                    os.remove(file)
+                rubber.util.verbose_remove (bib + suffix, pkg='multibib')
