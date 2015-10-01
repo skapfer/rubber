@@ -154,11 +154,6 @@ Compress the final document (in @command{bzip2} format). This option is
 equivalent to saying @option{-o bzip2} after all other options. It is
 incompatible with the option @command{--gzip}.
 
-@item --cache
-Use the experimental cache system. This uses a file @file{rubber.cache} in the
-current directory to store the results of parsing and dependency analysis, so
-that subsequent compilations are faster.
-
 @item --clean
 Remove all files produced by the compilation, instead of building the
 document. This option is present in rubber only. It applies to the compilation

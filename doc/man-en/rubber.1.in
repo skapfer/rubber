@@ -57,13 +57,6 @@ This is equivalent to saying
 .I \-o bzip2
 after all other options.
 .TP
-.B \-\-cache
-Use the experimental cache system.
-This uses a file named
-.I rubber.cache
-in the current directory to store the results of parsing and dependency
-analysis, so that subsequent compilations are faster.
-.TP
 .B \-\-clean
 Remove all files produced by the compilation, instead
 of building the document.

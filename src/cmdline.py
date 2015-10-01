@@ -43,7 +43,6 @@ This is Rubber version %s.
 usage: rubber [options] sources...
 available options:
   -b, --bzip2              compress the final document with bzip2
-      --cache              use the (experimental) caching mechanism
       --clean              remove produced files instead of compiling
   -c, --command=CMD        run the directive CMD before parsing (see man page)
   -e, --epilogue=CMD       run the directive CMD after parsing
@@ -95,7 +94,7 @@ available options:
 				else:
 					self.compress = "bzip2"
 			elif opt == "--cache":
-				print 'warning: cache is currently disabled'
+				msg.warn (_("warning: ignoring option %s") % opt)
 			elif opt == "--clean":
 				self.clean = True
 			elif opt in ("-c", "--command"):
