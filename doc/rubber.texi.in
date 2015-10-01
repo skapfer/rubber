@@ -276,6 +276,9 @@ This is equivalent to setting the variable @command{src-specials} to
 @itemx --short
 Display LaTeX's error messages in a compact form (one error per line).
 
+@item --synctex
+Enable SyncTeX support in the LaTeX run.
+
 @item -I <dir>
 @itemx --texpath <dir>
 Add the specified directory to the search path of TeX files.
@@ -445,6 +448,18 @@ Adds the specified directory to the search path for TeX (and Rubber). The
 name of the directory is everything that follows the spaces after
 @samp{path}.
 
+@item produce <file>
+Declares that the LaTeX run will create or update the specified file(s).
+This implies that Rubber will check if the file contents changed and re-make
+other files derived from it; it also implies that rubber --clean will
+remove the indicated file.  @command{produce} may be combined with @command{watch}.
+For example, Rubber's built-in behavior of recompiling the main LaTeX source
+until the auxiliary file's contents no longer changes may be achieved using
+@example
+    produce document.aux
+    watch document.aux
+@end example
+
 @item read <file>
 Read the specified file of directives. The file must contain one directive per
 line. Empty lines and lines that begin with @samp{%} are ignored.
@@ -466,6 +481,9 @@ possibly empty. For details on the existing variables and their meaning, see
 Mark the document as requiring external programs (shell-escape or write18).
 Rubber does not actually enable this unless called with the option
 @option{--unsafe}.
+
+@item synctex
+Enable SyncTeX support in the LaTeX run.
 
 @item watch <file>
 Watch the specified file for changes. If the contents of this file has
@@ -547,7 +565,7 @@ extension.
 * Compiler choice::    Choosing which LaTeX compiler to use.
 @end menu
 
-@node Packages, BibTeX, Modules, Modules
+@node Packages, BibLaTeX, Modules, Modules
 @section Supported Packages
 
 For every package that a document uses, Rubber looks for a module of
@@ -566,8 +584,12 @@ triggers a recompilation.
 This module handles Beamer's extra files the same way as other tables
 of contents.
 
+@item biblatex
+Takes care of processing the document's bibliographies with Biber or BibTeX
+when needed.  For details, see @ref{BibLaTeX}.
+
 @item bibtex
-@itemx biblatex
+@itemx bibtopic
 @itemx multibib
 Takes care of processing the document's bibliographies with BibTeX when
 needed. The @command{bibtex} module is automatically loaded if the document
@@ -610,9 +632,6 @@ contents.
 Adds the files included with @code{\verbatiminput} and similar macros to the
 list of dependencies.
 
-@item natbib
-May cause an extra compilation to solve references.
-
 @item ltxtable
 Add dependencies for files inserted via the @code{ltxtable} LaTeX package.
 
@@ -623,11 +642,27 @@ changed.
 @end vtable
 
 @menu
+* BibLaTeX::    Details on BibLaTeX support.
 * BibTeX::      Details on BibTeX support.
 * Indexing::    Details on Makeindex support.
 @end menu
 
-@node BibTeX, Indexing, Packages, Packages
+@node BibLaTeX, BibTeX, Packages, Packages
+@subsection BibLaTeX support
+
+If the document loads the package @code{biblatex}, Rubber enables
+BibLaTeX support.  Rubber will extract the appropriate external bibliography
+tool such as @command{biber} or @command{bibtex} from the @code{backend}
+option to the @code{biblatex} package and invoke it as needed.
+
+@ftable @command
+@item biblatex.path <directory>
+Add the specified directory to the seach path for BibTeX database files
+(@file{.bib} files).  The directory will be passed down to the bibliography
+tool in the environment variable @command{BIBINPUTS}.
+@end ftable
+
+@node BibTeX, Indexing, BibLaTeX, Packages
 @subsection BibTeX support
 
 If the document contains a call to @code{\bibliography} or
@@ -644,11 +679,16 @@ of the referenced entry in the citation list. This sets the option
 
 @item bibtex.path <directory>
 Add the specified directory to the seach path for BibTeX database files
-(@file{.bib} files).
+(@file{.bib} files).  The directory will be passed down to the bibliography
+tool in the environment variable @command{BIBINPUTS}.
 
 @item bibtex.stylepath <directory>
 Add the specified directory  to  the  search  path  for  BibTeX style files
 (@file{.bst} files).
+
+@item bibtex.tool <command>
+Call the specified command instead of @command{bibtex} to process the .aux file,
+for example @command{bibtex8}.
 @end ftable
 
 Multiple bibliographies can be handled by the @command{multibib} package. The
