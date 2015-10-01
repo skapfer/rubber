@@ -1,10 +1,7 @@
 Makefile
-rubber.spec
 settings.py
 *.pyc
 src/version.py
-doc/rubber.info
-doc/rubber.texi
 build
 build-stamp
 in
