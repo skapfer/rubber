@@ -350,6 +350,9 @@ class LogCheck (object):
 				parsing = 1
 				continue
 
+			if line[:17] == "Output written on":
+				continue
+
 			# Long warnings
 
 			if prefix is not None:
