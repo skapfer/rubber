@@ -666,9 +666,9 @@ applies to.
 .SH BUGS
 There are surely a some...
 .PP
-This page documents Rubber version 1.2.
-The program and this man-page are maintained by Sebastian Kapfer <sebastian.kapfer@fau.de>.
-The homepage for Rubber can be found at https://launchpad.net/rubber.
+This page documents Rubber version @@version@@.
+The program and this man-page are maintained by @@maintainer@@ <@@maintainer_email@@>.
+The homepage for Rubber can be found at @@url@@.
 .
 .SH SEE ALSO
 The full documentation for

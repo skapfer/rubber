@@ -72,9 +72,9 @@ toutes les lignes du fichier log qui contiennent "Warning".
 .SH BUGS
 Il y en a surement quelques uns...
 
-Cette page se rapporte à la version 1.2 de Rubber. Le programme et cette
-documentation sont maintenus par Sebastian Kapfer <sebastian.kapfer@fau.de>.
-La page web du programme se trouve à l'adresse https://launchpad.net/rubber.
+Cette page se rapporte à la version @@version@@ de Rubber. Le programme et cette
+documentation sont maintenus par @@maintainer@@ <@@maintainer_email@@>.
+La page web du programme se trouve à l'adresse @@url@@.
 
 .SH VOIR AUSSI
 La documentation complète de

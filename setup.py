@@ -151,6 +151,11 @@ if len(sys.argv) > 1:
 		make_files(sub, [
 			"Makefile",
 			"doc/rubber.texi",
+			"doc/man-en/rubber.1",
+			"doc/man-en/rubber-info.1",
+			"doc/man-fr/rubber.1",
+			"doc/man-fr/rubber-info.1",
+			"doc/rubber.texi",
 			"src/version.py"])
 		print ("""
 Rubber is now configured. It will use the following Python interpreter:
