@@ -149,7 +149,6 @@ if len(sys.argv) > 1:
 	elif cmd == "config":
 		sub = settings.sub
 		make_files(sub, [
-			"rubber.spec",
 			"Makefile",
 			"doc/rubber.texi",
 			"src/version.py"])
