@@ -17,11 +17,11 @@ clean: clean-local
 	cd doc && $(MAKE) clean
 
 clean-local:
-	rm -rf build dist MANIFEST tests/tmp
+	rm -rf build dist tests/tmp
 	find . \( -name '*~' -or -name '*.py[co]' \) -delete
 
 distclean: clean-local
-	rm -f rubber.spec Makefile settings.py src/version.py doc/rubber.texi
+	@python@ setup.py rm_sub_files
 	cd doc && $(MAKE) distclean
 
 install:
@@ -30,7 +30,6 @@ install:
 ###  distribution-related targets
 
 sdist:
-	rm -f MANIFEST
 	@python@ setup.py sdist
 
 deb: sdist

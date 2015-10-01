@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: noet:ts=4
 #
 # This is the setup script for Rubber. It acts both as a part of the
 # configuration script a la autoconf and as a setup script a la Distutils.
@@ -141,22 +142,30 @@ Metapost compilation).\
 # - `inst' to install the package according to the configuration's settings
 #          (here, the install prefix is the next argument)
 
+sub_files = [
+    "Makefile",
+    "doc/rubber.texi",
+    "doc/man-en/rubber.1",
+    "doc/man-en/rubber-info.1",
+    "doc/man-fr/rubber.1",
+    "doc/man-fr/rubber-info.1",
+    "doc/rubber.texi",
+    "src/version.py" ]
+
 if len(sys.argv) > 1:
 	cmd = sys.argv[1]
 	if cmd == "check":
 		ret = do_check()
 		sys.exit(ret)
+	elif cmd == "rm_sub_files":
+		for filename in sub_files:
+			try:
+				os.remove(filename)
+			except:
+				pass
 	elif cmd == "config":
 		sub = settings.sub
-		make_files(sub, [
-			"Makefile",
-			"doc/rubber.texi",
-			"doc/man-en/rubber.1",
-			"doc/man-en/rubber-info.1",
-			"doc/man-fr/rubber.1",
-			"doc/man-fr/rubber-info.1",
-			"doc/rubber.texi",
-			"src/version.py"])
+		make_files(sub, sub_files)
 		print ("""
 Rubber is now configured. It will use the following Python interpreter:
     %s
