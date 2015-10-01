@@ -85,9 +85,9 @@ EOF
         . ./fragment
     else
         # default test code:  try to build two times, clean up.
-        echo Running rubber $arguments $doc ...
+        echo "Running rubber $arguments $doc ..."
 
-        $rubber $arguments         $doc
+        $rubber $arguments "$doc"
     fi
 
     if $KEEP; then
@@ -104,8 +104,8 @@ EOF
 
     if ! [ -e fragment ]; then
         # default test code:  try to build two times, clean up.
-        $rubber $arguments         $doc
-        $rubber $arguments --clean $doc
+        $rubber $arguments         "$doc"
+        $rubber $arguments --clean "$doc"
     fi
 
     unset doc arguments
