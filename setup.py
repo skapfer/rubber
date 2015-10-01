@@ -114,9 +114,9 @@ makeindex. A good number of standard packages are supported, including
 graphics/graphicx (with automatic conversion between various formats and
 Metapost compilation).\
 """,
-		author = "Emmanuel Beffara",
-		author_email = "manu@beffara.org",
-		url = "http://rubber.sourceforge.net/",
+		author = settings.sub["maintainer"],
+		author_email = settings.sub["maintainer_email"],
+		url = settings.sub["url"],
 		license = "GPL",
 		packages = ["rubber", "rubber.converters", "rubber.latex_modules"],
 		package_dir = {"rubber": "src"},
