@@ -9,83 +9,82 @@ rubber-info \- extraction d'information de documents LaTeX
 .I source
 
 .SH DESCRIPTION
-Rubber-info est un utilitaire destiné à extraire divers types d'information
-d'un document LaTeX. L'information peut être tirée des sources (par exemple
-pour l'analyse de dépendances) ou des logs de compilation (pour extraire
-erreurs et avertissements). Cet utilitaire est un complément au système de
+Rubber-info est un utilitaire destinÃ© Ã  extraire divers types d'information
+d'un document LaTeX. L'information peut Ãªtre tirÃ©e des sources (par exemple
+pour l'analyse de dÃ©pendances) ou des logs de compilation (pour extraire
+erreurs et avertissements). Cet utilitaire est un complÃ©ment au systÃ¨me de
 compilation
 .BR rubber (1).
 
-Les options de ligne de commande sont celles utilisées par
+Les options de ligne de commande sont celles utilisÃ©es par
 .BR rubber (1)
-plus l'une des actions décrites plus bas.
+plus l'une des actions dÃ©crites plus bas.
 
 .SH ACTIONS
-L'une des options de ligne de commande suivantes doit être spécifiée,
+L'une des options de ligne de commande suivantes doit Ãªtre spÃ©cifiÃ©e,
 afin de choisir quel information extraire. Bien entendu, les actions qui
-extraient des informations des logs ne peuvent êtres effectuées que si une
-compilation a effectivement eu lieu. Si aucune de ces actions n'est spécifiée,
+extraient des informations des logs ne peuvent Ãªtres effectuÃ©es que si une
+compilation a effectivement eu lieu. Si aucune de ces actions n'est spÃ©cifiÃ©e,
 c'est
 .I \-\-check
-qui est utilisée.
+qui est utilisÃ©e.
 .TP
 .B \-\-boxes
-Extrait du fichier log les emplacements dans le source où la compilation a
-produit des boîtes mal construites (ce sont les fameux overfull et underfull
+Extrait du fichier log les emplacements dans le source oÃ¹ la compilation a
+produit des boÃ®tes mal construites (ce sont les fameux overfull et underfull
 \\hbox et \\vbox).
 .TP
 .B \-\-check
-Affiche les erreurs de compilation s'il y en a, sinon énumère les références
-non définies s'il y en a, sinon affiche les avertissements et les boîtes mal
-construites. C'est l'action par défaut.
+Affiche les erreurs de compilation s'il y en a, sinon Ã©numÃ¨re les rÃ©fÃ©rences
+non dÃ©finies s'il y en a, sinon affiche les avertissements et les boÃ®tes mal
+construites. C'est l'action par dÃ©faut.
 .TP
 .B \-\-deps
-Analyse les sources et produit une liste (séparée par des espaces) des noms de
-tous les fichiers dont dépend le document et que Rubber ne peut pas
+Analyse les sources et produit une liste (sÃ©parÃ©e par des espaces) des noms de
+tous les fichiers dont dÃ©pend le document et que Rubber ne peut pas
 reconstituer.
 .TP
 .B \-\-errors
 Extrait du fichier log la liste des erreurs qui sont survenues durant la
-dernière compilation.
+derniÃ¨re compilation.
 .TP
 .B \-h, \-\-help
 Affiche la liste de toutes les options disponibles et quitte.
 .TP
 .B \-\-refs
-Renvoie la liste des références non définies ou définies plusieurs fois (i.e.
-les \\ref qui ne correspondent pas à exactement un \\label).
+Renvoie la liste des rÃ©fÃ©rences non dÃ©finies ou dÃ©finies plusieurs fois (i.e.
+les \\ref qui ne correspondent pas Ã  exactement un \\label).
 .TP
 .B \-\-rules
-Analyse les sources et produit une liste de règles de dépendances. Une règle
-est produite pour chaque fichier intermédiaire qui serait construit par
+Analyse les sources et produit une liste de rÃ¨gles de dÃ©pendances. Une rÃ¨gle
+est produite pour chaque fichier intermÃ©diaire qui serait construit par
 .BR rubber .
-Les règles sont formattées dans le style des Makefile.
+Les rÃ¨gles sont formattÃ©es dans le style des Makefile.
 .TP
 .B \-\-version
-Affiche le numéro de version et termine.
+Affiche le numÃ©ro de version et termine.
 .TP
 .B \-\-warnings
-Affiche stupidement la liste de tous les avertissements de LaTeX, c'est-à-dire
-toutes les lignes du fichier log qui contiennent "Warning".
+Affiche stupidement la liste de tous les avertissements de LaTeX, c'est-Ã -dire
+toutes les lignes du fichier log qui contiennent Â«Â WarningÂ Â».
 .PP
 
 .SH BUGS
 Il y en a surement quelques uns...
 
-Cette page se rapporte à la version @@version@@ de Rubber. Le programme et cette
+Cette page se rapporte Ã  la version @@version@@ de Rubber. Le programme et cette
 documentation sont maintenus par @@maintainer@@ <@@maintainer_email@@>.
-La page web du programme se trouve à l'adresse @@url@@.
+La page web du programme se trouve Ã  l'adresse @@url@@.
 
 .SH VOIR AUSSI
-La documentation complète de
+La documentation complÃ¨te de
 .B rubber
 est maintenue en tant que manuel en Texinfo. Si les programmes
 .B info
 et
 .B rubber
-sont installés correctement sur votre système, la commande
+sont installÃ©s correctement sur votre systÃ¨me, la commande
 .IP
 .B info rubber
 .PP
-devrait vous donner accès au manuel complet (en anglais).
-
+devrait vous donner accÃ¨s au manuel complet (en anglais).

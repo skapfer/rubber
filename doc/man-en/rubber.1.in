@@ -309,7 +309,7 @@ dependencies, so recompiling is automatic when referenced document are
 changed.
 .PP
 .
-.SS Pre-processing
+.SS Pre\-processing
 The following modules are provided for using programs that generate a LaTeX
 source from a different file format:
 .TP
@@ -330,9 +330,9 @@ It is automatically triggered if the input file's name ends with
 .BR .lhs .
 .PP
 .
-.SS Post-processing
+.SS Post\-processing
 The following modules are provided to support different kinds of
-post-processings.
+post\-processings.
 Note that the order matters when using these modules: if you want to use a
 processing chain like
 .RS
@@ -537,7 +537,7 @@ For details on the existing variables and their meaning, see the info
 documentation.
 .TP
 .BI shell_escape
-Mark the document as requiring external programs (shell-escape or write18).
+Mark the document as requiring external programs (shell\-escape or write18).
 Rubber does not actually enable this unless called with the option
 \-\-unsafe.
 .TP
