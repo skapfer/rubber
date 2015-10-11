@@ -56,7 +56,7 @@ class Node (object):
 			# only for the second build during this rubber run, we want to skip
 			# recompiling based on MD5 hashes.  for the first build, only the
 			# date counts.
-			self.md5_for_source[name] = "UNKNOWN"
+			self.md5_for_source[name] = None
 
 	def remove_source (self, name):
 		"""
@@ -104,15 +104,21 @@ class Node (object):
 			# FIXME complain if source has been modified in an unplanned way
 			# NB: we ignore the case source.date == None (missing dependency) here.
 			# NB2: to be extra correct, equal (disk-precision) timestamps trigger a recompile.
-			if source.date is not None and source.date >= self.date:
-				if self.md5_for_source.has_key (source_name):
-					if self.md5_for_source[source_name] == rubber.util.md5_file (source_name):
-						msg.debug(_("while making %s: contents of %s unchanged, ignoring mtime") % (self.products[0], source_name), pkg="depend")
-						continue
-					msg.debug(_("while making %s: contents of dependency %s changed, rebuilding") % (self.products[0], source_name), pkg="depend")
-					return True
-				msg.debug(_("while making %s: timestamp of dependency %s changed, rebuilding") % (self.products[0], source_name), pkg="depend")
+			if source.date == None:
+				msg.debug(_("Not rebuilding %s from %s: unknown source timestamp") % (self.products[0], source_name), pkg="depend")
+			elif source.date < self.date:
+				msg.debug(_("Not rebuilding %s from %s: up to date") % (self.products[0], source_name), pkg="depend")
+			elif not self.md5_for_source.has_key (source_name):
+				msg.debug(_("Rebuilding %s from %s: outdated, source not tracked") % (self.products[0], source_name), pkg="depend")
 				return True
+			elif self.md5_for_source [source_name] == None:
+				msg.debug(_("Rebuilding %s from %s: outdated, previous source unknown") % (self.products[0], source_name), pkg="depend")
+				return True
+			elif self.md5_for_source [source_name] != rubber.util.md5_file (source_name):
+				msg.debug(_("Rebuilding %s from %s: outdated, source really modified") % (self.products[0], source_name), pkg="depend")
+				return True
+			else:
+				msg.debug(_("Not rebuilding %s from %s: outdated, but source unmodified") % (self.products[0], source_name), pkg="depend")
 		return False
 
 	def make (self, force=False):
