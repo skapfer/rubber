@@ -10,6 +10,7 @@ from rubber.util import _, msg
 import rubber.util
 import rubber.biblio
 import sys
+import re
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
@@ -32,11 +33,20 @@ class Module (rubber.module_interface.Module):
 	def do_path (self, path):
 		self.dep.do_path (path)
 
+# for parsing the Biber log file
+re_updatefile = re.compile (
+	".*INFO - Found BibTeX data source '(?P<filename>.*)'$")
+re_error = re.compile (
+	".*Utils.pm:[0-9]+> (?P<kind>(WARN|ERROR)) .* line (?P<line>[0-9]+), (?P<text>.*)")
+biber_to_rubber = { "ERROR": "error",
+	"WARN": "warning" }
+
 class BibLaTeXDep (rubber.biblio.BibToolDep):
 	def __init__ (self, doc, tool):
 		rubber.biblio.BibToolDep.__init__ (self, doc.set)
 		self.doc = doc
 		self.tool = tool
+		self.blg = doc.basename (with_suffix = ".blg")
 
 		for suf in [ ".bbl", ".blg", ".run.xml" ]:
 			self.add_product (doc.basename (with_suffix = suf))
@@ -81,3 +91,37 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 
 	def bibliographystyle (self, loc, bibs):
 		msg.warn (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"), pkg="biblatex")
+
+	def get_errors (self):
+		"""
+		Read the log file, identify error messages and report them.
+		"""
+		if self.tool != "biber":
+			# we re-use the BibTeX support in superclass
+			super (BibLaTeXDep, self).get_errors ()
+			return
+
+		current_bib = None
+
+		try:
+			log = open (self.blg, "r")
+		except:
+			# FIXME blg cannot be opened -- should this be an error?
+			return
+
+		with log:
+			for line in log:
+				m = re_updatefile.match (line)
+				if m:
+					current_bib = m.group ("filename")
+				m = re_error.match (line)
+				if m:
+					d = {
+						"pkg": "biber"
+					}
+					d["kind"] = biber_to_rubber[m.group ("kind")]
+					if current_bib:
+						d["file"] = current_bib
+					d["line"] = int (m.group ("line"))
+					d["text"] = m.group ("text")
+					yield d
