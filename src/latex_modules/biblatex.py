@@ -107,7 +107,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		try:
 			log = open (self.blg, "r")
 		except:
-			# FIXME blg cannot be opened -- should this be an error?
+			msg.warn (_("cannot open Biber logfile: %s") % self.blg, pkg="biblatex")
 			return
 
 		with log:
