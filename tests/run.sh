@@ -54,7 +54,6 @@ for main; do
     mkdir $tmpdir
     cp $main/* $tmpdir
     cp shared/* $tmpdir
-    gzip -c shared/sample.eps > $tmpdir/compressed.eps.gz
     cd $tmpdir
 
     cp -a "$SOURCE_DIR/src" rubber
@@ -112,7 +111,6 @@ EOF
 
     rm -r rubber
     rm usrbinrubber.py
-    rm compressed.eps.gz
     (list0 ../$main; list0 ../shared) | xargs -0 rm -r
     cd ..
 
