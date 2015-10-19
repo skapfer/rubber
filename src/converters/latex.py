@@ -1208,7 +1208,7 @@ class LaTeXDep (rubber.depend.Node):
 		self.env.execute(cmd, env, kpse=1)
 
 		if self.log.read(self.basename (with_suffix=".log")):
-			msg.error(_("Could not run %s.") % cmd[0])
+			msg.error(_("Running %s failed.") % cmd[0])
 			return False
 		if self.log.errors():
 			return False
