@@ -49,6 +49,44 @@ class BibToolDep (rubber.depend.Node):
 			return False
 		return True
 
+	def find_bib (self, name):
+		return rubber.util.find_resource (name, suffix = ".bib", paths = self.bib_paths)
+
+	def get_errors (self):
+		"""
+		Read the log file, identify error messages and report them.
+		"""
+		try:
+			log = open (self.blg, "r")
+		except:
+			msg.warn (_("cannot open BibTeX logfile: %s") % self.blg, pkg="biblio")
+			return
+
+		with log:
+			last_line = ""
+			for line in log:
+				m = re_error.search (line)
+				if m:
+					# TODO: it would be possible to report the offending code.
+					if m.start () == 0:
+						text = last_line.strip ()
+					else:
+						text = line[:m.start ()].strip ()
+
+					filename = self.find_bib (m.group ("file")) or m.group ("file")
+					line = int (m.group ("line"))
+
+					d =	{
+						"pkg": "bibtex",
+						"kind": "error",
+						"file": filename,
+						"line": line,
+						"text": text
+					}
+
+					yield d
+
+				last_line = line
 
 # The regular expression that identifies errors in BibTeX log files is heavily
 # heuristic. The remark is that all error messages end with a text of the form
@@ -110,7 +148,7 @@ class BibTeXDep (BibToolDep):
 
 	def hook_bibliography (self, loc, bibs):
 		for name in string.split (bibs, ","):
-			filename = rubber.util.find_resource (name, suffix = ".bib", paths = self.bib_paths)
+			filename = self.find_bib (name)
 			if filename is not None:
 				self.db[name] = filename
 				self.add_source (filename, track_contents=True)
@@ -137,48 +175,3 @@ class BibTeXDep (BibToolDep):
 		elif name not in [ "plain", "alpha" ]:
 			# do not complain about default styles coming with bibtex
 			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
-
-	#
-	# The following method extract information from BibTeX log files.
-	#
-
-	def get_errors (self):
-		"""
-		Read the log file, identify error messages and report them.
-		"""
-		try:
-			log = open (self.blg, "r")
-		except:
-			msg.warn (_("cannot open BibTeX logfile: %s") % self.blg, pkg="biblio")
-			return
-
-		with log:
-			last_line = ""
-			for line in log:
-				m = re_error.search(line)
-				if m:
-					# TODO: it would be possible to report the offending code.
-					if m.start() == 0:
-						text = string.strip(last_line)
-					else:
-						text = string.strip(line[:m.start()])
-					line = m.group("line")
-					if line: line = int(line)
-					d =	{
-						"pkg": "bibtex",
-						"kind": "error",
-						"text": text
-						}
-					d.update( m.groupdict() )
-
-					# BibTeX does not report the path of the database in its log.
-
-					file = d["file"]
-					if file[-4:] == ".bib":
-						file = file[:-4]
-					if self.db.has_key(file):
-						d["file"] = self.db[file]
-					elif self.db.has_key(file + ".bib"):
-						d["file"] = self.db[file + ".bib"]
-					yield d
-				last_line = line

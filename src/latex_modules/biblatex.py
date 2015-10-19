@@ -79,7 +79,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		if "location" in options and options["location"] == "remote":
 			return
 
-		filename = rubber.util.find_resource (name, suffix = ".bib", paths = self.bib_paths)
+		filename = self.find_bib (name)
 		if filename is None:
 			msg.error (_ ("cannot find bibliography resource %s") % name, pkg="biblatex")
 		else:
@@ -98,7 +98,8 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		"""
 		if self.tool != "biber":
 			# we re-use the BibTeX support in superclass
-			super (BibLaTeXDep, self).get_errors ()
+			for error in super (BibLaTeXDep, self).get_errors ():
+				yield error
 			return
 
 		current_bib = None
