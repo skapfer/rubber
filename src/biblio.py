@@ -146,9 +146,13 @@ class BibTeXDep (BibToolDep):
 		"""
 		Read the log file, identify error messages and report them.
 		"""
-		if not os.path.exists (self.blg):
+		try:
+			log = open (self.blg, "r")
+		except:
+			msg.warn (_("cannot open BibTeX logfile: %s") % self.blg, pkg="biblio")
 			return
-		with open (self.blg) as log:
+
+		with log:
 			last_line = ""
 			for line in log:
 				m = re_error.search(line)
