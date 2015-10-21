@@ -16,7 +16,7 @@ clean-local:
 
 distclean: clean-local
 	@python@ setup.py rm_sub_files
-	rm -f settings.py
+	rm -f settings.py settings.pyc
 	cd doc && $(MAKE) distclean
 
 install:
