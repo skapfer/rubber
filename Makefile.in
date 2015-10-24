@@ -23,4 +23,4 @@ install:
 	@python@ setup.py inst @prefix@
 
 tar:
-	git archive --format=tar HEAD | gzip -9 > rubber-@version@.tar.gz
+	git archive --format=tar --prefix=rubber-@version@/ HEAD | gzip -9 > rubber-@version@.tar.gz
