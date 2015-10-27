@@ -66,9 +66,9 @@ contain the string "Warning".
 .SH BUGS
 There are surely a some...
 
-This page documents Rubber version @@version@@.
-The program and this man-page are maintained by @@maintainer@@ <@@maintainer_email@@>.
-The homepage for Rubber can be found at @@url@@.
+This page documents Rubber version @version@.
+The program and this man-page are maintained by @author@ <@author_email@>.
+The homepage for Rubber can be found at @url@.
 
 .SH SEE ALSO
 The full documentation for

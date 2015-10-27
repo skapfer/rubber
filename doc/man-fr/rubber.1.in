@@ -680,9 +680,9 @@ commande.
 .SH BUGS
 Il y en a surement quelques uns...
 .PP
-Cette page se rapporte à la version @@version@@ de Rubber. Le programme et cette
-documentation sont maintenus par @@maintainer@@ <@@maintainer_email@@>.
-La page web du programme se trouve à l’adresse @@url@@.
+Cette page se rapporte à la version @version@ de Rubber. Le programme et cette
+documentation sont maintenus par @author@ <@author_email@>.
+La page web du programme se trouve à l’adresse @url@.
 .
 .SH VOIR AUSSI
 La documentation complète de

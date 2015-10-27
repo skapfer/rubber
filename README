@@ -22,11 +22,32 @@ Cygwin, any feedback is welcome about other systems).
 
 To compile and install Rubber, just follow the usual procedure:
 
-	./configure
-	make
-	make install
+# python2 setup.py --help
+# python2 setup.py install
+# python2 setup.py clean --all
 
-The options for configuration can be shown using ./configure --help.
+Some options affect other commands indirectly:
+* --moddir is used to generate src/version.py.
+* only documentation formats selected during build are installed.
+If you need to build and install as separate steps, for example in
+order to select a --root stage directory during install, you should
+set these options in a configuration file.
+
+A typical example will select:
+
+[build]
+html=1
+pdf =1
+[install]
+prefix  = /usr
+mandir  = $base/share/man
+infodir = $base/share/info
+docdir  = $base/share/doc/rubber
+
+into setup.cfg, then run:
+
+# python2 setup.py build
+# python2 setup.py install --root=stage_dir
 
 
 * Usage
