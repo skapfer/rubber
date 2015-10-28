@@ -23,7 +23,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
 		self.add_product (source [:-3] + 'pdf')
 		self.add_source (source)
 		self.env = document.env
-                tool = 'dvipdfm'
+		tool = 'dvipdfm'
 		self.cmd = [tool]
 		for opt in document.vars ['paper'].split ():
 			self.cmd.extend (('-p', opt))

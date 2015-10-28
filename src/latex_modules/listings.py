@@ -14,8 +14,8 @@ class Module (rubber.module_interface.Module):
                         lambda loc: document.h_begin_verbatim (loc, env='lstlisting'))
 
     def hook_input (self, loc, opt, file):
- 	if file.find('\\') < 0 and file.find('#') < 0:
-	    self.doc.add_source(file)
+        if file.find('\\') < 0 and file.find('#') < 0:
+            self.doc.add_source(file)
 
     def hook_newenvironment (self, loc, name):
         self.doc.hook_begin (name,

@@ -15,8 +15,8 @@ re_bbox = re.compile("%[%\w]*BoundingBox:")
 class Dep (rubber.depend.Node):
 	def __init__ (self, set, target, source):
 		super (Dep, self).__init__(set)
-                self.add_product (target)
-                self.add_source (source)
+		self.add_product (target)
+		self.add_source (source)
 		self.source = source
 		self.target = target
 
@@ -29,7 +29,7 @@ class Dep (rubber.depend.Node):
 		"""
 		msg.progress(_("extracting bounding box from %s") % self.source)
 		with GzipFile(self.source) as source:
- 			for line in source:
+			for line in source:
 				if re_bbox.match(line):
 					with open(self.target, "w") as target:
 						target.write(line)

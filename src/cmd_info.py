@@ -29,7 +29,7 @@ For more information, try `rubber-info --help'.
 """))
 
 	def help (self):
-		print _("""\
+		print (_("""\
 This is Rubber's information extractor version %s.
 usage: rubber-info [options] source
 available options:
@@ -44,7 +44,7 @@ actions:
   --rules     print the dependency rules including intermediate results
   --version   print the program's version and exit
   --warnings  show all LaTeX warnings\
-""") % version
+""") % version)
 
 	def parse_opts (self, cmdline):
 		try:
@@ -54,7 +54,7 @@ actions:
 			args = super (Main, self).parse_opts(cmdline, long=long)
 			opts, args = getopt(args, "", long)
 			self.max_errors = -1
-		except GetoptError, e:
+		except GetoptError as e:
 			msg.error(e)
 			sys.exit(1)
 
@@ -110,7 +110,7 @@ actions:
 			for dep in self.env.main.source_nodes():
 				for file in dep.leaves():
 					deps[file] = None
-			print string.join(deps.keys())
+			print (string.join(deps.keys()))
 
 		elif self.act == "rules":
 			self.prepare(src)
@@ -124,8 +124,8 @@ actions:
 				seen[node] = None
 				if len(node.sources) == 0:
 					continue
-				print "\n%s:" % string.join(node.products),
-				print string.join(node.sources)
+				print ("\n%s:" % string.join(node.products))
+				print (string.join(node.sources))
 				next.extend(node.source_nodes())
 		else:
 			self.prepare(src, parse=0)

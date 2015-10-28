@@ -23,7 +23,7 @@ file, which must then be processed by the 'asy' external tool to
 produce a .eps/.pdf.  If the output already exists, it is inserted,
 but a (maybe identical) .asy is created nevertheless.
 
-The inline option may be passed with \usepackage[inline]{asymptote} or
+The inline option may be passed with \\usepackage[inline]{asymptote} or
 \begin[inline]{asy}, and asks 'asy' to produce and insert TeX output
 instead of .eps/.pdf. As rubber currently fails to report environment
 options, only the former is recognized.

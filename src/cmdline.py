@@ -38,7 +38,7 @@ For more information, try `rubber --help'."""))
 		"""
 		Display the description of all the options and exit.
 		"""
-		print _("""\
+		print (_("""\
 This is Rubber version %s.
 usage: rubber [options] sources...
 available options:
@@ -69,7 +69,7 @@ available options:
   -v, --verbose            increase verbosity
       --version            print version information and exit
   -W, --warn=TYPE          report warnings of the given TYPE (see man page)\
-""") % version
+""") % version)
 
 	def parse_opts (self, cmdline, short="", long=[]):
 		try:
@@ -80,8 +80,8 @@ available options:
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
 				 "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
 				 "warn="] + long)
-		except GetoptError, e:
-			print e
+		except GetoptError as e:
+			print (e)
 			sys.exit(1)
 
 		extra = []
@@ -157,8 +157,8 @@ available options:
 			elif opt in ("-v", "--verbose"):
 				msg.level = msg.level + 1
 			elif opt == "--version":
-				print "Rubber version: " + version
-				print "module path: " + moddir
+				print ("Rubber version: " + version)
+				print ("module path: " + moddir)
 				sys.exit(0)
 			elif opt in ("-W", "--warn"):
 				self.warn = 1

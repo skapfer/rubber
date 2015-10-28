@@ -49,7 +49,7 @@ class Main (rubber.cmdline.Main):
 		"""
 		Display the description of all the options and exit.
 		"""
-		print _("""\
+		print (_("""\
 This is Rubber version %s.
 usage: rubber-pipe [options]
 available options:
@@ -74,7 +74,7 @@ available options:
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
       --version            print version information and exit\
-""") % version
+""") % version)
 
 	def parse_opts (self, cmdline):
 		args = super (Main, self).parse_opts(cmdline)
