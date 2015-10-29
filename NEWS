@@ -1,5 +1,8 @@
 Version 1.4
 
+  Features:
+  - Report BibTeX / Biber errors more reliably.
+
   Bugfixes:
   - Refuse to read logfiles which exceed 1 MB.
     This avoids out-of-memory situations.  The limit may be raised with
