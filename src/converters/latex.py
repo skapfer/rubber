@@ -167,7 +167,7 @@ class LogCheck (object):
 	def __init__ (self):
 		self.lines = None
 
-	def read (self, name):
+	def readlog (self, name, limit):
 		"""
 		Read the specified log file, checking that it was produced by the
 		right compiler. Returns true if the log file is invalid or does not
@@ -175,14 +175,19 @@ class LogCheck (object):
 		"""
 		self.lines = None
 		try:
-			with open(name) as file:
-				line = file.readline()
-				if not line or not re_loghead.match(line):
-					return 1
-				self.lines = file.readlines()
+			with open (name) as fp:
+				line = fp.readline ()
+				if not line or not re_loghead.match (line):
+					return False
+				# do not read the whole log unconditionally
+				whole_file = fp.read (limit)
+				self.lines = whole_file.split ('\n')
+				if fp.read (1) != '':
+					# more data to be read
+					msg.warn (_('log file is very long, and will not be read completely.'), pkg='latex')
+			return True
 		except IOError:
-			return 2
-		return 0
+			return False
 
 	#-- Process information {{{2
 
@@ -567,6 +572,7 @@ class LaTeXDep (rubber.depend.Node):
 			"base": None,
 			"ext": None,
 			"job": None,
+			"logfile_limit": 1000000,
 			"graphics_suffixes" : [] })
 
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
@@ -919,6 +925,12 @@ class LaTeXDep (rubber.depend.Node):
 			if type (self.vars[name]) is list:
 				msg.warn (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
 				return
+			if type (self.vars[name]) is int:
+				try:
+					val = int (val)
+				except:
+					msg.warn (_("cannot set int variable %s to value %s (ignored)") % (name, val))
+					return
 			self.vars[name] = val
 		except KeyError:
 			msg.warn(_("unknown variable: %s") % name, **self.vars)
@@ -1207,7 +1219,9 @@ class LaTeXDep (rubber.depend.Node):
 
 		self.env.execute(cmd, env, kpse=1)
 
-		if self.log.read(self.basename (with_suffix=".log")):
+		logfile_name = self.basename (with_suffix=".log")
+		logfile_limit = self.vars["logfile_limit"]
+		if not self.log.readlog (logfile_name, logfile_limit):
 			msg.error(_("Running %s failed.") % cmd[0])
 			return False
 		if self.log.errors():
@@ -1223,8 +1237,6 @@ class LaTeXDep (rubber.depend.Node):
 		Prepare the source for compilation using package-specific functions.
 		This function must return False on failure.
 		"""
-		self.log.read(self.basename (with_suffix=".log"))
-
 		msg.log(_("building additional files..."), pkg='latex')
 
 		for mod in self.modules.objects.values():

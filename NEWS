@@ -1,3 +1,11 @@
+Version 1.4
+
+  Bugfixes:
+  - Refuse to read logfiles which exceed 1 MB.
+    This avoids out-of-memory situations.  The limit may be raised with
+      % rubber: set logfile_limit 1000000
+    https://bugs.launchpad.net/rubber/+bug/628150
+
 Version 1.3 (2015-10-11)
 
   This version of rubber has changes in the dependency management.
