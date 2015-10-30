@@ -73,7 +73,14 @@ class BibToolDep (rubber.depend.Node):
 					else:
 						text = line[:m.start ()].strip ()
 
-					filename = self.find_bib (m.group ("file")) or m.group ("file")
+					# when including a bibtex DB with \bibliography{a.bib}
+					# bibtex will report it in the log as a.bib.bib.
+					# work around this
+					filename = m.group ("file")
+					if filename.endswith (".bib.bib"):
+						filename = filename[:-4]
+
+					filename = self.find_bib (filename) or filename
 					line = int (m.group ("line"))
 
 					d =	{
