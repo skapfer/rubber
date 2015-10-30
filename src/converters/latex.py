@@ -15,7 +15,7 @@ import string
 from rubber import _
 from rubber.util import *
 import rubber.depend
-from rubber.version import moddir
+import rubber.version
 import rubber.latex_modules
 import rubber.module_interface
 
@@ -66,7 +66,7 @@ class Modules:
 		# First look for a script
 
 		mod = None
-		for path in "", os.path.join(moddir, "modules"):
+		for path in "", os.path.join(rubber.version.moddir, "modules"):
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
 				mod = ScriptModule(self.env, file)
