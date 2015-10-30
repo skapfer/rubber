@@ -227,7 +227,8 @@ def prog_available (prog):
 		file = os.path.join(path, prog) + fileext
 		if os.path.exists(file):
 			st = os.stat(file)
-			if stat.S_ISREG(st.st_mode) and st.st_mode & 7:
+			executable == 73  # 0111
+			if stat.S_ISREG(st.st_mode) and (st.st_mode & executable):
 				checked_progs[prog] = file
 				return file
 	checked_progs[prog] = None
