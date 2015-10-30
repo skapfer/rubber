@@ -253,8 +253,6 @@ class LogCheck (object):
 		macro = None   # the macro in which the error occurs
 		cseqs = {}     # undefined control sequences so far
 		for line in self.lines:
-			line = line[:-1]  # remove the line feed
-
 			# TeX breaks messages at 79 characters, just to make parsing
 			# trickier...
 
