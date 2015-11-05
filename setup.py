@@ -6,7 +6,7 @@
 #
 # As the rest of Rubber, this script is covered by the GPL (see COPYING).
 # Copyright 2002-2006 Emmanuel Beffara
-# Copyright 2008-2015 Sebastian Kapfer
+# Copyright 2015-2015 Sebastian Kapfer
 # Copyright 2015-2015 Nicolas Boulenguez
 
 import distutils.cmd
@@ -42,14 +42,15 @@ doc_recipes = (
 class build (distutils.command.build.build):
 
     user_options = distutils.command.build.build.user_options + [
+        ("info", None, "build Info documentation"),
         ("html", None, "format HTML documentation"),
         ("pdf",  None, "format PDF documentation"),
         ("txt",  None, "format plain text documentation"),
     ]
     boolean_options = distutils.command.build.build.boolean_options \
-                      + ["html", "pdf", "txt"]
+                      + ["info", "html", "pdf", "txt"]
     info = True
-    html = False
+    html = True
     pdf  = False
     txt  = False
 

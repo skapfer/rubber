@@ -13,12 +13,14 @@ dependency relations or post-compilation diagnostics.
 
 * Installation
 
-Compiling and running Rubber just requires Python version 2.2 or newer. For
-compilation, you will need the Python Distutils, which are usually included in
-developpement packages (in Debian, this is the python-dev package). Of course
-it won't be of much use without a working LaTeX environment (Rubber is known
-to work on teTeX and VTeX on various flavours of Unix including Darwin and
-Cygwin, any feedback is welcome about other systems).
+Running Rubber just requires Python version 2.6 or newer.  Of course it won't
+be of much use without a working LaTeX environment (Rubber is known to work on
+TeXLive and VTeX on various flavors of Unix including Darwin and Cygwin, any
+feedback is welcome about other systems).
+
+For compilation, you will need the Python Distutils, which are usually included
+in development packages (in Debian, this is the python-dev package).  To build
+the documentation, you need texinfo (Debian package: texinfo).
 
 To compile and install Rubber, just follow the usual procedure:
 
@@ -27,24 +29,11 @@ To compile and install Rubber, just follow the usual procedure:
 # python2 setup.py clean --all
 
 Some options affect other commands indirectly:
-* --moddir is used to generate src/version.py.
-* only documentation formats selected during build are installed.
+* moddir is used to generate src/version.py and must be set at build time.
+* Only documentation formats selected during build are installed.
 If you need to build and install as separate steps, for example in
 order to select a --root stage directory during install, you should
-set these options in a configuration file.
-
-A typical example will select:
-
-[build]
-html=1
-pdf =1
-[install]
-prefix  = /usr
-mandir  = $base/share/man
-infodir = $base/share/info
-docdir  = $base/share/doc/rubber
-
-into setup.cfg, then run:
+set these options in the configuration file setup.cfg, and then invoke
 
 # python2 setup.py build
 # python2 setup.py install --root=stage_dir
@@ -69,4 +58,4 @@ Thanks to all those who provided testing, comments and suggestions, and
 re-thanks to those who wrote patches and bugfixes.
 
 Any kind of feedback is appreciated, in order to make this program as useful,
-robust and powerful as possible...
+robust and powerful as possible.
