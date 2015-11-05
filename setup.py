@@ -122,9 +122,11 @@ class install (distutils.command.install.install):
                 "doc/man-fr/rubber.1",
                 "doc/man-fr/rubber-info.1",
                 "doc/man-fr/rubber-pipe.1",
-            )),
-            (self.infodir, (manual_basename + "info", )),
+            ))
         ]
+        if build.info:
+            infodocs = (manual_basename + "info", )
+            self.distribution.data_files.append ((self.infodir, infodocs))
         otherdocs = [manual_basename + f for f in ("html", "pdf", "txt")
                      if getattr (build, f)]
         if len (otherdocs) > 0:
