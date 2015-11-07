@@ -1,5 +1,7 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# (c) Sebastian Kapfer 2015
+# vim:et:ts=4
 """
 PostScript generation through dvips with Rubber.
 
@@ -19,35 +21,37 @@ import rubber.module_interface
 
 class Module (rubber.depend.Node, rubber.module_interface.Module):
 
-	def __init__ (self, document, context):
-		super (Module, self).__init__ (document.env.depends)
+    def __init__ (self, document, context):
+        super (Module, self).__init__ (document.env.depends)
 
-		source = document.env.final.products[0]
-		document.env.final = self
+        self.doc = document
+        self.source = self.doc.env.final.products[0]
+        self.doc.env.final = self
 
-		self.add_product (source [:-3] + 'ps')
-		self.add_source (source)
-		self.env = document.env
-		if document.vars['engine'] == 'Omega':
-			tool = 'odvips'
-		else:
-			tool = 'dvips'
-		self.cmd = [tool]
-		for opt in document.vars ['paper'].split ():
-			self.cmd.extend (('-t', opt))
-		self.cmd.append (source)
-		if source[-4:] != '.dvi':
-			msg.error(_("I can't use %s when not producing a DVI")%tool)
-			sys.exit(2)
+        self.add_product (self.source[:-3] + 'ps')
+        self.add_source (self.source)
+        self.extra_args = []
 
-	def do_options (self, *args):
-		cmd = self.cmd [:-1]
-		cmd.extend (args)
-		cmd.append (self.cmd [-1])
-		self.cmd = cmd
+    def do_options (self, *args):
+        self.extra_args.extend (args)
 
-	def run (self):
-		if self.env.execute (self.cmd, kpse=1) != 0:
-			msg.error(_("dvipdfm failed on %s") % self.cmd [1])
-			return False
-		return True
+    def run (self):
+        # build command line
+        if self.doc.vars['engine'] == 'Omega':
+            tool = 'odvips'
+        else:
+            tool = 'dvips'
+        cmd = [ tool ]
+        for opt in self.doc.vars['paper'].split ():
+            cmd.extend ([ '-t', opt ])
+        cmd.extend (self.extra_args)
+        cmd.append (self.source)
+        if not self.source.endswith ('.dvi'):
+            msg.error (_('I can\'t use %s when not producing a DVI') % tool)
+            sys.exit (2)
+
+        # run
+        if self.doc.env.execute (cmd, kpse=1) != 0:
+            msg.error (_('dvips failed on %s') % self.source)
+            return False
+        return True
