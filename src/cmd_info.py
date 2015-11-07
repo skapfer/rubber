@@ -203,7 +203,7 @@ I don't know the action `%s'. This should not happen.\n") % act)
 			self.short_help()
 			return 1
 		try:
-			self.main(cmdline)
+			return self.main(cmdline)
 		except KeyboardInterrupt:
 			msg(0, _("*** interrupted"))
 			return 2
