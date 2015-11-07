@@ -28,6 +28,8 @@ each time a .rub file is read.
 """
 
 import abc
+import sys
+from rubber import msg, _
 
 class Module:
     # This class may not be instantiated directly, only subclassed.
@@ -73,12 +75,24 @@ class Module:
     def command (self, cmd, args):
         """
         This is called when a directive for the module is found in the source.
-        The method can raise 'AttributeError' when the directive does not
-        exist and 'TypeError' if the syntax is wrong. By default, when called
-        with argument "foo" it calls the method "do_foo" if it exists, and
-        fails otherwise.
+        We treat syntax errors in the directive as fatal, aborting the run.
         """
-        getattr (self, "do_" + cmd)(*args)
+        try:
+            handler = getattr (self, "do_" + cmd)
+        except AttributeError:
+            # there is no do_ method for this directive, which means there
+            # is no such directive.
+            # FIXME report the module which was given
+            msg.error (_("no such directive '%s'") % cmd, pkg='module')
+            sys.exit (1)
+        try:
+            return handler (*args)
+        except TypeError:
+            # Python failed to coerce the arguments given into whatever
+            # the handler would like to see.  report a generic failure.
+            # FIXME report the module which was given
+            msg.error (_("invalid syntax for directive '%s'") % cmd, pkg='module')
+            sys.exit (1)
 
     def get_errors (self):
         """

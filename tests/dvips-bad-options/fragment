@@ -1,0 +1,2 @@
+# this rubber run should fail, an invalid rubber directive in the source
+! $rubber doc
