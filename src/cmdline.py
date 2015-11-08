@@ -1,44 +1,66 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# (c) Sebastian Kapfer, 2015
 # vim: noet:ts=4
 """
 This is the command line interface for Rubber.
 """
 
 import sys
+from sys import exit
 import os.path
 import string
-from getopt import *
+from getopt import getopt, GetoptError
 
 from rubber.environment import Environment
-from rubber.version import *
 from rubber.depend import ERROR, CHANGED, UNCHANGED
-from rubber.util import _, msg, Variables, parse_line
+from rubber.util import _, msg
+import rubber.util
+import rubber.version
 
 class Main (object):
-	def __init__ (self):
+	def __init__ (self, mode):
+		self.rubber_mode = mode  # can be "build", "clean", "info" or "pipe"
 		self.max_errors = 10
-		self.include_only = None
-		self.path = []
-		self.compress = None
-		msg.write = self.stderr_write
+		msg.write = rubber.util.stderr_write
 
-	def stderr_write (self, text, level=0):
-		sys.stderr.write(text + "\n")
+		self.place = "."
+		self.path = []
+		self.prologue = []
+		self.epilogue = []
+		self.include_only = None
+		self.compress = None
+		self.jobname = None
+		self.unsafe = False
+
+		# FIXME when are these legal
+		self.warn = 0
+		self.warn_boxes = 0
+		self.warn_misc = 0
+		self.warn_refs = 0
 
 	def short_help (self):
 		"""
 		Display a short description of the command line.
 		"""
-		msg(0, _("""\
+		sys.stderr.write (_("""\
 usage: rubber [options] sources...
-For more information, try `rubber --help'."""))
+For more information, try `rubber --help'.
+"""))
+		exit (1)
+
+	def ignored_option (self, opt):
+		msg.warn (_("warning: ignoring option %s") % opt)
+
+	def illegal_option (self, opt):
+		msg.error (_("error: illegal option %s") % opt)
+		exit (1)
 
 	def help (self):
 		"""
 		Display the description of all the options and exit.
 		"""
-		print (_("""\
+		sys.stderr.write (_("""\
 This is Rubber version %s.
 usage: rubber [options] sources...
 available options:
@@ -68,57 +90,82 @@ available options:
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
       --version            print version information and exit
-  -W, --warn=TYPE          report warnings of the given TYPE (see man page)\
-""") % version)
+  -W, --warn=TYPE          report warnings of the given TYPE (see man page)
+""") % rubber.version.version)
 
-	def parse_opts (self, cmdline, short="", long=[]):
+	def parse_opts (self, cmdline):
+		"""
+		Parse the command-line arguments.
+		Returns the extra arguments (i.e. the files to operate on), or an
+		empty list, if no extra arguments are present.
+		"""
+		# if no arguments at all are given, print a short version of the
+		# help text and exit.
+		if cmdline == []:
+			self.short_help ()
 		try:
 			opts, args = getopt(
-				cmdline, "I:bc:de:fhklm:n:o:pqr:SsvW:z" + short,
+				cmdline, "I:bc:de:fhklm:n:o:pqr:SsvW:z",
 				["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
 				 "help", "inplace", "into=", "jobname=", "keep", "landcape", "maxerr=",
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
+				 "readopts=",
 				 "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
-				 "warn="] + long)
+				 "warn="])
 		except GetoptError as e:
-			print (e)
-			sys.exit(1)
+			msg.error (_("getopt error: %s") % str (e))
+			exit (1)
 
 		extra = []
 		using_dvips = False
 
 		for (opt,arg) in opts:
-			if opt in ("-b", "--bzip2"):
-				if self.compress is not None and self.compress != "bzip2":
-					msg.warn(_("warning: ignoring option %s") % opt)
-				else:
-					self.compress = "bzip2"
-			elif opt == "--cache":
-				msg.warn (_("warning: ignoring option %s") % opt)
+			# obsolete options
+			if opt == "--cache":
+				# unimplemented option (harmless)
+				self.ignored_option (opt)
+			elif opt == "--readopts":
+				# undocumented option which is no longer supported
+				self.illegal_option (opt)
+
+			# info
+			elif opt in ("-h", "--help"):
+				self.help ()
+				exit (0)
+			elif opt == "--version":
+				sys.stdout.write ("Rubber version: %s\nmodule path: %s\n" % \
+					(rubber.version.version, rubber.version.moddir))
+				exit (0)
+
+			# mode of operation
 			elif opt == "--clean":
-				self.clean = True
+				self.ignored_option (opt)
+			elif opt in ("-k", "--keep"):
+				if self.rubber_mode == "pipe":
+					self.keep_temp = False
+				else:
+					# does not make any sense except in pipe mode
+					self.illegal_option (opt)
+
+			# compression etc. which affects which products exist
+			elif opt in ("-b", "--bzip2", "-z", "--gzip"):
+				algo = "bzip2" if opt in ("-b", "--bzip2") else "gzip"
+				if self.compress is not None and self.compress != algo:
+					self.ignored_option (opt)
+				else:
+					self.compress = algo
 			elif opt in ("-c", "--command"):
 				self.prologue.append(arg)
 			elif opt in ("-e", "--epilogue"):
 				self.epilogue.append(arg)
 			elif opt in ("-f", "--force"):
 				self.force = True
-			elif opt in ("-z", "--gzip"):
-				if self.compress is not None and self.compress != "gz":
-					msg.warn(_("warning: ignoring option %s") % opt)
-				else:
-					self.compress = "gzip"
-			elif opt in ("-h", "--help"):
-				self.help()
-				sys.exit(0)
 			elif opt == "--inplace":
 				self.place = None
 			elif opt == "--into":
 				self.place = arg
 			elif opt == "--jobname":
 				self.jobname = arg
-			elif opt in ("-k", "--keep"):
-				self.clean = False
 			elif opt in ("-l", "--landscape"):
 				self.prologue.append("paper landscape")
 			elif opt in ("-n", "--maxerr"):
@@ -129,6 +176,8 @@ available options:
 			elif opt == "--only":
 				self.include_only = arg.split(",")
 			elif opt in ("-o", "--post"):
+				if self.rubber_mode == "info":
+					self.illegal_option (opt)
 				self.epilogue.append("module " +
 					string.replace(arg, ":", " ", 1))
 			elif opt in ("-d", "--pdf"):
@@ -156,10 +205,6 @@ available options:
 				self.path.append(arg)
 			elif opt in ("-v", "--verbose"):
 				msg.level = msg.level + 1
-			elif opt == "--version":
-				print ("Rubber version: " + version)
-				print ("module path: " + moddir)
-				sys.exit(0)
 			elif opt in ("-W", "--warn"):
 				self.warn = 1
 				if arg == "all":
@@ -172,13 +217,66 @@ available options:
 					self.warn_misc = 1
 				elif arg == "refs":
 					self.warn_refs = 1
+			elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
+				if self.rubber_mode != "info":
+					self.illegal_option (opt)
+				if self.info_action is not None:
+					msg.error (_("error: cannot have both '--%s' and '%s'") \
+						% (self.info_action, opt))
+					exit (1)
+				self.info_action = opt[2:]
 
 			elif arg == "":
 				extra.append(opt)
 			else:
 				extra.extend([arg, opt])
 
-		return extra + args
+		ret = extra + args
+
+		if self.jobname is not None and len (ret) > 1:
+			msg.error (_("error: cannot give jobname and have more than one input file"))
+			exit (1)
+
+		return ret
+
+	def prepare_source (self, filename):
+		"""
+		Prepare the dependency node for the main LaTeX run.
+		Returns the filename of the main LaTeX source file, which might
+		change for various reasons (adding a .tex suffix; preprocessors;
+		pipe dumping).
+		When this is done, the file must exist on disk, otherwise this
+		function must exit(1) or exit(2).
+		"""
+		path = rubber.util.find_resource (filename, suffix=".tex")
+
+		if not path:
+			msg.error (_("Main document not found: '%s'") % filename)
+			exit (2)
+
+		base, ext = os.path.splitext (path)
+
+		from rubber.converters.literate import literate_preprocessors as lpp
+		if ext in lpp.keys ():
+			src = base + ".tex"
+			# FIXME kill src_node
+			src_node = lpp[ext] (self.env.depends, src, path)
+			if self.rubber_mode == "build":
+				if not self.unsafe:
+					msg.error (_("Running external commands requires --unsafe."))
+					exit (1)
+				# Produce the source from its dependency rules, if needed.
+				if src_node.make () == ERROR:
+					msg.error (_("Producing the main LaTeX file failed: '%s'") \
+						% src)
+					exit (2)
+		else:
+			src = path
+
+		from rubber.converters.latex import LaTeXDep
+		self.env.final = self.env.main = LaTeXDep (self.env, src, self.jobname)
+
+		return src
 
 	def main (self, cmdline):
 		"""
@@ -187,21 +285,7 @@ available options:
 		happens while making one of the documents, the whole process stops.
 		The method returns the program's exit code.
 		"""
-		self.jobname = None
-		self.prologue = []
-		self.epilogue = []
-		self.clean = False
-		self.force = False
-		self.unsafe = False
-
-		self.warn = 0
-		self.warn_boxes = 0
-		self.warn_misc = 0
-		self.warn_refs = 0
-
-		self.place = "."
-
-		args = self.parse_opts(cmdline)
+		args = self.parse_opts (cmdline)
 
 		initial_dir = os.getcwd()
 		msg.cwd = os.path.join(initial_dir, "")
@@ -213,13 +297,13 @@ available options:
 			msg.path = self.place
 			self.place = os.path.abspath(self.place)
 
-		msg.log(_("This is Rubber version %s.") % version)
+		global rubber
+		msg.log (_("This is Rubber version %s.") % rubber.version.version)
 
 		for srcname in args:
 			src = os.path.join(initial_dir, srcname)
 
 			# Go to the appropriate directory
-
 			try:
 				if self.place != ".":
 					if self.place is None:
@@ -229,43 +313,44 @@ available options:
 						os.chdir(self.place)
 			except OSError as e:
 				msg.error(_("Error changing to working directory: %s") % e.strerror)
-				return 1
+				exit (2)
 
-			# Check the source and prepare it for processing
-
-			env = Environment()
-
-			if env.set_source(src, jobname=self.jobname):
-				return 1
-			self.jobname = None
-
-			env.is_in_unsafe_mode_ = self.unsafe
+			# prepare the source file.  this may require a pre-processing
+			# step, or dumping stdin.  thus, the input filename may change.
+			# in case of build mode, preprocessors will be run as part of
+			# prepare_source.
+			env = self.env = Environment ()
+			self.env.is_in_unsafe_mode_ = self.unsafe
+			src = self.prepare_source (src)
 
 			if self.include_only is not None:
-				env.main.includeonly(self.include_only)
+				env.main.includeonly (self.include_only)
 
-			if self.clean:
-				if env.main.products == []:
-					msg.warn(_("there is no LaTeX source for %s") % srcname)
-					continue
-			else:
-				env.make_source()
+			# at this point, the LaTeX source file must exist; if it is
+			# the result of pre-processing, this has happened already.
+			# the main LaTeX file is not found via find_file (unlike
+			# most other resources) by design:  paths etc may be set up
+			# from within via rubber directives, so that wouldn't make a
+			# whole lot of sense.
+			if not os.path.exists (src):
+				msg.error (_("LaTeX source file not found: '%s'") % src)
+				exit (2)
 
 			saved_vars = env.main.vars
-			env.main.vars = Variables(saved_vars, { "cwd": initial_dir })
+			env.main.vars = rubber.util.Variables (saved_vars, { "cwd": initial_dir })
 			for dir in self.path:
 				env.main.do_path(dir)
 			for cmd in self.prologue:
-				cmd = parse_line(cmd, env.main.vars)
+				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
 			env.main.vars = saved_vars
 
 			env.main.parse()
 
 			saved_vars = env.main.vars
-			env.main.vars = Variables(saved_vars, { "cwd": initial_dir })
+			env.main.vars = rubber.util.Variables (saved_vars, { "cwd": initial_dir })
 			for cmd in self.epilogue:
-				cmd = parse_line(cmd, env.main.vars)
+				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
 			env.main.vars = saved_vars
 
@@ -282,13 +367,25 @@ available options:
 					env.final = rubber.converters.compressor.Node (
 						env.depends, bz2.BZ2File, '.bz2', filename)
 
-			# Compile the document
+			self.process_source (env)
 
-			if self.clean:
-				for dep in env.final.set.values():
-					dep.clean ()
-				continue
+		exit (0)
 
+	def clean (self, env):
+		"""
+		Remove all products.
+		This function should never throw or call exit
+		"""
+		for dep in env.final.set.values ():
+			dep.clean ()
+
+	def build (self, env):
+		"""
+		Build the final product.
+		"""
+		srcname = env.main.sources[0]
+		# FIXME unindent, untangle
+		if True:
 			if self.force:
 				ret = env.main.make(True)
 				if ret != ERROR and env.final is not env.main:
@@ -309,12 +406,13 @@ available options:
 						break
 					msg.display(**err)
 					number -= 1
-				return 1
+				exit (2)
 
 			if ret == UNCHANGED:
 				msg(1, _("nothing to be done for %s") % srcname)
 
 			if self.warn:
+				# FIXME
 				log = env.main.log
 				if log.read (env.main.basename (with_suffix=".log")):
 					msg.error(_("cannot read the log file"))
@@ -322,19 +420,38 @@ available options:
 				msg.display_all(log.parse(boxes=self.warn_boxes,
 					refs=self.warn_refs, warnings=self.warn_misc))
 
-		return 0
-
 	def __call__ (self, cmdline):
 		"""
-		This method is a wrapper around the main method, showing a short help
-		message when the command line is empty, and catching the keyboard
-		interruption signal.
+		This method is a wrapper around the main method,
+		catching the keyboard interruption signal.
 		"""
-		if cmdline == []:
-			self.short_help()
-			return 1
 		try:
-			return self.main(cmdline)
+			self.main (cmdline)
+			assert False
 		except KeyboardInterrupt:
 			msg(0, _("*** interrupted"))
-			return 2
+			exit (2)
+
+class Clean (Main):
+	"""
+	rubber --clean
+	"""
+	def __init__ (self):
+		super (Clean, self).__init__ (mode="clean")
+
+	def process_source (self, env):
+		self.clean (env)
+
+class Build (Main):
+	"""
+	plain rubber
+	"""
+	def __init__ (self):
+		super (Build, self).__init__ (mode="build")
+
+	def parse_opts (self, cmdline):
+		self.force = False
+		return super (Build, self).parse_opts (cmdline)
+
+	def process_source (self, env):
+		self.build (env)

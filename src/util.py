@@ -12,6 +12,7 @@ import errno
 import imp
 import re, string
 from string import whitespace
+import sys
 
 #-- Message writers --{{{1
 
@@ -48,7 +49,7 @@ class Message (object):
 		depending on command-line options.
 		"""
 		if self.write and level <= self.level:
-			self.write(text, level=level)
+			self.write (text)
 
 	def display (self, kind, text, **info):
 		"""
@@ -465,3 +466,9 @@ def verbose_remove (path, **kwargs):
 		msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
 	except OSError:
 		pass
+
+def stderr_write (text):
+	sys.stderr.write (text + "\n")
+
+def stdout_write (text):
+	sys.stdout.write (text + "\n")

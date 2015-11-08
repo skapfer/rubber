@@ -1,35 +1,36 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# (c) Sebastian Kapfer, 2015
+# vim: noet:ts=4
 """
 This is the command line interface for the information extractor.
 """
 
 import sys
-from getopt import *
 import string
-from os.path import *
 
-from rubber.util import _, msg, parse_line
-from rubber.environment import Environment
-from rubber.version import *
+from rubber.util import _, msg
 import rubber.cmdline
+import rubber.util
+import rubber.version
 
-class Main (rubber.cmdline.Main):
+class Info (rubber.cmdline.Main):
 	def __init__ (self):
-		super (Main, self).__init__()
-		msg.write = self.stdout_write
-
-	def stdout_write (self, text, level=0):
-		sys.stdout.write(text + "\n")
+		super (Info, self).__init__ (mode="info")
+		# FIXME why?
+		self.max_errors = -1
+		# FIXME why?
+		msg.write = rubber.util.stdout_write
 
 	def short_help (self):
-		sys.stderr.write(_("""\
+		sys.stderr.write (_("""\
 usage: rubber-info [options] source
 For more information, try `rubber-info --help'.
 """))
+		sys.exit (1)
 
 	def help (self):
-		print (_("""\
+		sys.stderr.write (_("""\
 This is Rubber's information extractor version %s.
 usage: rubber-info [options] source
 available options:
@@ -43,77 +44,28 @@ actions:
   --refs      show the list of undefined references
   --rules     print the dependency rules including intermediate results
   --version   print the program's version and exit
-  --warnings  show all LaTeX warnings\
-""") % version)
+  --warnings  show all LaTeX warnings
+""") % rubber.version.version)
 
 	def parse_opts (self, cmdline):
-		try:
-			long =  [ "module=", "readopts=", "short", "verbose", "boxes",
-				"check", "deps", "errors", "help", "refs", "rules", "version",
-				"warnings" ]
-			args = super (Main, self).parse_opts(cmdline, long=long)
-			opts, args = getopt(args, "", long)
-			self.max_errors = -1
-		except GetoptError as e:
-			msg.error(e)
-			sys.exit(1)
+		self.info_action = None
+		ret = super (Info, self).parse_opts (cmdline)
+		if self.info_action is None:
+			self.info_action = "check"
+		return ret
 
-		for (opt,arg) in opts:
-			if opt in ("-h", "--help"):
-				self.help()
-				sys.exit(0)
-			elif opt in ("-m", "--module"):
-				self.modules.append(arg)
-			elif opt in ("-o" ,"--readopts"):
-				file = open(arg)
-				opts2 = file.read().split()
-				file.close()
-				args = self.parse_opts(opts2) + args
-			elif opt in ("-s", "--short"):
-				msg.short = 1
-			elif opt in ("-v", "--verbose"):
-				msg.level = msg.level + 1
-			elif opt == "--version":
-				msg(0, version)
-				sys.exit(0)
-			else:
-				if self.act:
-					sys.stderr.write(_("You must specify only one action.\n"))
-					sys.exit(1)
-				self.act = opt[2:]
-		return args
+	# FIXME rewrite
+	def process_source (self, env):
+		self.env = env
 
-	def main (self, cmdline):
-		self.env = Environment()
-		self.prologue = []
-		self.epilogue = []
-
-		self.act = None
-		args = self.parse_opts(cmdline)
-		if not self.act: self.act = "check"
-
-		msg.log(_(
-			"This is Rubber's information extractor version %s.") % version)
-
-		if len(args) != 1:
-			sys.stderr.write(_("You must specify one source file.\n"))
-			sys.exit(1)
-
-		src = args[0]
-		if self.env.set_source(src):
-			sys.stderr.write(_("I cannot find %s.\n") % src)
-			sys.exit(1)
-
-		if self.act == "deps":
-			self.prepare(src)
+		if self.info_action == "deps":
 			deps = {}
 			for dep in self.env.main.source_nodes():
 				for file in dep.leaves():
 					deps[file] = None
 			print (string.join(deps.keys()))
 
-		elif self.act == "rules":
-			self.prepare(src)
+		elif self.info_action == "rules":
 			seen = {}
 			next = [self.env.final]
 			while len(next) > 0:
@@ -128,48 +80,18 @@ actions:
 				print (string.join(node.sources))
 				next.extend(node.source_nodes())
 		else:
-			self.prepare(src, parse=0)
-			return self.info_log(self.act)
+			self.info_log (self.info_action)
 
-		return 0
-
-	def prepare (self, src, parse=1):
-		"""
-		Check for the source file and prepare it for processing.
-		"""
-		env = self.env
-
-		if env.make_source():
-			sys.exit(1)
-
-		if not parse:
-			return
-
-		for dir in self.path:
-			env.main.do_path(dir)
-		for cmd in self.prologue:
-			cmd = parse_line(cmd, {})
-			env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
-
-		self.env.main.parse()
-
-		for cmd in self.epilogue:
-			cmd = parse_line(cmd, {})
-			env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
-
+	# FIXME rewrite
 	def info_log (self, act):
 		"""
 		Check for a log file and extract information from it if it exists,
 		accroding to the argument's value.
 		"""
 		log = self.env.main.log
-		ret = log.read (self.env.main.basename (with_suffix=".log"))
-		if ret == 1:
-			msg.error(_("The log file is invalid."))
-			return 1
-		elif ret == 2:
-			msg.error(_("There is no log file"))
-			return 1
+		if not self.env.main.parse_log ():
+			msg.error(_("Parsing the log file failed"))
+			exit (2)
 
 		if act == "boxes":
 			if not msg.display_all(log.get_boxes()):
@@ -197,13 +119,3 @@ actions:
 I don't know the action `%s'. This should not happen.\n") % act)
 			return 1
 		return 0
-
-	def __call__ (self, cmdline):
-		if cmdline == []:
-			self.short_help()
-			return 1
-		try:
-			return self.main(cmdline)
-		except KeyboardInterrupt:
-			msg(0, _("*** interrupted"))
-			return 2

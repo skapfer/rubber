@@ -1,4 +1,17 @@
 #!/usr/bin/python
+# (c) Sebastian Kapfer, 2015
+# vim: et:ts=4
 import sys
-from rubber.cmdline import Main
-sys.exit(Main()(sys.argv[1:]))
+from rubber.cmdline import Build, Clean
+
+# --clean is actually a different mode of operation for rubber.
+# it changes the interpretation of several command-line flags,
+# so we pull it to the front
+args = sys.argv[1:]
+if '--clean' in args:
+    args.remove ('--clean')
+    cmdline = Clean ()
+else:
+    cmdline = Build ()
+
+sys.exit (cmdline (args))

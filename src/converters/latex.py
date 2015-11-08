@@ -1,5 +1,6 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2002--2006
+# (c) Sebastian Kapfer 2015
 # vim: noet:ts=4
 """
 LaTeX document building system for Rubber.
@@ -546,7 +547,7 @@ class LaTeXDep (rubber.depend.Node):
 
 	#--  Initialization  {{{2
 
-	def __init__ (self, env):
+	def __init__ (self, env, src, job):
 		"""
 		Initialize the environment. This prepares the processing steps for the
 		given file (all steps are initialized empty) and sets the regular
@@ -624,7 +625,9 @@ class LaTeXDep (rubber.depend.Node):
 
 		self.failed_module = None
 
-	def set_source (self, path, jobname=None):
+		self.set_source (src, job)
+
+	def set_source (self, path, jobname):
 		"""
 		Specify the main source for the document. The exact path and file name
 		are determined, and the source building process is updated if needed,
@@ -1217,9 +1220,7 @@ class LaTeXDep (rubber.depend.Node):
 
 		self.env.execute(cmd, env, kpse=1)
 
-		logfile_name = self.basename (with_suffix=".log")
-		logfile_limit = self.vars["logfile_limit"]
-		if not self.log.readlog (logfile_name, logfile_limit):
+		if not self.parse_log ():
 			msg.error(_("Running %s failed.") % cmd[0])
 			return False
 		if self.log.errors():
@@ -1229,6 +1230,11 @@ class LaTeXDep (rubber.depend.Node):
 				msg.simplify(self.products[0]))
 			return False
 		return True
+
+	def parse_log (self):
+		logfile_name = self.basename (with_suffix=".log")
+		logfile_limit = self.vars["logfile_limit"]
+		return self.log.readlog (logfile_name, logfile_limit)
 
 	def pre_compile (self):
 		"""

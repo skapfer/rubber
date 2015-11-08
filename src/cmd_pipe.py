@@ -1,22 +1,18 @@
 # This file is part of Rubber and thus covered by the GPL
 # (c) Emmanuel Beffara, 2003--2006
+# (c) Sebastian Kapfer, 2015
 # vim: noet:ts=4
 """
 This is the command line pipe interface for Rubber.
 """
 
+import os
 import sys
-import os.path
-import string
 import re
-from getopt import *
 
-from rubber import _, msg
-from rubber.environment import Environment
-from rubber.version import *
-from rubber.util import parse_line
-from rubber.depend import ERROR, CHANGED, UNCHANGED
 import rubber.cmdline
+from rubber.util import _, msg
+import rubber.version
 
 re_rubtmp = re.compile("rubtmp(?P<num>[0-9]+)\\.")
 
@@ -40,16 +36,14 @@ def dump_file (f_in, f_out):
 	for line in f_in.readlines():
 		f_out.write(line)
 
-class Main (rubber.cmdline.Main):
+class Pipe (rubber.cmdline.Main):
 	def __init__ (self):
-		super (Main, self).__init__()
+		super (Pipe, self).__init__ (mode="pipe")
+		# FIXME why?
 		msg.level = 0
 
 	def help (self):
-		"""
-		Display the description of all the options and exit.
-		"""
-		print (_("""\
+		sys.stderr.write (_("""\
 This is Rubber version %s.
 usage: rubber-pipe [options]
 available options:
@@ -73,106 +67,65 @@ available options:
   -s, --short              display errors in a compact form
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
-      --version            print version information and exit\
-""") % version)
+      --version            print version information and exit
+""") % rubber.version.version)
+
+	def short_help (self):
+		# normally, Rubber prints a short help text if no arguments
+		# at all are given.  This is valid for rubber-pipe, though.
+		pass
 
 	def parse_opts (self, cmdline):
-		args = super (Main, self).parse_opts(cmdline)
-		if len(args) > 0:
-			msg.warn(_("the following options were ignored: %s")
-				% string.join(args, " "))
+		args = super (Pipe, self).parse_opts (cmdline)
+		self.keep_temp = False
+		# rubber-pipe doesn't take file arguments
+		for arg in args:
+			self.ignored_option (arg)
+		# --inplace nonsensical since we don't have a filename
+		if self.place is None:
+			self.illegal_option ("--inplace")
+		# hack: force is required by self.build
+		self.force = False
+		return [ "-" ]   # this will be stdin
 
-	def main (self, cmdline):
+	def prepare_source (self, filename):
 		"""
-		Run Rubber as a pipe for the specified command line. This dumps the
-		standard input into a temporary file, compiles it, dumps the result on
-		standard output, and then removes the files if requested. If an error
-		happens while building the document, the process stops. The method
-		returns the program's exit code.
+		Dump the standard input in a file, and set up that file
+		the same way we would normally process LaTeX sources.
 		"""
-		self.prologue = []
-		self.epilogue = []
-		self.clean = True
-		self.place = "."
-		self.path = []
-		self.parse_opts(cmdline)
-		msg.log(_("This is Rubber version %s.") % version)
+		assert filename.endswith ("-")  # filename is ignored
 
-		# Put the standard input in a file
-
-		initial_dir = os.getcwd()
-
-		if self.place is not None and self.place != ".":
-			self.path.insert(0, initial_dir)
-			os.chdir(self.place)
-
-		src = make_name() + ".tex"
 		try:
-			srcfile = open(src, 'w')
+			filename = make_name () + ".tex"
+			# note the tempfile name so we can remove it later
+			self.pipe_tempfile = filename
+			# copy stdin into the tempfile
+			srcfile = open (filename, "w")
+			msg.progress (_("saving the input in %s") % filename)
+			dump_file (sys.stdin, srcfile)
+			srcfile.close ()
 		except IOError:
-			msg.error(_("cannot create temporary files"))
-			return 1
+			msg.error (_("cannot create temporary file '%s'") % filename)
+			sys.exit (2)
 
-		msg.progress(_("saving the input in %s") % src)
-		dump_file(sys.stdin, srcfile)
-		srcfile.close()
+		return super (Pipe, self).prepare_source (filename)
 
-		# Make the document
-
-		env = Environment()
-		env.vars["cwd"] = initial_dir
-
-		if env.set_source(src):
-			msg.error(_("cannot open the temporary %s") % src)
-			return 1
-
-		if self.include_only is not None:
-			env.main.includeonly(self.include_only)
-
-		env.make_source()
-
-		for dir in self.path:
-			env.main.do_path(dir)
-		for cmd in self.prologue:
-			cmd = parse_line(cmd, {})
-			env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
-
-		env.main.parse()
-
-		for cmd in self.epilogue:
-			cmd = parse_line(cmd, {})
-			env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
-
-		ret = env.final.make()
-
-		if ret == ERROR:
-			msg.info(_("There were errors."))
-			number = self.max_errors
-			for err in env.final.failed().get_errors():
-				if number == 0:
-					msg.info(_("More errors."))
-					break
-				msg.display(**err)
-				number -= 1
-			return 1
-
-
-		# Dump the results on standard output
-
-		output = open(env.final.products[0])
-		dump_file(output, sys.stdout)
-
-		# Clean the intermediate files
-
-		if self.clean:
-			for dep in env.final.set.values ():
-				dep.clean ()
-			os.remove(src)
-		return 0
-
-	def __call__ (self, cmdline):
+	def process_source (self, env):
+		"""
+		Build the document, and dump the result on stdout.
+		"""
 		try:
-			return self.main(cmdline)
-		except KeyboardInterrupt:
-			msg(0, _("*** interrupted"))
-			return 2
+			self.build (env)
+			filename = env.final.products[0]
+			try:
+				# dump the results on standard output
+				with open (filename, "r") as output:
+					dump_file (output, sys.stdout)
+			except IOError:
+				msg.error (_("error copying the product '%s' to stdout") % filename)
+				sys.exit (2)
+		finally:
+			# clean the intermediate files
+			if not self.keep_temp:
+				self.clean (env)
+				rubber.util.verbose_remove (self.pipe_tempfile)

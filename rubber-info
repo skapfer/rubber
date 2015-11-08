@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# (c) Sebastian Kapfer, 2015
+# vim: et:ts=4
 import sys
-from rubber.cmd_info import Main
-sys.exit(Main()(sys.argv[1:]))
+from rubber.cmd_info import Info
+Info () (sys.argv[1:])

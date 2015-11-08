@@ -15,7 +15,6 @@ from rubber.version import moddir
 from rubber.util import _
 from rubber.util import *
 import rubber.converters
-from rubber.converters.literate import literate_preprocessors
 import rubber.depend
 from rubber.convert import Converter
 
@@ -68,46 +67,6 @@ class Environment:
 			elif os.path.exists(test) and os.path.isfile(test):
 				return test
 		return None
-
-	def set_source (self, name, jobname=None):
-		"""
-		Create a main dependency node from the given file name. If this name
-		has an extension that is known of a preprocessor, this preprocessor is
-		used, otherwise the name is that of a LaTeX source.
-		"""
-		path = self.find_file(name, ".tex")
-		if not path:
-			msg.error(_("cannot find %s") % name)
-			return 1
-
-		base,ext = os.path.splitext(path)
-
-		if ext in literate_preprocessors.keys():
-			src = base + ".tex"
-			self.src_node = literate_preprocessors[ext](self.depends, src, path)
-		else:
-			src = path
-			self.src_node = None
-
-		from rubber.converters.latex import LaTeXDep
-		self.main = LaTeXDep(self)
-		if os.path.exists(src):
-			if self.main.set_source(src, jobname):
-				return 1
-		self.final = self.main
-		return 0
-
-	def make_source (self):
-		"""
-		Produce the source from its dependency rules, if needed.
-		Returns 0 on success and 1 on failure.
-		"""
-		if self.src_node and self.main.sources == []:
-			if self.src_node.make() == rubber.depend.ERROR:
-				return 1
-			src = self.src_node.products[0]
-			self.main.set_source(src)
-		return 0
 
 	def conv_set (self, file, vars):
 		"""
