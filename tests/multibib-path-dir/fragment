@@ -2,10 +2,10 @@ mkdir a b m
 mv biblioa.bib a
 mv bibliob.bib b
 mv biblio.bib m
-$rubber doc.tex
+rubber doc.tex
 [ -r multibiba.bbl ]
 [ -r multibibb.bbl ]
 [ -r doc.bbl ]
-$rubber --clean doc.tex
+rubber --clean doc.tex
 mv ?/*.bib .
 rmdir a b m

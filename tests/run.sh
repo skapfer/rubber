@@ -36,6 +36,11 @@ list0() {
     (cd "$1"; find -mindepth 1 -print0)
 }
 
+rubber() {
+    cp "$SOURCE_DIR/rubber" usrbinrubber.py
+    $python usrbinrubber.py $VERBOSE "$@"
+}
+
 rubberpipe() {
     cp "$SOURCE_DIR/rubber-pipe" usrbinrubber.py
     $python usrbinrubber.py $VERBOSE "$@"
@@ -65,14 +70,10 @@ for main; do
 
     cp -a "$SOURCE_DIR/src" rubber
 
-    cp "$SOURCE_DIR/rubber" usrbinrubber.py
-
     cat > rubber/version.py <<EOF
 version = "unreleased"
 moddir = "$SOURCE_DIR/data"
 EOF
-
-    rubber="$python usrbinrubber.py $VERBOSE"
 
     if test -r document; then
         read doc < document
@@ -90,7 +91,7 @@ EOF
         # default test code:  try to build two times, clean up.
         echo "Running rubber $arguments $doc ..."
 
-        $rubber $arguments "$doc"
+        rubber $arguments "$doc"
     fi
 
     if $KEEP; then
@@ -107,14 +108,14 @@ EOF
 
     if ! [ -e fragment ]; then
         # default test code:  try to build two times, clean up.
-        $rubber $arguments         "$doc"
-        $rubber $arguments --clean "$doc"
+        rubber $arguments         "$doc"
+        rubber $arguments --clean "$doc"
     fi
 
     unset doc arguments
 
     rm -r rubber
-    rm usrbinrubber.py
+    rm -f usrbinrubber.py
     (list0 ../$main; list0 ../shared) | xargs -0 rm -r
     cd ..
 
