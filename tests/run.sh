@@ -38,6 +38,7 @@ list0() {
 for main; do
     [ "$main" = 'run.sh' ] && continue
     [ "$main" = 'shared' ] && continue
+    [ "$main" = "$tmpdir" ] && continue
 
     [ -d $main ] || {
         echo "$main must be a directory"
