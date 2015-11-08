@@ -58,12 +58,9 @@ for main; do
 
     cp -a "$SOURCE_DIR/src" rubber
 
-    cat > usrbinrubber.py <<EOF
-import sys, rubber.cmdline
-sys.exit (rubber.cmdline.Main () (sys.argv [1:]))
-EOF
+    cp "$SOURCE_DIR/rubber" usrbinrubber.py
 
-    cat >> rubber/version.py <<EOF
+    cat > rubber/version.py <<EOF
 version = "unreleased"
 moddir = "$SOURCE_DIR/data"
 EOF
