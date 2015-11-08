@@ -5,6 +5,7 @@
 
 SOURCE_DIR="$(cd ..; pwd)"
 tmpdir=tmp
+python=python2
 
 set -e                          # Stop at first failure.
 
@@ -33,6 +34,11 @@ echo "When a test fails, please remove the $tmpdir directory manually."
 
 list0() {
     (cd "$1"; find -mindepth 1 -print0)
+}
+
+rubberpipe() {
+    cp "$SOURCE_DIR/rubber-pipe" usrbinrubber.py
+    $python usrbinrubber.py $VERBOSE "$@"
 }
 
 for main; do
@@ -66,7 +72,7 @@ version = "unreleased"
 moddir = "$SOURCE_DIR/data"
 EOF
 
-    rubber="python usrbinrubber.py $VERBOSE"
+    rubber="$python usrbinrubber.py $VERBOSE"
 
     if test -r document; then
         read doc < document
