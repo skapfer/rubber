@@ -41,6 +41,11 @@ rubber() {
     $python usrbinrubber.py $VERBOSE "$@"
 }
 
+rubberinfo() {
+    cp "$SOURCE_DIR/rubber-info" usrbinrubber.py
+    $python usrbinrubber.py $VERBOSE "$@"
+}
+
 rubberpipe() {
     cp "$SOURCE_DIR/rubber-pipe" usrbinrubber.py
     $python usrbinrubber.py $VERBOSE "$@"
