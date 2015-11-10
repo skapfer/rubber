@@ -1,3 +1,3 @@
 rubber -d doc.tex
 rubberinfo doc
-rubber --clean doc
+rubber -d --clean doc
