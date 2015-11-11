@@ -2,5 +2,5 @@
 # (c) Sebastian Kapfer, 2015
 # vim: et:ts=4
 import sys
-from rubber.cmd_info import Info
+from rubber.cmdline import Info
 Info () (sys.argv[1:])

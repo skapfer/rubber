@@ -2,5 +2,5 @@
 # (c) Sebastian Kapfer, 2015
 # vim: et:ts=4
 import sys
-from rubber.cmd_pipe import Pipe
+from rubber.cmdline import Pipe
 Pipe () (sys.argv[1:])
