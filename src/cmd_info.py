@@ -56,14 +56,10 @@ actions:
 
 	# FIXME rewrite
 	def process_source (self, env):
-		self.env = env
-
 		if self.info_action == "deps":
-			deps = {}
-			for dep in self.env.main.source_nodes():
-				for file in dep.leaves():
-					deps[file] = None
-			print (string.join(deps.keys()))
+			from rubber.depend import Leaf
+			deps = [ k for k,n in env.depends.iteritems () if type (n) is Leaf ]
+			rubber.util.stdout_write (string.join (deps))
 
 		elif self.info_action == "rules":
 			seen = {}

@@ -224,18 +224,6 @@ class Node (object):
 			rubber.util.verbose_remove (file)
 		self.date = None
 
-	def leaves (self):
-		"""
-		Return a list of all source files that are required by this node and
-		cannot be built, i.e. the leaves of the dependency tree.
-		"""
-		if self.sources == []:
-			return self.products
-		ret = []
-		for source in self.source_nodes():
-			ret.extend(source.leaves())
-		return ret
-
 class Leaf (Node):
 	"""
 	This class specializes Node for leaf nodes, i.e. source files with no

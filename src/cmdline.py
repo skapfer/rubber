@@ -111,6 +111,7 @@ available options:
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
 				 "readopts=",
 				 "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
+				 "boxes", "check", "deps", "errors", "refs", "rules", "warnings",
 				 "warn="])
 		except GetoptError as e:
 			msg.error (_("getopt error: %s") % str (e))
@@ -414,7 +415,7 @@ available options:
 			if self.warn:
 				# FIXME
 				log = env.main.log
-				if log.read (env.main.basename (with_suffix=".log")):
+				if not env.main.parse_log ():
 					msg.error(_("cannot read the log file"))
 					return 1
 				msg.display_all(log.parse(boxes=self.warn_boxes,
