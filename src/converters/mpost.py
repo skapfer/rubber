@@ -16,6 +16,8 @@ from rubber.util import *
 import rubber.depend
 import rubber.converters.latex
 
+metapost_logfile_limit = 1000000
+
 def check (source, target, context):
 	return prog_available('mpost')
 
@@ -71,7 +73,8 @@ class MPLogCheck (rubber.converters.latex.LogCheck):
 			# a TeX error was found: parse mpxerr.log
 
 			log = rubber.converter.latex.LogCheck()
-			if log.read(os.path.join(self.pwd, "mpxerr.log")):
+			# FIXME this path has no testcase.
+			if not log.readlog (os.path.join(self.pwd, "mpxerr.log"), metapost_logfile_limit):
 				yield err
 				continue
 
@@ -165,7 +168,7 @@ class Dep (rubber.depend.Node):
 		# This creates a log file that has the same aspect as TeX logs.
 
 		self.log = MPLogCheck(self.cmd_pwd)
-		if self.log.read(self.base + ".log"):
+		if not self.log.readlog (self.base + ".log", metapost_logfile_limit):
 			msg.error(_(
 				"I can't read MetaPost's log file, this is wrong."))
 			return False
