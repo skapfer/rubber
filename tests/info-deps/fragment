@@ -1,0 +1,3 @@
+rubber -d doc.tex
+test $(rubberinfo --deps doc | wc -w) -eq 2
+rubber -d --clean doc
