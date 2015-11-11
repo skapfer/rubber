@@ -32,24 +32,17 @@ done
 
 echo "When a test fails, please remove the $tmpdir directory manually."
 
-list0() {
-    (cd "$1"; find -mindepth 1 -print0)
-}
-
-rubber() {
-    cp "$SOURCE_DIR/rubber" usrbinrubber.py
-    $python usrbinrubber.py $VERBOSE "$@"
-}
-
-rubberinfo() {
-    cp "$SOURCE_DIR/rubber-info" usrbinrubber.py
-    $python usrbinrubber.py $VERBOSE "$@"
-}
-
-rubberpipe() {
-    cp "$SOURCE_DIR/rubber-pipe" usrbinrubber.py
-    $python usrbinrubber.py $VERBOSE "$@"
-}
+# Copy source directory, because we must patch version.py and python
+# will attempt to write precompiled *.pyc sources.  For efficiency,
+# we share these temporary files among tests.
+mkdir $tmpdir
+cp -a "$SOURCE_DIR/src" $tmpdir/rubber
+sed "s%@version@%unreleased%;s%@moddir@%$SOURCE_DIR/data%" \
+    $tmpdir/rubber/version.py.in > $tmpdir/rubber/version.py
+for exe in rubber rubber-info rubber-pipe; do
+    cp "$SOURCE_DIR/$exe" $tmpdir/$exe.py
+    alias $exe="$python ../$exe.py $VERBOSE"
+done
 
 for main; do
     [ "$main" = 'run.sh' ] && continue
@@ -68,17 +61,9 @@ for main; do
 
     echo "Test: $main"
 
-    mkdir $tmpdir
-    cp $main/* $tmpdir
-    cp shared/* $tmpdir
-    cd $tmpdir
-
-    cp -a "$SOURCE_DIR/src" rubber
-
-    cat > rubber/version.py <<EOF
-version = "unreleased"
-moddir = "$SOURCE_DIR/data"
-EOF
+    mkdir $tmpdir/$main
+    cp $main/* shared/* $tmpdir/$main
+    cd $tmpdir/$main
 
     if test -r document; then
         read doc < document
@@ -100,7 +85,7 @@ EOF
     fi
 
     if $KEEP; then
-        echo "Keeping ${tmpdir}."
+        echo "Keeping $tmpdir/$main."
         exit 1
     fi
 
@@ -119,16 +104,24 @@ EOF
 
     unset doc arguments
 
-    rm -r rubber
-    rm -f usrbinrubber.py
-    (list0 ../$main; list0 ../shared) | xargs -0 rm -r
-    cd ..
+    cd ../..
 
-    rmdir $tmpdir || {
-        echo "Directory $tmpdir is not left clean:"
-        ls $tmpdir
+    for before in $main/* shared/*; do
+        after=$tmpdir/$main/${before##*/}
+        diff $before $after || {
+            echo "File $after missing or changed"
+            exit 1
+        }
+        rm $after
+    done
+
+    rmdir $tmpdir/$main || {
+        echo "Directory $tmpdir/$main is not left clean:"
+        ls $tmpdir/$main
         exit 1
     }
 done
+
+rm -fr $tmpdir
 
 echo OK

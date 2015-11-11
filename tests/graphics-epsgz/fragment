@@ -1,0 +1,5 @@
+gzip -c sample.eps > compressed.eps.gz
+rubber doc
+rubber doc
+rubber --clean doc
+rm -f compressed.eps.gz
