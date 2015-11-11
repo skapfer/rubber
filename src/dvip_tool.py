@@ -16,6 +16,7 @@ import sys
 
 import abc
 from rubber import _, msg
+import rubber.converters
 import rubber.depend
 import rubber.module_interface
 
@@ -37,6 +38,8 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
             msg.error (_('Unknown tool: %s') % tool)
             sys.exit (2)
         self.doc = document
+
+        assert type (self.doc.env.final) is rubber.converters.latex.LaTeXDep
         self.source = self.doc.env.final.products[0]
         if not self.source.endswith ('.dvi'):
             msg.error (_('I can\'t use %s when not producing a DVI') % tool)
