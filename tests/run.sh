@@ -45,9 +45,10 @@ for exe in rubber rubber-info rubber-pipe; do
 done
 
 for main; do
-    [ "$main" = 'run.sh' ] && continue
-    [ "$main" = 'shared' ] && continue
-    [ "$main" = "$tmpdir" ] && continue
+    case "$main" in
+        run.sh | shared | $tmpdir)
+            continue;;
+    esac
 
     [ -d $main ] || {
         echo "$main must be a directory"
