@@ -1,3 +1,3 @@
 # this rubber run should fail, an invalid bibtex database being included.
-! rubber doc
+! rubber doc 2>/dev/null
 rm doc.aux doc.dvi doc.log doc.bbl doc.bcf doc.blg doc.run.xml
