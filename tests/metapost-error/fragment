@@ -1,0 +1,6 @@
+# syntax error in metapost; rubber should parse the logfile and report the location.
+rubber doc 2>&1 | grep -q metapost.mp:3 || {
+    echo expected error message not reported by Rubber
+    false
+}
+rubber --clean doc
