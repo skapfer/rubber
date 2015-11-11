@@ -171,7 +171,7 @@ class LogCheck (object):
 	def readlog (self, name, limit):
 		"""
 		Read the specified log file, checking that it was produced by the
-		right compiler. Returns true if the log file is invalid or does not
+		right compiler. Returns False if the log file is invalid or does not
 		exist.
 		"""
 		self.lines = None
@@ -179,6 +179,7 @@ class LogCheck (object):
 			with open (name) as fp:
 				line = fp.readline ()
 				if not line or not re_loghead.match (line):
+					msg.log (_('empty log'), pkg='latex')
 					return False
 				# do not read the whole log unconditionally
 				whole_file = fp.read (limit)
@@ -188,6 +189,7 @@ class LogCheck (object):
 					msg.warn (_('log file is very long, and will not be read completely.'), pkg='latex')
 			return True
 		except IOError:
+			msg.log (_('IO Error with log'), pkg='latex')
 			return False
 
 	#-- Process information {{{2
