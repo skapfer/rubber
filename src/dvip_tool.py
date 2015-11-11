@@ -34,9 +34,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         super (Module, self).__init__ (document.env.depends)
 
         self.tool = tool
-        if tool not in ('dvipdfm', 'dvips'):
-            msg.error (_('Unknown tool: %s') % tool)
-            sys.exit (2)
+        assert tool in ('dvipdfm', 'dvips')
         self.doc = document
 
         assert type (self.doc.env.final) is rubber.converters.latex.LaTeXDep
