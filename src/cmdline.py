@@ -145,7 +145,7 @@ available options:
 				self.ignored_option (opt)
 			elif opt in ("-k", "--keep"):
 				if self.rubber_mode == "pipe":
-					self.keep_temp = False
+					self.keep_temp = True
 				else:
 					# does not make any sense except in pipe mode
 					self.illegal_option (opt)
@@ -521,8 +521,8 @@ available options:
 		pass
 
 	def parse_opts (self, cmdline):
-		args = super (Pipe, self).parse_opts (cmdline)
 		self.keep_temp = False
+		args = super (Pipe, self).parse_opts (cmdline)
 		# rubber-pipe doesn't take file arguments
 		for arg in args:
 			self.ignored_option (arg)

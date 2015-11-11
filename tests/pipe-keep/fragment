@@ -1,0 +1,3 @@
+rubberpipe -k <doc.tex >/dev/null
+rm rubtmp*tex
+rm rubtmp*
