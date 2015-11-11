@@ -82,16 +82,14 @@ class Module:
         except AttributeError:
             # there is no do_ method for this directive, which means there
             # is no such directive.
-            # FIXME report the module which was given
-            msg.error (_("no such directive '%s'") % cmd, pkg='module')
+            msg.error (_("no such directive '%s'") % cmd, pkg=self.__module__)
             sys.exit (1)
         try:
             return handler (*args)
         except TypeError:
             # Python failed to coerce the arguments given into whatever
             # the handler would like to see.  report a generic failure.
-            # FIXME report the module which was given
-            msg.error (_("invalid syntax for directive '%s'") % cmd, pkg='module')
+            msg.error (_("invalid syntax for directive '%s'") % cmd, pkg=self.__module__)
             sys.exit (1)
 
     def get_errors (self):
