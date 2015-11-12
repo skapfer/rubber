@@ -7,6 +7,9 @@ Version 1.4 (2015-11-xx)
   Features:
   - New distutils-based build & install scripts by Nicolas.
   - Report BibTeX / Biber errors more reliably.
+  - We have support for embedding R code via knitr.
+    http://yihui.name/knitr/
+    Closes: https://bugs.launchpad.net/rubber/+bug/1422759
 
   Bugfixes:
   - Refuse to read logfiles which exceed 1 MB.

@@ -26,7 +26,8 @@ class CWebDep (rubber.depend.Shell):
 
 class KnitrDep (rubber.depend.Shell):
 	def __init__ (self, set, target, source):
-		super (KnitrDep, self).__init__(set, ['R', '-e', 'library(knitr); knit("%s")' % source], target)
+		super (KnitrDep, self).__init__(set, ['R', '-e', 'library(knitr); knit("%s")' % source])
 		self.add_source (source)
+		self.add_product (target)
 
 literate_preprocessors = { ".lhs": LHSDep, ".w": CWebDep, ".Rtex": KnitrDep }

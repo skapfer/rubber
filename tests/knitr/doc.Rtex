@@ -1,0 +1,17 @@
+\documentclass{article}
+\usepackage{url}
+\begin{document}
+A tiny example for knitr, taken from
+\url{https://github.com/yihui/knitr/blob/master/inst/examples/knitr-minimal.Rnw}
+by Yihui Xie)
+
+OK, let's get started with some boring random numbers:
+
+<<boring-random>>=
+set.seed(1121)
+(x=rnorm(20))
+mean(x);var(x)
+@
+
+The first element of \texttt{x} is \Sexpr{x[1]}.
+\end{document}
