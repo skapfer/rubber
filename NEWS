@@ -10,6 +10,10 @@ Version 1.4 (2015-11-xx)
   - We have support for embedding R code via knitr.
     http://yihui.name/knitr/
     Closes: https://bugs.launchpad.net/rubber/+bug/1422759
+    Note that since R can run arbitrary external code, --unsafe
+    must be given at the command line:
+      rubber -d --unsafe paper.Rtex
+    creates beautifully typeset PDF from your R script.
 
   Bugfixes:
   - Refuse to read logfiles which exceed 1 MB.
