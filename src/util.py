@@ -445,13 +445,24 @@ def find_resource (name, suffix = "", paths = []):
 	return None
 
 def verbose_remove (path, **kwargs):
+	"""
+	Remove a file and notify the user of it.
+	This is meant for --clean;  failures are ignored.
+	"""
 	try:
 		os.remove (path)
-		msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
-	except OSError:
-		pass
+	except OSError as e:
+		if e.errno != errno.ENOENT:
+			msg.log (_("error removing '{filename}': {strerror}").format ( \
+				filename=msg.simplify (path), strerror=e.strerror), **kwargs)
+		return
+	msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
 
 def verbose_rmtree (tree):
+	"""
+	Remove a directory and notify the user of it.
+	This is meant for --clean;  failures are ignored.
+	"""
 	msg.log (_("removing tree {}").format (msg.simplify (tree)))
 	# FIXME proper error reporting
 	shutil.rmtree (tree, ignore_errors=True)
