@@ -14,6 +14,7 @@ import re
 import string
 from getopt import getopt, GetoptError
 
+import rubber.converters.compressor
 from rubber.environment import Environment
 from rubber.depend import ERROR, CHANGED, UNCHANGED
 from rubber.util import _, msg
@@ -360,7 +361,6 @@ available options:
 			if self.compress is not None:
 				last_node = env.final
 				filename = last_node.products[0]
-				import rubber.converters.compressor
 				if self.compress == 'gzip':
 					import gzip
 					env.final = rubber.converters.compressor.Node (
