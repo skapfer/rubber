@@ -14,6 +14,8 @@ Version 1.4 (2015-11-xx)
     must be given at the command line:
       rubber -d --unsafe paper.Rtex
     creates beautifully typeset PDF from your R script.
+  - Support for PythonTeX package.  Also requires --unsafe if
+    you want Rubber to invoke pythontex.
 
   Bugfixes:
   - Refuse to read logfiles which exceed 1 MB.
