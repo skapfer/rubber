@@ -16,8 +16,13 @@ Version 1.4 (2015-11-xx)
     This avoids out-of-memory situations.  The limit may be raised with
       % rubber: set logfile_limit 1000000
     https://bugs.launchpad.net/rubber/+bug/628150
+  - The command-line parsing of rubber and rubber-info has been merged.
+    Thus, the --inplace and --into options are not only accepted by
+    Rubber (as they were previously), they also take effect.
+    Closes: https://bugs.launchpad.net/rubber/+bug/975376
   - Rubber complains properly now for nonexisting directives, and
     doesn't just print a stacktrace.
+    Closes: https://bugs.launchpad.net/rubber/+bug/1090115
   - More refactoring, reducing the number of code paths to test and
     maintain.
 
