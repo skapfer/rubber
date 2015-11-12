@@ -405,23 +405,6 @@ def parse_line (line, dict):
 
 	return elems
 
-def make_line (template, dict):
-	"""
-	Instanciate a command template as returned by parse_line using a specific
-	dictionary for variables.
-	"""
-	def one_string (arg):
-		if arg.__class__ != list: return arg
-		val = ""
-		for elem in arg:
-			if elem[0] == "'":
-				val = val + elem[1:]
-			else:
-				if dict.has_key(elem[1:]):
-					val = val + str(dict[elem[1:]])
-		return val
-	return map(one_string, template)
-
 devnull_fp = None
 def devnull ():
 	global devnull_fp
