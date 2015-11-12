@@ -11,6 +11,7 @@ import os, stat, time
 import errno
 import imp
 import re, string
+import shutil
 from string import whitespace
 import sys
 
@@ -466,6 +467,11 @@ def verbose_remove (path, **kwargs):
 		msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
 	except OSError:
 		pass
+
+def verbose_rmtree (tree):
+	msg.log (_("removing tree {}").format (msg.simplify (tree)))
+	# FIXME proper error reporting
+	shutil.rmtree (tree, ignore_errors=True)
 
 def stderr_write (text):
 	sys.stderr.write (text + "\n")

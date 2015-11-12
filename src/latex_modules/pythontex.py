@@ -9,9 +9,9 @@ pythontex support for Rubber
 from rubber import _, msg
 
 import os.path
-import shutil
 
 import rubber.module_interface
+import rubber.util
 
 class PythonTeXDep (rubber.depend.Shell):
 	def __init__ (self, set, document):
@@ -40,9 +40,7 @@ class PythonTeXDep (rubber.depend.Shell):
 		return super (PythonTeXDep, self).run ()
 
 	def clean (self):
-		msg.log (_('removing tree %s') % self.pythontex_files)
-		# FIXME proper error reporting
-		shutil.rmtree (self.pythontex_files, ignore_errors=True)
+		rubber.util.verbose_rmtree (self.pythontex_files)
 		return super (PythonTeXDep, self).clean ()
 
 class Module (rubber.module_interface.Module):
