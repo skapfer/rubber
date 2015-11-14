@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: noet:ts=4
+# vim: et:ts=4
 #
 # This is the setup script for Rubber. It acts both as a part of the
 # configuration script a la autoconf and as a setup script a la Distutils.
@@ -110,8 +110,6 @@ class install (distutils.command.install.install):
         build = self.get_finalized_command ("build")
         assert self.distribution.data_files == None
         self.distribution.data_files = [
-            (self.moddir + "/modules",
-             glob.glob (os.path.join ("data", "modules", "*.rub"))),
             (self.moddir, ("data/rules.ini", )),
             (self.mandir + "/man1", (
                 "doc/man-en/rubber.1",
@@ -216,6 +214,9 @@ Metapost compilation).\
     ),
     package_dir = {
         "rubber" : "src",
+    },
+    package_data = {
+        "rubber" : [ "latex_modules/*.rub" ],
     },
     scripts = (
         "rubber",

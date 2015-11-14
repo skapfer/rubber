@@ -67,7 +67,16 @@ class Modules:
 		# First look for a script
 
 		mod = None
-		for path in "", os.path.join(rubber.version.moddir, "modules"):
+		rub_searchpath = [
+			"",                              # working dir
+			rubber.latex_modules.__path__,   # builtin rubber modules
+			# these are different from pre-1.4 search paths to avoid pulling
+			# in old modules from previous installs.
+			"/usr/local/share/rubber/latex_modules",
+			"/usr/share/rubber/latex_modules",
+			# FIXME allow the user to configure this, e.g. via RUBINPUTS
+		]
+		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
 				mod = ScriptModule(self.env, file)
