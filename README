@@ -28,16 +28,7 @@ To compile and install Rubber, just follow the usual procedure:
 # python2 setup.py install
 # python2 setup.py clean --all
 
-Some options affect other commands indirectly:
-* moddir is used to generate src/version.py and must be set at build time.
-* Only documentation formats selected during build are installed.
-If you need to build and install as separate steps, for example in
-order to select a --root stage directory during install, you should
-set these options in the configuration file setup.cfg, and then invoke
-
-# python2 setup.py build
-# python2 setup.py install --root=stage_dir
-
+Note that only documentation formats selected during build are installed.
 
 * Usage
 
