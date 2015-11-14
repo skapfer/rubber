@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 # (c) Sebastian Kapfer, 2015
 # vim: et:ts=4
 import sys
