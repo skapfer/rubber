@@ -40,18 +40,18 @@ doc_recipes = (
 
 class build (distutils.command.build.build):
 
-    user_options = distutils.command.build.build.user_options + [
-        ("info", None, "build Info documentation"),
-        ("html", None, "format HTML documentation"),
-        ("pdf",  None, "format PDF documentation"),
-        ("txt",  None, "format plain text documentation"),
-    ]
     boolean_options = distutils.command.build.build.boolean_options \
                       + ["info", "html", "pdf", "txt"]
     info = True
     html = True
-    pdf  = False
+    pdf  = True
     txt  = False
+    user_options = distutils.command.build.build.user_options + [
+        ("info", None, "build Info documentation [{}]".format (info)),
+        ("html", None, "format HTML documentation [{}]".format (html)),
+        ("pdf",  None, "format PDF documentation [{}]".format (pdf)),
+        ("txt",  None, "format plain text documentation [{}]".format (txt)),
+    ]
 
     def generate_files_with_substitutions (self, subs):
         pattern = "|".join (subs.keys ())
@@ -89,14 +89,14 @@ class build (distutils.command.build.build):
 
 class install (distutils.command.install.install):
 
-    user_options = distutils.command.install.install.user_options + [
-        ("mandir=", None, "installation directory for manual pages [$base/man]"),
-        ("infodir=", None, "installation directory for info manuals [$base/info]"),
-        ("docdir=", None, "installation directory for other documentation [$base/share/doc/rubber]"),
-    ]
-    mandir  = "$base/man"
-    infodir = "$base/info"
+    mandir  = "$base/share/man"
+    infodir = "$base/share/info"
     docdir  = "$base/share/doc/rubber"
+    user_options = distutils.command.install.install.user_options + [
+        ("mandir=", None, "installation directory for manual pages [{}]".format (mandir)),
+        ("infodir=", None, "installation directory for info manuals [{}]".format (infodir)),
+        ("docdir=", None, "installation directory for other documentation [{}]".format (docdir)),
+    ]
 
     def finalize_options (self):
         distutils.command.install.install.finalize_options (self)
