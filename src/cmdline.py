@@ -9,7 +9,6 @@ This is the command line interface for Rubber.
 import os
 import os.path
 import sys
-from sys import exit
 import re
 import string
 from getopt import getopt, GetoptError
@@ -50,14 +49,14 @@ class Main (object):
 usage: rubber [options] sources...
 For more information, try `rubber --help'.
 """))
-		exit (1)
+		rubber.util.abort_rubber_syntax_error ()
 
 	def ignored_option (self, opt):
 		msg.warn (_("warning: ignoring option %s") % opt)
 
 	def illegal_option (self, opt):
 		msg.error (_("error: illegal option %s") % opt)
-		exit (1)
+		rubber.util.abort_rubber_syntax_error ()
 
 	def help (self):
 		"""
@@ -118,7 +117,7 @@ available options:
 				 "warn="])
 		except GetoptError as e:
 			msg.error (_("getopt error: %s") % str (e))
-			exit (1)
+			rubber.util.abort_rubber_syntax_error ()
 
 		extra = []
 		using_dvips = False
@@ -227,7 +226,7 @@ available options:
 				if self.info_action is not None:
 					msg.error (_("error: cannot have both '--%s' and '%s'") \
 						% (self.info_action, opt))
-					exit (1)
+					rubber.util.abort_rubber_syntax_error ()
 				self.info_action = opt[2:]
 
 			elif arg == "":
@@ -239,7 +238,7 @@ available options:
 
 		if self.jobname is not None and len (ret) > 1:
 			msg.error (_("error: cannot give jobname and have more than one input file"))
-			exit (1)
+			rubber.util.abort_rubber_syntax_error ()
 
 		return ret
 
@@ -256,7 +255,7 @@ available options:
 
 		if not path:
 			msg.error (_("Main document not found: '%s'") % filename)
-			exit (2)
+			rubber.util.abort_generic_error ()
 
 		base, ext = os.path.splitext (path)
 
@@ -268,12 +267,12 @@ available options:
 			if self.rubber_mode == "build":
 				if not self.unsafe:
 					msg.error (_("Running external commands requires --unsafe."))
-					exit (1)
+					rubber.util.abort_rubber_syntax_error ()
 				# Produce the source from its dependency rules, if needed.
 				if src_node.make () == ERROR:
 					msg.error (_("Producing the main LaTeX file failed: '%s'") \
 						% src)
-					exit (2)
+					rubber.util.abort_generic_error ()
 		else:
 			src = path
 
@@ -317,7 +316,7 @@ available options:
 						os.chdir(self.place)
 			except OSError as e:
 				msg.error(_("Error changing to working directory: %s") % e.strerror)
-				exit (2)
+				rubber.util.abort_generic_error ()
 
 			# prepare the source file.  this may require a pre-processing
 			# step, or dumping stdin.  thus, the input filename may change.
@@ -338,7 +337,7 @@ available options:
 			# whole lot of sense.
 			if not os.path.exists (src):
 				msg.error (_("LaTeX source file not found: '%s'") % src)
-				exit (2)
+				rubber.util.abort_generic_error ()
 
 			saved_vars = env.main.vars
 			env.main.vars = rubber.util.Variables (saved_vars, { "cwd": initial_dir })
@@ -409,7 +408,7 @@ available options:
 						break
 					msg.display(**err)
 					number -= 1
-				exit (2)
+				rubber.util.abort_generic_error ()
 
 			if ret == UNCHANGED:
 				msg(1, _("nothing to be done for %s") % srcname)
@@ -433,7 +432,7 @@ available options:
 			assert False
 		except KeyboardInterrupt:
 			msg(0, _("*** interrupted"))
-			exit (2)
+			rubber.util.abort_generic_error ()
 
 class Clean (Main):
 	"""
@@ -551,7 +550,7 @@ available options:
 			srcfile.close ()
 		except IOError:
 			msg.error (_("cannot create temporary file '%s'") % filename)
-			sys.exit (2)
+			rubber.util.abort_generic_error ()
 
 		return super (Pipe, self).prepare_source (filename)
 
@@ -568,7 +567,7 @@ available options:
 					dump_file (output, sys.stdout)
 			except IOError:
 				msg.error (_("error copying the product '%s' to stdout") % filename)
-				sys.exit (2)
+				rubber.util.abort_generic_error ()
 		finally:
 			# clean the intermediate files
 			if not self.keep_temp:
@@ -588,7 +587,7 @@ class Info (Main):
 usage: rubber-info [options] source
 For more information, try `rubber-info --help'.
 """))
-		sys.exit (1)
+		rubber.util.abort_rubber_syntax_error ()
 
 	def help (self):
 		sys.stderr.write (_("""\
@@ -648,7 +647,7 @@ actions:
 		log = self.env.main.log
 		if not self.env.main.parse_log ():
 			msg.error(_("Parsing the log file failed"))
-			exit (2)
+			rubber.util.abort_generic_error ()
 
 		if act == "boxes":
 			if not msg.display_all(log.get_boxes()):

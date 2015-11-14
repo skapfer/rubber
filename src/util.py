@@ -472,3 +472,11 @@ def stderr_write (text):
 
 def stdout_write (text):
 	sys.stdout.write (text + "\n")
+
+def abort_rubber_syntax_error ():
+	"""signal invalid Rubber command-line"""
+	sys.exit (1)
+
+def abort_generic_error ():
+	"""errors running LaTeX, finding essential files, etc."""
+	sys.exit (2)

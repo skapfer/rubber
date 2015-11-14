@@ -51,7 +51,7 @@ class Module (rubber.module_interface.Module):
 
     def hook_bibliography (self, loc, bibs):
         msg.error(_("incompatible with \\bibliography"), pkg="bibtopic")
-        sys.exit (2)
+        rubber.util.abort_generic_error ()
 
     def hook_bibliographystyle (self, loc, name):
         self.current_style = name

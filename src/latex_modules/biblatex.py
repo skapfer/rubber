@@ -9,7 +9,6 @@ BibLaTeX support for Rubber
 from rubber.util import _, msg
 import rubber.util
 import rubber.biblio
-import sys
 import re
 import rubber.module_interface
 
@@ -22,7 +21,7 @@ class Module (rubber.module_interface.Module):
 
 		if backend not in ("biber", "bibtex", "bibtex8", "bibtexu"):
 			msg.error (_("Garbled biblatex backend: backend=%s (aborting)") % backend)
-			sys.exit (1)  # abort rather than guess
+			rubber.util.abort_generic_error () # abort rather than guess
 
 		self.dep = BibLaTeXDep (doc, backend)
 		doc.hook_macro ("bibliography", "a", self.dep.add_bibliography)

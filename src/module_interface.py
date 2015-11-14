@@ -28,8 +28,8 @@ each time a .rub file is read.
 """
 
 import abc
-import sys
 from rubber import msg, _
+import rubber.util
 
 class Module:
     # This class may not be instantiated directly, only subclassed.
@@ -83,14 +83,14 @@ class Module:
             # there is no do_ method for this directive, which means there
             # is no such directive.
             msg.error (_("no such directive '%s'") % cmd, pkg=self.__module__)
-            sys.exit (1)
+            rubber.util.abort_syntax_error ()
         try:
             return handler (*args)
         except TypeError:
             # Python failed to coerce the arguments given into whatever
             # the handler would like to see.  report a generic failure.
             msg.error (_("invalid syntax for directive '%s'") % cmd, pkg=self.__module__)
-            sys.exit (1)
+            rubber.util.abort_syntax_error ()
 
     def get_errors (self):
         """

@@ -12,13 +12,12 @@ When the name of the main compiler is "Omega" (instead of "TeX" for
 instance), then "odvips" is used instead of "dvips".
 """
 
-import sys
-
 import abc
 from rubber import _, msg
 import rubber.converters
 import rubber.depend
 import rubber.module_interface
+import rubber.util
 
 # FIXME: this class may probably be simplified a lot if inheriting
 # from rubber.depend.Shell instead of rubber.depend.Node.
@@ -41,7 +40,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         self.source = self.doc.env.final.products[0]
         if not self.source.endswith ('.dvi'):
             msg.error (_('I can\'t use %s when not producing a DVI') % tool)
-            sys.exit (2)
+            rubber.util.abort_generic_error ()
         self.doc.env.final = self
         self.add_product (self.source [:-3] + product_extension [tool])
         self.add_source (self.source)
