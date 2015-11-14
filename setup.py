@@ -89,8 +89,8 @@ class build (distutils.command.build.build):
 
 class install (distutils.command.install.install):
 
-    mandir  = "$base/share/man"
-    infodir = "$base/share/info"
+    mandir  = "$base/man"
+    infodir = "$base/info"
     docdir  = "$base/share/doc/rubber"
     user_options = distutils.command.install.install.user_options + [
         ("mandir=", None, "installation directory for manual pages [{}]".format (mandir)),
