@@ -16,7 +16,6 @@ import distutils.command.install
 import distutils.core
 import distutils.dir_util
 import distutils.log
-import glob
 import os.path
 import re
 
@@ -80,7 +79,6 @@ class build (distutils.command.build.build):
 
     def run (self):
         subs = {}
-        subs ["moddir"] = self.get_finalized_command ("install").moddir
         for v in ("author", "author_email", "url", "version"):
             subs [v] = getattr (self.distribution.metadata, "get_"+v) ()
         self.generate_files_with_substitutions (subs)
@@ -92,25 +90,22 @@ class build (distutils.command.build.build):
 class install (distutils.command.install.install):
 
     user_options = distutils.command.install.install.user_options + [
-        ("moddir=", None, "installation directory for .rub modules and rules.ini [$base/share/rubber]"),
         ("mandir=", None, "installation directory for manual pages [$base/man]"),
         ("infodir=", None, "installation directory for info manuals [$base/info]"),
         ("docdir=", None, "installation directory for other documentation [$base/share/doc/rubber]"),
     ]
-    moddir  = "$base/share/rubber"
     mandir  = "$base/man"
     infodir = "$base/info"
     docdir  = "$base/share/doc/rubber"
 
     def finalize_options (self):
         distutils.command.install.install.finalize_options (self)
-        self._expand_attrs (("moddir", "mandir", "infodir", "docdir"))
+        self._expand_attrs (("mandir", "infodir", "docdir"))
 
     def run (self):
         build = self.get_finalized_command ("build")
         assert self.distribution.data_files == None
         self.distribution.data_files = [
-            (self.moddir, ("data/rules.ini", )),
             (self.mandir + "/man1", (
                 "doc/man-en/rubber.1",
                 "doc/man-en/rubber-info.1",
@@ -216,7 +211,7 @@ Metapost compilation).\
         "rubber" : "src",
     },
     package_data = {
-        "rubber" : [ "latex_modules/*.rub" ],
+        "rubber" : [ "latex_modules/*.rub", "rules.ini" ],
     },
     scripts = (
         "rubber",

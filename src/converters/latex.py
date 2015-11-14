@@ -16,7 +16,6 @@ import string
 from rubber import _
 from rubber.util import *
 import rubber.depend
-import rubber.version
 import rubber.latex_modules
 import rubber.module_interface
 
@@ -68,8 +67,8 @@ class Modules:
 
 		mod = None
 		rub_searchpath = [
-			"",                              # working dir
-			rubber.latex_modules.__path__,   # builtin rubber modules
+			"",                                # working dir
+			rubber.latex_modules.__path__[0],  # builtin rubber modules
 			# these are different from pre-1.4 search paths to avoid pulling
 			# in old modules from previous installs.
 			"/usr/local/share/rubber/latex_modules",

@@ -137,8 +137,8 @@ available options:
 				self.help ()
 				exit (0)
 			elif opt == "--version":
-				sys.stdout.write ("Rubber version: %s\nmodule path: %s\n" % \
-					(rubber.version.version, rubber.version.moddir))
+				sys.stdout.write ("Rubber version: %s\n" % \
+					rubber.version.version)
 				exit (0)
 
 			# mode of operation

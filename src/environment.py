@@ -11,7 +11,6 @@ import os, os.path, sys, subprocess, thread
 import re, string
 from subprocess import Popen
 
-from rubber.version import moddir
 from rubber.util import _
 from rubber.util import *
 import rubber.converters
@@ -46,7 +45,7 @@ class Environment:
 		# path name using the dictionary interface.
 		self.depends = dict()
 		self.converter = Converter(self.depends)
-		self.converter.read_ini(os.path.join(moddir, 'rules.ini'))
+		self.converter.read_ini (os.path.join (rubber.__path__[0], 'rules.ini'))
 
 		self.is_in_unsafe_mode_ = False
 		self.doc_requires_shell_ = False
