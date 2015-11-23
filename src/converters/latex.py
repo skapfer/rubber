@@ -658,9 +658,6 @@ class LaTeXDep (rubber.depend.Node):
 			self.set_job = 1
 			job = jobname
 		self.vars['job'] = job
-		# also set target for backwards compatibility (FIXME remove at some point)
-		#self.vars['target'] = job
-		# FIXME what is base supposed to do?
 		if src_path == "":
 			src_path = "."
 			self.vars['base'] = job
