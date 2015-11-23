@@ -1,8 +1,11 @@
-Version 1.4 (2015-11-xx)
+Version 1.4 (2015-11-25)
 
   This version of Rubber officially requires Python 2.6 and up.
   Note that the code has not been tested with Python 3, so if you
   run it under Python 3, you're on your own.  Bug reports are welcome!
+
+  Starting with 1.4, the primary repository at Launchpad is a
+  Git tree.
 
   Features:
   - New distutils-based build & install scripts by Nicolas.
