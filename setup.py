@@ -16,6 +16,7 @@ import distutils.command.install
 import distutils.core
 import distutils.dir_util
 import distutils.log
+import distutils.util
 import os.path
 import re
 
@@ -39,19 +40,26 @@ doc_recipes = (
 )
 
 class build (distutils.command.build.build):
-
-    boolean_options = distutils.command.build.build.boolean_options \
-                      + ["info", "html", "pdf", "txt"]
+    man  = True
     info = True
     html = True
     pdf  = True
     txt  = False
     user_options = distutils.command.build.build.user_options + [
-        ("info", None, "build Info documentation [{}]".format (info)),
-        ("html", None, "format HTML documentation [{}]".format (html)),
-        ("pdf",  None, "format PDF documentation [{}]".format (pdf)),
-        ("txt",  None, "format plain text documentation [{}]".format (txt)),
+        ("man=",  None, "build Manpages [{}]".format (info)),
+        ("info=", None, "build Info documentation [{}]".format (info)),
+        ("html=", None, "format HTML documentation [{}]".format (html)),
+        ("pdf=",  None, "format PDF documentation [{}]".format (pdf)),
+        ("txt=",  None, "format plain text documentation [{}]".format (txt)),
     ]
+
+    def finalize_options (self):
+        distutils.command.build.build.finalize_options (self)
+        for fmt in [ 'man' ] + [ fmt for fmt, recipe in doc_recipes ]:
+            value = getattr (self, fmt)
+            if type (value) is str:
+                value = distutils.util.strtobool (value)
+                setattr (self, fmt, value)
 
     def generate_files_with_substitutions (self, subs):
         pattern = "|".join (subs.keys ())
@@ -105,18 +113,20 @@ class install (distutils.command.install.install):
     def run (self):
         build = self.get_finalized_command ("build")
         assert self.distribution.data_files == None
-        self.distribution.data_files = [
-            (self.mandir + "/man1", (
-                "doc/man-en/rubber.1",
-                "doc/man-en/rubber-info.1",
-                "doc/man-en/rubber-pipe.1",
-            )),
-            (self.mandir + "/fr/man1", (
-                "doc/man-fr/rubber.1",
-                "doc/man-fr/rubber-info.1",
-                "doc/man-fr/rubber-pipe.1",
-            ))
-        ]
+        self.distribution.data_files = []
+        if build.man:
+            self.distribution.data_files = [
+                (self.mandir + "/man1", (
+                    "doc/man-en/rubber.1",
+                    "doc/man-en/rubber-info.1",
+                    "doc/man-en/rubber-pipe.1",
+                )),
+                (self.mandir + "/fr/man1", (
+                    "doc/man-fr/rubber.1",
+                    "doc/man-fr/rubber-info.1",
+                    "doc/man-fr/rubber-pipe.1",
+                ))
+            ]
         if build.info:
             infodocs = (manual_basename + "info", )
             self.distribution.data_files.append ((self.infodir, infodocs))
