@@ -30,6 +30,17 @@ To compile and install Rubber, just follow the usual procedure:
 
 Note that only documentation formats selected during build are installed.
 
+Disabling info docs:
+
+# python2 setup.py build --info=False install
+
+and similar for --html, --man, --pdf.
+
+Changing the installation path for manpages:
+
+# python2 setup.py install --mandir=/path/to/man/pages
+
+
 * Usage
 
 As civility requires, saying `rubber --help' and `rubber-info --help' provides
