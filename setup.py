@@ -74,6 +74,8 @@ class build (distutils.command.build.build):
                         out_line = pattern.sub (repl, in_line)
                         out_file.write (out_line)
         for out_path in files_with_substitutions:
+            if re.match ('.*man-??.*\\.1', out_path) and not self.man:
+                continue
             in_path = out_path + ".in"
             self.make_file (in_path, out_path, func, (in_path, out_path))
 
