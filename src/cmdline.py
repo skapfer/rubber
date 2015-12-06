@@ -9,9 +9,9 @@ This is the command line interface for Rubber.
 import os
 import os.path
 import sys
-import re
 import string
 from getopt import getopt, GetoptError
+import tempfile
 
 import rubber.converters.compressor
 from rubber.environment import Environment
@@ -458,21 +458,6 @@ class Build (Main):
 	def process_source (self, env):
 		self.build (env)
 
-re_rubtmp = re.compile("rubtmp(?P<num>[0-9]+)\\.")
-
-def make_name ():
-	"""
-	Return a base name suitable for a new compilation in the current
-	directory. The name will have the form "rubtmp" plus a number, such
-	that no file of this prefix exists.
-	"""
-	num = 0
-	for file in os.listdir("."):
-		m = re_rubtmp.match(file)
-		if m:
-			num = max(num, int(m.group("num")) + 1)
-	return "rubtmp%d" % num
-
 def dump_file (f_in, f_out):
 	"""
 	Dump the contents of a file object into another.
@@ -540,19 +525,20 @@ available options:
 		assert filename.endswith ("-")  # filename is ignored
 
 		try:
-			filename = make_name () + ".tex"
-			# note the tempfile name so we can remove it later
-			self.pipe_tempfile = filename
-			# copy stdin into the tempfile
-			srcfile = open (filename, "w")
-			msg.progress (_("saving the input in %s") % filename)
-			dump_file (sys.stdin, srcfile)
-			srcfile.close ()
+			# Make a temporary on-disk copy of the standard input,
+			# in the current working directory.
+			# The name will have the form "rubtmpXXX.tex.
+			with tempfile.NamedTemporaryFile (suffix='.tex', prefix='rubtmp', dir='.', delete=False) as srcfile:
+				# note the tempfile name so we can remove it later
+				self.pipe_tempfile = srcfile.name
+				# copy stdin into the tempfile
+				msg.progress (_("saving the input in %s") % self.pipe_tempfile)
+				dump_file (sys.stdin, srcfile)
 		except IOError:
-			msg.error (_("cannot create temporary file '%s'") % filename)
+			msg.error (_("cannot create temporary file for the main LaTeX source"))
 			rubber.util.abort_generic_error ()
 
-		return super (Pipe, self).prepare_source (filename)
+		return super (Pipe, self).prepare_source (self.pipe_tempfile)
 
 	def process_source (self, env):
 		"""
