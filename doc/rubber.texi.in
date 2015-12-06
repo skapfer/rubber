@@ -1010,7 +1010,7 @@ Other programs can be used using the @command{shell} rule. This rule takes an
 extra parameter @code{command}, specified in the rule file, that defines a
 shell command-line. This is used for simple conversion rules using
 command-line tools like @command{convert} (from ImageMagick),
-@command{epstopdf}, @command{jpeg2ps}.
+@command{epstopdf}.
 @end table
 
 @node rules.ini, Index, Standard rules, Graphics
