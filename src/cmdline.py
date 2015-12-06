@@ -109,7 +109,7 @@ available options:
 			opts, args = getopt(
 				cmdline, "I:bc:de:fhklm:n:o:pqr:SsvW:z",
 				["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
-				 "help", "inplace", "into=", "jobname=", "keep", "landcape", "maxerr=",
+				 "help", "inplace", "into=", "jobname=", "keep", "landscape", "maxerr=",
 				 "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
 				 "readopts=",
 				 "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
