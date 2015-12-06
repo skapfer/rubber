@@ -142,10 +142,11 @@ rubber-pipe [options]
 @noindent
 The source files may be either LaTeX sources (in which case the suffix
 @file{.tex} may be omitted) or documents in a format Rubber knows how to
-translate into LaTeX (this currently means CWEB or Literate Haskell
-documents). If any compilation fails, the whole process stops, including the
-compilation of the next documents on the command line, and the program returns
-a non-zero exit code.
+translate into LaTeX.  This currently includes CWEB documents (filename
+extension @file{.w}, via @command{cweave}), Literate Haskell (@file{.lhs} via
+@command{lhs2tex}) and Knitr (@file{.Rtex}).  If any compilation fails, the
+whole process stops, including the compilation of the next documents on the
+command line, and the program returns a non-zero exit code.
 
 The options are the following:
 
@@ -559,7 +560,6 @@ as the argument of the @command{-src-specials} switch of the compiler.
 
 @menu
 * Packages::           Supported LaTeX packages.
-* Pre-processing::     Files format that can be converted into LaTeX.
 * Post-processing::    Post-processing the compiler's output.
 * Compiler choice::    Choosing which LaTeX compiler to use.
 @end menu
@@ -697,7 +697,7 @@ arument of the form @samp{(foo,bar,quux)} in order to specify that the
 directive only applies to the bibliographies named @samp{foo}, @samp{bar} and
 @samp{quux}. By default, directives are applied to all bibliographies.
 
-@node Indexing, Pre-processing, BibTeX, Packages
+@node Indexing, Post-processing, BibTeX, Packages
 @subsection Index generation
 
 The use of the packages @command{index}, @command{makeidx} and
@@ -741,25 +741,7 @@ When using the package @command{makeidx} instead of  @command{index}, the
 directives must of course be prefixed by @samp{makeidx.} instead of
 @samp{index.}, and the optional first argument is not accepted.
 
-@node Pre-processing, Post-processing, Indexing, Modules
-@section Pre-processors
-
-The following modules are provided for using programs that generate a LaTeX
-source from a different file format:
-
-@vtable @command
-@item cweb
-This module's purpose is to run @command{cweave} if needed before the
-compiling process to produce the LaTeX source. This module is automatically
-loaded if the file specified on the command line has @file{.w} as its suffix.
-
-@item lhs2TeX
-This module uses the @command{lhs2tex} preprocessor to generate the LaTeX
-source from a Literate Haskell program. It is automatically triggered if the
-input file's name ends with @file{.lhs}.
-@end vtable
-
-@node Post-processing, Dvips and Dvipdfm, Pre-processing, Modules
+@node Post-processing, Dvips and Dvipdfm, Indexing, Modules
 @section Post-processors
 
 The following modules are provided to support different kinds of
