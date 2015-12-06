@@ -11,6 +11,7 @@ import os.path
 import sys
 import string
 from getopt import getopt, GetoptError
+import shutil
 import tempfile
 
 import rubber.converters.compressor
@@ -458,13 +459,6 @@ class Build (Main):
 	def process_source (self, env):
 		self.build (env)
 
-def dump_file (f_in, f_out):
-	"""
-	Dump the contents of a file object into another.
-	"""
-	for line in f_in.readlines():
-		f_out.write(line)
-
 class Pipe (Main):
 	def __init__ (self):
 		super (Pipe, self).__init__ (mode="pipe")
@@ -533,7 +527,7 @@ available options:
 				self.pipe_tempfile = srcfile.name
 				# copy stdin into the tempfile
 				msg.progress (_("saving the input in %s") % self.pipe_tempfile)
-				dump_file (sys.stdin, srcfile)
+				shutil.copyfileobj (sys.stdin, srcfile)
 		except IOError:
 			msg.error (_("cannot create temporary file for the main LaTeX source"))
 			rubber.util.abort_generic_error ()
@@ -550,7 +544,7 @@ available options:
 			try:
 				# dump the results on standard output
 				with open (filename, "r") as output:
-					dump_file (output, sys.stdout)
+					shutil.copyfileobj (output, sys.stdout)
 			except IOError:
 				msg.error (_("error copying the product '%s' to stdout") % filename)
 				rubber.util.abort_generic_error ()
