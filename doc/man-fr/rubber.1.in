@@ -22,8 +22,7 @@ La commande
 construit complètement les documents spécifiés.
 Les fichiers traités peuvent être des sources LaTeX (auquel cas le
 suffixe .tex peut être omis), ou des fichiers dans un format que Rubber sait
-traduire vers LaTeX (pour le moment, cela signifie un source CWEB ou Literate
-Haskell).
+traduire vers LaTeX.
 Si une compilation échoue, l’ensemble du processus est interrompu, y compris la
 compilation des documents suivants sur la ligne de commande, et
 .B rubber
