@@ -28,7 +28,8 @@ To compile and install Rubber, just follow the usual procedure:
 # python2 setup.py install
 # python2 setup.py clean --all
 
-Note that only documentation formats selected during build are installed.
+
+Some useful options to setup.py include:
 
 Disabling info docs:
 
@@ -39,6 +40,32 @@ and similar for --html, --man, --pdf.
 Changing the installation path for manpages:
 
 # python2 setup.py install --mandir=/path/to/man/pages
+
+Installing to a staging directory instead of the root/prefix:
+
+# python2 setup.py install --root=/staging/directory
+
+Note that if you need build and install to be two different steps
+(for example when building packages for distribution purposes),
+Python's distutils will forget about any 'build' options, and re-build
+with default options during the 'install' stage.  This is worrysome if
+you'd like not to build some of the documentation.  It is then best
+to make options permanent by putting them info a setup.cfg file.  For
+example:
+
+[build]
+man = 1
+html = 0
+pdf = 0
+info = 0
+txt = 0
+[install]
+prefix  = /usr
+
+Finally, invoke
+
+# python2 setup.py build
+# python2 setup.py install --root=/staging/directory
 
 
 * Usage
