@@ -81,15 +81,16 @@ class BibToolDep (rubber.depend.Node):
 						filename = filename[:-4]
 
 					filename = self.find_bib (filename) or filename
-					line = int (m.group ("line"))
 
 					d =	{
 						"pkg": "bibtex",
 						"kind": "error",
 						"file": filename,
-						"line": line,
 						"text": text
 					}
+
+					if m.group ("line"):
+						d["line"] = int (m.group ("line"))
 
 					yield d
 
