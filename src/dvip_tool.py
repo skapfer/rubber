@@ -58,7 +58,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         cmd.append (self.source)
 
         # run
-        if self.doc.env.execute (cmd, kpse=1) != 0:
+        if self.doc.env.execute (cmd) != 0:
             msg.error (_('%s failed on %s') % (tool, self.source))
             return False
         return True

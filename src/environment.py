@@ -17,8 +17,6 @@ import rubber.converters
 import rubber.depend
 from rubber.convert import Converter
 
-re_kpse = re.compile("kpathsea: Running (?P<cmd>[^ ]*).* (?P<arg>[^ ]*)$")
-
 class Environment:
 	"""
 	This class contains all state information related to the building process
@@ -30,12 +28,6 @@ class Environment:
 		reference directory for compilation, by default it is the current
 		working directory.
 		"""
-		self.kpse_msg = {
-			"mktextfm" : _("making font metrics for \\g<arg>"),
-			"mktexmf" : _("making font \\g<arg>"),
-			"mktexpk" : _("making bitmap for font \\g<arg>")
-			}
-
 		if cwd is None: cwd = os.getcwd()
 		self.vars = Variables(items = { 'cwd': cwd, '_environment': self })
 		self.path = [cwd]
@@ -133,16 +125,13 @@ class Environment:
 		"""
 		return self.converter.may_produce(name)
 
-	def execute (self, prog, env={}, pwd=None, out=None, kpse=0):
+	def execute (self, prog, env={}, pwd=None, out=None):
 		"""
 		Silently execute an external program. The `prog' argument is the list
 		of arguments for the program, `prog[0]' is the program name. The `env'
 		argument is a dictionary with definitions that should be added to the
 		environment when running the program. The standard output is passed
-		line by line to the `out' function (or discarded by default). If the
-		optional argument `kpse' is true, the error output is parsed and
-		messages from Kpathsea are processed (to indicate e.g. font
-		compilation), otherwise the error output is kept untouched.
+		line by line to the `out' function (or discarded by default).
 		"""
 		msg.info(_("executing: %s") % string.join(prog))
 		if pwd:
@@ -159,32 +148,13 @@ class Environment:
 		for (key,val) in env.items():
 			penv[key] = val
 
-		if kpse:
-			stderr = subprocess.PIPE
-		else:
-			stderr = None
-
 		process = Popen(prog,
 			executable = progname,
 			env = penv,
 			cwd = pwd,
 			stdin = devnull(),
 			stdout = subprocess.PIPE,
-			stderr = stderr)
-
-		if kpse:
-			def parse_kpse ():
-				for line in process.stderr:
-					line = line.rstrip()
-					match = re_kpse.match(line)
-					if not match:
-						continue
-					cmd = match.group("cmd")
-					if self.kpse_msg.has_key(cmd):
-						msg.progress(match.expand(self.kpse_msg[cmd]))
-					else:
-						msg.progress(_("kpathsea running %s") % cmd)
-			thread.start_new_thread(parse_kpse, ())
+			stderr = None)
 
 		if out is not None:
 			for line in process.stdout:

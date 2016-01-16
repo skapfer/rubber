@@ -1227,7 +1227,7 @@ class LaTeXDep (rubber.depend.Node):
 			inputs = inputs + ":" + os.getenv("TEXINPUTS", "")
 			env = {"TEXINPUTS": inputs}
 
-		self.env.execute(cmd, env, kpse=1)
+		self.env.execute (cmd, env)
 
 		if not self.parse_log ():
 			msg.error(_("Running %s failed.") % cmd[0])
