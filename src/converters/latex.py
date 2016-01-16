@@ -891,6 +891,9 @@ class LaTeXDep (rubber.depend.Node):
 		self.modules.register (mod, context = {'arg':mod, 'opt':opt})
 
 	def do_onchange (self, file, cmd):
+		if not self.env.is_in_unsafe_mode_:
+			msg.warn (_("Rubber directive 'onchange' is valid only in unsafe mode"))
+			return
 		self.onchange_cmd[file] = cmd
 		self.onchange_md5[file] = md5_file(file)
 
