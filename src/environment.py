@@ -47,7 +47,6 @@ class Environment:
 		self.converter = Converter(self.depends)
 		self.converter.read_ini (os.path.join (rubber.__path__[0], 'rules.ini'))
 
-		self.is_in_unsafe_mode_ = False
 		self.doc_requires_shell_ = False
 		self.synctex = False
 		self.main = None

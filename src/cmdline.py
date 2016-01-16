@@ -320,8 +320,10 @@ available options:
 			# in case of build mode, preprocessors will be run as part of
 			# prepare_source.
 			env = self.env = Environment ()
-			self.env.is_in_unsafe_mode_ = self.unsafe
 			src = self.prepare_source (src)
+
+			# safe mode is off during the prologue
+			self.env.is_in_unsafe_mode_ = True
 
 			if self.include_only is not None:
 				env.main.includeonly (self.include_only)
@@ -344,6 +346,9 @@ available options:
 				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
 			env.main.vars = saved_vars
+
+			# safe mode is enforced for anything that comes from the .tex file
+			self.env.is_in_unsafe_mode_ = self.unsafe
 
 			env.main.parse()
 
