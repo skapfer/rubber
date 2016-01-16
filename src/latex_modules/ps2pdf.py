@@ -19,8 +19,6 @@ class Module (rubber.module_interface.Module):
         ps = env.final.products[0]
         pdf = ps[:-2] + 'pdf'
         cmd = ['ps2pdf']
-        for opt in document.vars['paper'].split():
-            cmd.append('-sPAPERSIZE=' + opt)
         cmd.extend([ps, pdf])
         dep = Shell (env.depends, cmd)
         dep.add_product (pdf)

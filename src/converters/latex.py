@@ -572,7 +572,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.vars = Variables(env.vars, {
 			"program": "latex",
 			"engine": "TeX",
-			"paper": "",
 			"arguments": [],
 			"src-specials": "",
 			"source": None,
@@ -896,7 +895,7 @@ class LaTeXDep (rubber.depend.Node):
 		self.onchange_md5[file] = md5_file(file)
 
 	def do_paper (self, arg):
-		self.vars["paper"] = arg
+		msg.warn (_("Rubber directive 'paper' is no longer supported"))
 
 	def do_path (self, name):
 		self.env.path.append(name)

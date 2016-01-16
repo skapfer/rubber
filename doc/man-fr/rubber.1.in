@@ -509,17 +509,6 @@ Exécute la commande shell spécifiée après la compilation lorsque le contenu 
 fichier spécifié a changé.
 Le nom de fichier se termine au premier espace sur la ligne.
 .TP
-.BI paper \ <options>
-Spécifie des options relatives à la taille du papier.
-Pour le moment, ces options sont passées sous forme d’options
-.I \-t
-à
-.B dvips
-ou
-.I \-p
-à
-.BR dvipdfm .
-.TP
 .BI path \ <répertoire>
 Ajoute le répertoire spécifié au chemin de recherche de TeX (et de Rubber).
 Le nom du répertoire est tout le texte qui suit les espaces après « path ».

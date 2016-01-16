@@ -436,11 +436,6 @@ Execute the specified shell command after compiling if the contents of the
 specified file have changed. In case the file or command contains
 spaces, they must be enclosed within double or single quotes.
 
-@item paper <options>
-Specify options related to paper size. Currently they are used to give
-@option{-t} options to @command{dvips} and @option{-p} options to
-@command{dvipdfm}.
-
 @item path <directory>
 Adds the specified directory to the search path for TeX (and Rubber). The
 name of the directory is everything that follows the spaces after
@@ -535,10 +530,6 @@ The default is 1 MB, which should be ample for any real document.
 
 @item line
 The current line number in the current file (this is set during parsing).
-
-@item paper
-The paper size to use when compiling. This is used by post-processors like
-@command{dvips} or @command{dvipdfm}.
 
 @item path
 The path name of the main output file.
@@ -799,12 +790,6 @@ output of LaTeX. The following directives may be used to change their
 behaviour:
 
 @ftable @command
-@item paper <options>
-Specify options related to paper size. Currently they are used to give
-@option{-t} options to @command{dvips} and @option{-p} options to
-@command{dvipdfm}. The command-line option @option{--landscape} is equivalent
-to the directive @samp{paper landscape}.
-
 @item dvipdfm.options <options>
 @itemx dvips.options <options>
 Pass the specified options to the driver. The argument is a space-separated

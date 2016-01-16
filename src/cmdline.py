@@ -77,7 +77,6 @@ available options:
       --inplace            compile the documents from their source directory
       --into=DIR           go to directory DIR before compiling
       --jobname=NAME       set the job name for the first target
-  -l, --landscape          change paper orientation (if relevant)
   -n, --maxerr=NUM         display at most NUM errors (default: 10)
   -m, --module=MOD[:OPTS]  use module MOD (with options OPTS)
       --only=SOURCES       only include the specified SOURCES
@@ -128,7 +127,7 @@ available options:
 			if opt == "--cache":
 				# unimplemented option (harmless)
 				self.ignored_option (opt)
-			elif opt == "--readopts":
+			elif opt in ("--readopts", "-l", "--landscape" ):
 				# undocumented option which is no longer supported
 				self.illegal_option (opt)
 
@@ -170,8 +169,6 @@ available options:
 				self.place = arg
 			elif opt == "--jobname":
 				self.jobname = arg
-			elif opt in ("-l", "--landscape"):
-				self.prologue.append("paper landscape")
 			elif opt in ("-n", "--maxerr"):
 				self.max_errors = int(arg)
 			elif opt in ("-m", "--module"):
@@ -476,7 +473,6 @@ available options:
   -h, --help               display this help
       --into=DIR           go to directory DIR before compiling
   -k, --keep               keep the temporary files after compiling
-  -l, --landscape          change paper orientation (if relevant)
   -n, --maxerr=NUM         display at most NUM errors (default: 10)
   -m, --module=MOD[:OPTS]  use module MOD (with options OPTS)
       --only=SOURCES       only include the specified SOURCES

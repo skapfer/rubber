@@ -23,7 +23,6 @@ import rubber.util
 # from rubber.depend.Shell instead of rubber.depend.Node.
 
 product_extension = { 'dvips':'ps', 'dvipdfm':'pdf' }
-paper_selection_option = { 'dvips':'-t', 'dvipdfm':'-p' }
 
 class Module (rubber.depend.Node, rubber.module_interface.Module):
     # This class may not be instantiated directly, only subclassed.
@@ -55,8 +54,6 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         if tool == 'dvips' and self.doc.vars ['engine'] == 'Omega':
             tool = 'odvips'
         cmd = [ tool ]
-        for opt in self.doc.vars['paper'].split ():
-            cmd.extend ((paper_selection_option [self.tool], opt))
         cmd.extend (self.extra_args)
         cmd.append (self.source)
 
