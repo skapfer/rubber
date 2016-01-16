@@ -301,7 +301,6 @@ available options:
 			msg.path = self.place
 			self.place = os.path.abspath(self.place)
 
-		global rubber
 		msg.log (_("This is Rubber version %s.") % rubber_version)
 
 		for srcname in args:
