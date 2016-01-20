@@ -1,6 +1,6 @@
 # rubber should detect a syntax error (code 2).
-# previous version failed with a stacktrace (exit (2) by Python)
+# previous version failed with a stacktrace (exit (1) by Python)
 ret=0
-rubber doc || ret=$?
+rubber doc 2>/dev/null || ret=$?
 [ $ret = 2 ]
 rubber --clean doc
