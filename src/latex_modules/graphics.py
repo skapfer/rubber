@@ -159,7 +159,7 @@ class Module (rubber.module_interface.Module):
         # interrupt compilation when a graphic is not found.
         for node in self.files:
             if not node.making:
-                node.make()
+                node.make (False)
             else:
                 msg.log("*** FIXME ***  recursive making in graphics: %s" % str (node.products), pkg="graphics")
         return True

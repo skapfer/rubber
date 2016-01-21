@@ -197,7 +197,7 @@ class LogCheck (object):
 					msg.warn (_('log file is very long, and will not be read completely.'), pkg='latex')
 			return True
 		except IOError:
-			msg.log (_('IO Error with log'), pkg='latex')
+			msg.info (_('LaTeX log could not be read'), pkg='latex')
 			return False
 
 	#-- Process information {{{2
@@ -207,6 +207,9 @@ class LogCheck (object):
 		Returns true if there was an error during the compilation.
 		"""
 		skipping = 0
+		if self.lines is None:
+			# readlog failed
+			return 1
 		for line in self.lines:
 			if line.strip() == "":
 				skipping = 0
@@ -671,6 +674,7 @@ class LaTeXDep (rubber.depend.Node):
 		else:
 			comp_name = source
 		if comp_name.find('"') >= 0:
+			# FIXME return value is ignored
 			msg.error(_("The filename contains \", latex cannot handle this."))
 			return 1
 		for c in " \n\t()":
@@ -684,6 +688,9 @@ class LaTeXDep (rubber.depend.Node):
 		# always expect a primary aux file
 		self.new_aux_file (self.basename (with_suffix=".aux"))
 		self.add_product (self.basename (with_suffix=".synctex.gz"))
+
+		# read the log.  if it doesn't exist, this is not an error.
+		self.reread_log ()
 
 		return 0
 
@@ -852,8 +859,6 @@ class LaTeXDep (rubber.depend.Node):
 		else:
 			msg.log(_("directive: %s") % ' '.join([cmd]+args), pkg='latex')
 			getattr(self, "do_" + cmd)(*args)
-		#except TypeError:
-		#	msg.warn(_("wrong syntax for '%s'") % cmd, **pos)
 
 	def do_alias (self, name, val):
 		if self.hooks.has_key(val):
@@ -1150,6 +1155,9 @@ class LaTeXDep (rubber.depend.Node):
 
 	#--  Compilation steps  {{{2
 
+	def should_make (self):
+		return self.log.errors () or super (LaTeXDep, self).should_make ()
+
 	def compile (self):
 		"""
 		Run one LaTeX compilation on the source. Return true on success or
@@ -1227,20 +1235,22 @@ class LaTeXDep (rubber.depend.Node):
 			inputs = inputs + ":" + os.getenv("TEXINPUTS", "")
 			env = {"TEXINPUTS": inputs}
 
-		self.env.execute (cmd, env)
+		if self.env.execute (cmd, env) != 0 or \
+				not self.reread_log () or self.log.errors ():
+			msg.error (_("Running %s failed.") % cmd[0])
+			return False
 
-		if not self.parse_log ():
-			msg.error(_("Running %s failed.") % cmd[0])
-			return False
-		if self.log.errors():
-			return False
 		if not os.access(self.products[0], os.F_OK):
-			msg.error(_("Output file `%s' was not produced.") %
+			msg.error (_("Primary output file '%s' was not produced.") %
 				msg.simplify(self.products[0]))
 			return False
 		return True
 
-	def parse_log (self):
+	def reread_log (self):
+		"""
+		Rereads the logfile for parsing by LogCheck.
+		No error reporting is done.
+		"""
 		logfile_name = self.basename (with_suffix=".log")
 		logfile_limit = self.vars["logfile_limit"]
 		return self.log.readlog (logfile_name, logfile_limit)
@@ -1256,6 +1266,7 @@ class LaTeXDep (rubber.depend.Node):
 			if not mod.pre_compile():
 				self.failed_module = mod
 				return False
+		self.failed_module = None
 		return True
 
 	def post_compile (self):
@@ -1279,6 +1290,7 @@ class LaTeXDep (rubber.depend.Node):
 			if not mod.post_compile():
 				self.failed_module = mod
 				return False
+		self.failed_module = None
 		return True
 
 	def clean (self):
@@ -1305,18 +1317,10 @@ class LaTeXDep (rubber.depend.Node):
 		"""
 		if not self.pre_compile():
 			return False
-
-		# If an error occurs after this point, it will be while LaTeXing.
-		self.failed_dep = self
-		self.failed_module = None
-
 		if not self.compile():
 			return False
 		if not self.post_compile():
 			return False
-
-		# Finally there was no error.
-		self.failed_dep = None
 
 		return True
 

@@ -8,11 +8,21 @@ from subprocess import Popen
 import rubber.util
 from rubber.util import _, msg, devnull
 
-# constants for the return value of Node.make:
+class BuildError (Exception):
+	"""
+	Signals a build error.  The dep member points to the dependency node which
+	failed to properly build.
+	"""
+	def __init__ (self, dep):
+		self.failed_dep = dep
 
-ERROR = 0
-UNCHANGED = 1
-CHANGED = 2
+	def report (self, max_errors):
+		for err in self.failed_dep.get_errors ():
+			if max_errors == 0:
+				msg.info (_("More errors."))
+				return
+			msg.display (**err)
+			max_errors -= 1
 
 class Node (object):
 	"""
@@ -38,9 +48,6 @@ class Node (object):
 		# when a build succeeds, it is set to time.time(), including fractional
 		# seconds. in case building fails, it is set to None.
 		self.date = 0  # 1970-01-01 (will be updated in add_product)
-		# failed_dep: the Node which caused the build to fail.  can be self
-		# if this Node failed to build, or a dependency.
-		self.failed_dep = None
 
 	def add_source (self, name, track_contents=False):
 		"""
@@ -98,10 +105,10 @@ class Node (object):
 		i.e. if some dependency is modified. Nothing recursive is done here.
 		"""
 		if not self.date:
+			# meaning one of the products does not exist
 			return True
 		for source_name in self.sources:
 			source = self.set[source_name]
-			# FIXME complain if source has been modified in an unplanned way
 			# NB: we ignore the case source.date == None (missing dependency) here.
 			# NB2: to be extra correct, equal (disk-precision) timestamps trigger a recompile.
 			if source.date == None:
@@ -121,37 +128,17 @@ class Node (object):
 				msg.debug(_("Not rebuilding %s from %s: outdated, but source unmodified") % (self.products[0], source_name), pkg="depend")
 		return False
 
-	def make (self, force=False):
+	def make (self, force):
 		"""
-		Make the destination file. This recursively makes all dependencies,
-		then compiles the target if dependencies were modified. The return
-		value is one of the following:
-		- ERROR means that the process failed somewhere (in this node or in
-		  one of its dependencies)
-		- UNCHANGED means that nothing had to be done
-		- CHANGED means that something was recompiled (therefore nodes that
-		  depend on this one might have to be remade)
-		  This is mainly for diagnostics to the user, rubber no longer makes
-		  build decisions based on this value - proved to be error-prone.
-		If the optional argument 'force' is true, then the method 'run' is
-		called unless an error occurred in dependencies, and in this case
-		UNCHANGED cannot be returned.
+		Make our products, possibly making dependencies first, pruning cycles.
+		Returns the total number of times run() was called in this subgraph, or
+		raises BuildError.  If the argument force is true, run() is invoked
+		at least once for each dep.
 		"""
 		# catch if cyclic dependencies have not been detected properly
 		assert not self.making
 		self.making = True
-		rv = self.real_make (force)
-		self.making = False
-		if rv == ERROR:
-			self.date = None
-			assert self.failed_dep is not None
-		else:
-			assert self.date is not None
-			self.failed_dep = None
-		return rv
-
-	def real_make (self, force):
-		rv = UNCHANGED
+		deps_built = 0
 		patience = 5
 		primary_product = self.products[0]
 		msg.debug(_("make %s -> %s") % (primary_product, str (self.sources)), pkg="depend")
@@ -164,17 +151,12 @@ class Node (object):
 					# this would happen while trying to remake the .aux in order to make the .bbl, for example
 					msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name), pkg="depend")
 					continue
-				source_rv = source.make (force)
-				if source_rv == ERROR:
-					self.failed_dep = source.failed_dep
-					msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name), pkg="depend")
-					return ERROR
-				elif source_rv == CHANGED:
-					rv = CHANGED
+				deps_built += source.make (force)
 
 			must_make = force or self.should_make ()
 			if not must_make:
-				return rv
+				self.making = False
+				return deps_built
 
 			# record MD5 hash of source files as we now actually start the build
 			for source_name in self.md5_for_source.keys ():
@@ -182,18 +164,15 @@ class Node (object):
 
 			# actually make
 			if not self.run ():
-				self.failed_dep = self
-				return ERROR
+				raise BuildError (self)
 
 			self.date = time.time ()
-			rv = CHANGED
 			force = False
-
+			deps_built += 1
 			patience -= 1
 
-		self.failed_dep = self
 		msg.error(_("while making %s: file contents does not seem to settle") % self.products[0], pkg="depend")
-		return ERROR
+		raise BuildError (self)
 
 	def run (self):
 		"""
@@ -202,13 +181,6 @@ class Node (object):
 		on failure. It must be redefined by derived classes.
 		"""
 		return False
-
-	def failed (self):
-		"""
-		Return a reference to the node that caused the failure of the last
-		call to 'make'. If there was no failure, return None.
-		"""
-		return self.failed_dep
 
 	def get_errors (self):
 		"""
@@ -243,19 +215,17 @@ class Leaf (Node):
 		super (Leaf, self).__init__(set)
 		self.add_product (name)
 
-	def real_make (self, force):
+	def make (self, force):
 		# custom version to cut down on debug messages
 		if not self.run ():
-			self.failed_dep = self
-			return ERROR
-		else:
-			return UNCHANGED
+			raise BuildError (self)
+		return 0
 
 	def run (self):
 		if self.date is not None:
 			return True
 		else:
-			msg.error(_("%r does not exist") % self.products[0], pkg="leaf")
+			msg.error (_("%r does not exist, and cannot be made") % self.products[0], pkg="depend")
 			return False
 
 	def clean (self):

@@ -16,7 +16,7 @@ import tempfile
 
 import rubber.converters.compressor
 from rubber.environment import Environment
-from rubber.depend import ERROR, CHANGED, UNCHANGED
+from rubber.depend import BuildError
 from rubber.util import _, msg
 import rubber.util
 from rubber.version import version as rubber_version
@@ -37,7 +37,6 @@ class Main (object):
 		self.unsafe = False
 
 		# FIXME when are these legal
-		self.warn = 0
 		self.warn_boxes = 0
 		self.warn_misc = 0
 		self.warn_refs = 0
@@ -207,7 +206,6 @@ available options:
 			elif opt in ("-v", "--verbose"):
 				msg.level = msg.level + 1
 			elif opt in ("-W", "--warn"):
-				self.warn = 1
 				if arg == "all":
 					self.warn_boxes = 1
 					self.warn_misc = 1
@@ -267,9 +265,12 @@ available options:
 					msg.error (_("Running external commands requires --unsafe."))
 					rubber.util.abort_rubber_syntax_error ()
 				# Produce the source from its dependency rules, if needed.
-				if src_node.make () == ERROR:
+				try:
+					src_node.make (self.force)
+				except BuildError as e:
 					msg.error (_("Producing the main LaTeX file failed: '%s'") \
 						% src)
+					e.report (max_errors = self.max_errors)
 					rubber.util.abort_generic_error ()
 		else:
 			src = path
@@ -388,41 +389,13 @@ available options:
 		Build the final product.
 		"""
 		srcname = env.main.sources[0]
-		# FIXME unindent, untangle
-		if True:
-			if self.force:
-				ret = env.main.make(True)
-				if ret != ERROR and env.final is not env.main:
-					ret = env.final.make()
-				else:
-					# This is a hack for the call to get_errors() below
-					# to work when compiling failed when using -f.
-					env.final.failed_dep = env.main.failed_dep
-			else:
-				ret = env.final.make(self.force)
-
-			if ret == ERROR:
-				msg.info(_("There were errors compiling %s.") % srcname)
-				number = self.max_errors
-				for err in env.final.failed().get_errors():
-					if number == 0:
-						msg.info(_("More errors."))
-						break
-					msg.display(**err)
-					number -= 1
-				rubber.util.abort_generic_error ()
-
-			if ret == UNCHANGED:
-				msg(1, _("nothing to be done for %s") % srcname)
-
-			if self.warn:
-				# FIXME
-				log = env.main.log
-				if not env.main.parse_log ():
-					msg.error(_("cannot read the log file"))
-					return 1
-				msg.display_all(log.parse(boxes=self.warn_boxes,
-					refs=self.warn_refs, warnings=self.warn_misc))
+		try:
+			if env.final.make (self.force) == 0:
+				msg.info  (_("nothing to be done for %s") % srcname)
+		except BuildError as e:
+			msg.info (_("There were errors compiling %s.") % srcname)
+			e.report (max_errors = self.max_errors)
+			rubber.util.abort_generic_error ()
 
 	def __call__ (self, cmdline):
 		"""
@@ -459,6 +432,9 @@ class Build (Main):
 
 	def process_source (self, env):
 		self.build (env)
+		if self.warn_boxes or self.warn_refs or self.warn_misc:
+			msg.display_all (log.parse (boxes=self.warn_boxes,
+				refs=self.warn_refs, warnings=self.warn_misc))
 
 class Pipe (Main):
 	def __init__ (self):
@@ -594,14 +570,15 @@ actions:
 			self.info_action = "check"
 		return ret
 
-	# FIXME rewrite
 	def process_source (self, env):
 		if self.info_action == "deps":
+			# FIXME rewrite
 			from rubber.depend import Leaf
 			deps = [ k for k,n in env.depends.iteritems () if type (n) is Leaf ]
 			rubber.util.stdout_write (string.join (deps))
 
 		elif self.info_action == "rules":
+			# FIXME rewrite
 			seen = {}
 			next = [self.env.final]
 			while len(next) > 0:
@@ -616,42 +593,17 @@ actions:
 				print (string.join(node.sources))
 				next.extend(node.source_nodes())
 		else:
-			self.info_log (self.info_action)
-
-	# FIXME rewrite
-	def info_log (self, act):
-		"""
-		Check for a log file and extract information from it if it exists,
-		accroding to the argument's value.
-		"""
-		log = self.env.main.log
-		if not self.env.main.parse_log ():
-			msg.error(_("Parsing the log file failed"))
-			rubber.util.abort_generic_error ()
-
-		if act == "boxes":
-			if not msg.display_all(log.get_boxes()):
-				msg.info(_("There is no bad box."))
-		elif act == "check":
-			if msg.display_all(log.get_errors()): return 0
-			msg.info(_("There was no error."))
-			if msg.display_all(log.get_references()): return 0
-			msg.info(_("There is no undefined reference."))
-			if not msg.display_all(log.get_warnings()):
-				msg.info(_("There is no warning."))
-			if not msg.display_all(log.get_boxes()):
-				msg.info(_("There is no bad box."))
-		elif act == "errors":
-			if not msg.display_all(log.get_errors()):
-				msg.info(_("There was no error."))
-		elif act == "refs":
-			if not msg.display_all(log.get_references()):
-				msg.info(_("There is no undefined reference."))
-		elif act == "warnings":
-			if not msg.display_all(log.get_warnings()):
-				msg.info(_("There is no warning."))
-		else:
-			sys.stderr.write(_("\
-I don't know the action `%s'. This should not happen.\n") % act)
-			return 1
-		return 0
+			log = self.env.main.log
+			if msg.display_all (log.get_errors ()) != 0:
+				rubber.util.abort_generic_error ()
+			if self.info_action in ('check', 'errors'):
+				msg.info (_('There was no error.'))
+			if self.info_action in ('check', 'boxes'):
+				if msg.display_all (log.get_boxes ()) == 0:
+					msg.info (_('There is no bad box.'))
+			if self.info_action in ('check', 'refs'):
+				if msg.display_all (log.get_references ()) == 0:
+					msg.info (_('There is no undefined reference.'))
+			if self.info_action in ('check', 'warnings'):
+				if msg.display_all (log.get_warnings ()) == 0:
+					msg.info (_('There is no warning.'))
