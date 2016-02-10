@@ -409,7 +409,7 @@ devnull_fp = None
 def devnull ():
 	global devnull_fp
 	if not devnull_fp:
-		devnull_fp = open(os.devnull, 'rw')
+		devnull_fp = open(os.devnull, 'r+')
 	return devnull_fp
 
 def explode_path (name = "PATH"):
