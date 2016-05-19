@@ -61,8 +61,13 @@ class Module (rubber.module_interface.Module):
         self.prefixes = [os.path.join(x, '') for x in document.env.path]
         self.files = []
 
-        # I take dvips as the default, but it is not portable.
+        #Latex accepts upper and lowercase filename extensions
+        # to keep the above lists clean we auto-generate the
+        # uppercase versions of the extensions automatically
+        for engine,suffixes in drv_suffixes.iteritems():
+            suffixes += [x.upper() for x in suffixes]
 
+        # I take dvips as the default, but it is not portable.
         if document.vars['engine'] == 'pdfTeX' and document.products[0][-4:] == '.pdf':
             self.suffixes = drv_suffixes['pdftex']
         elif document.vars['engine'] == 'VTeX':
