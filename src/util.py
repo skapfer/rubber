@@ -456,14 +456,14 @@ def verbose_remove (path, **kwargs):
 			msg.log (_("error removing '{filename}': {strerror}").format ( \
 				filename=msg.simplify (path), strerror=e.strerror), **kwargs)
 		return
-	msg.log (_("removing {}").format (msg.simplify (path)), **kwargs)
+	msg.log (_("removing {filename}").format (filename=msg.simplify (path)), **kwargs)
 
 def verbose_rmtree (tree):
 	"""
 	Remove a directory and notify the user of it.
 	This is meant for --clean;  failures are ignored.
 	"""
-	msg.log (_("removing tree {}").format (msg.simplify (tree)))
+	msg.log (_("removing tree {dirname}").format (dirname=msg.simplify (tree)))
 	# FIXME proper error reporting
 	shutil.rmtree (tree, ignore_errors=True)
 

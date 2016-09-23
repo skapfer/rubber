@@ -46,11 +46,11 @@ class build (distutils.command.build.build):
     pdf  = True
     txt  = False
     user_options = distutils.command.build.build.user_options + [
-        ("man=",  None, "build Manpages [{}]".format (man)),
-        ("info=", None, "build Info documentation [{}]".format (info)),
-        ("html=", None, "format HTML documentation [{}]".format (html)),
-        ("pdf=",  None, "format PDF documentation [{}]".format (pdf)),
-        ("txt=",  None, "format plain text documentation [{}]".format (txt)),
+        ("man=",  None, "build Manpages [{default}]".format (default=man)),
+        ("info=", None, "build Info documentation [{default}]".format (default=info)),
+        ("html=", None, "format HTML documentation [{default}]".format (default=html)),
+        ("pdf=",  None, "format PDF documentation [{default}]".format (default=pdf)),
+        ("txt=",  None, "format plain text documentation [{default}]".format (default=txt)),
     ]
 
     def finalize_options (self):
