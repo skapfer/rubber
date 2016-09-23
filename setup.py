@@ -103,9 +103,9 @@ class install (distutils.command.install.install):
     infodir = "$base/info"
     docdir  = "$base/share/doc/rubber"
     user_options = distutils.command.install.install.user_options + [
-        ("mandir=", None, "installation directory for manual pages [{}]".format (mandir)),
-        ("infodir=", None, "installation directory for info manuals [{}]".format (infodir)),
-        ("docdir=", None, "installation directory for other documentation [{}]".format (docdir)),
+        ("mandir=", None, "installation directory for manual pages [{default}]".format (default=mandir)),
+        ("infodir=", None, "installation directory for info manuals [{default}]".format (default=infodir)),
+        ("docdir=", None, "installation directory for other documentation [{default}]".format (default=docdir)),
     ]
 
     def finalize_options (self):
