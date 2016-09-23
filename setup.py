@@ -230,10 +230,10 @@ Metapost compilation).\
         "rubber-info",
         "rubber-pipe",
     ),
-    cmdclass = { c : globals () [c] for c in (
-        "build",
-        "install",
-        "clean",
-        "tar",
-    )},
+    cmdclass = {
+        "build": build,
+        "install": install,
+        "clean": clean,
+        "tar": tar,
+    },
 )
