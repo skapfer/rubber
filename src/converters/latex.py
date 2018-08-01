@@ -350,7 +350,7 @@ class LogCheck (object):
 							}
 				continue
 
-			if len(line) > 0 and line[0] == "!":
+			if line.startswith ('!'):
 				error = line[2:]
 				parsing = 1
 				continue
