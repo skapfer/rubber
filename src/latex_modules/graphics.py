@@ -16,7 +16,7 @@ incomplete, because \\includegraphics can have a complex format.
 """
 
 import os, os.path
-import string, re
+import re
 
 from rubber import _, msg
 from rubber.util import parse_keyval
@@ -64,7 +64,7 @@ class Module (rubber.module_interface.Module):
         #Latex accepts upper and lowercase filename extensions
         # to keep the above lists clean we auto-generate the
         # uppercase versions of the extensions automatically
-        for engine,suffixes in drv_suffixes.iteritems():
+        for engine,suffixes in drv_suffixes.items():
             suffixes += [x.upper() for x in suffixes]
 
         # I take dvips as the default, but it is not portable.
@@ -81,7 +81,7 @@ class Module (rubber.module_interface.Module):
         opts = parse_keyval(context['opt'])
 
         for opt in opts.keys():
-            if drv_suffixes.has_key(opt):
+            if opt in drv_suffixes:
                 self.suffixes = drv_suffixes[opt]
 
         document.vars['graphics_suffixes'] = self.suffixes
@@ -148,13 +148,13 @@ class Module (rubber.module_interface.Module):
 
     def hook_declareExtensions (self, loc, list):
         for suffix in list.split(","):
-            self.suffixes.insert(0, string.strip(suffix))
+            self.suffixes.insert(0, suffix.strip())
 
     def hook_declareRule (self, loc, ext, type, read, command):
         if read in self.suffixes:
             return
         self.suffixes.insert(0, read)
-        msg.log("*** FIXME ***  rule %s -> %s [%s]" % (string.strip (ext), read, type), pkg='graphics')
+        msg.log("*** FIXME ***  rule %s -> %s [%s]" % (ext.strip (), read, type), pkg='graphics')
 
     #  module interface
 

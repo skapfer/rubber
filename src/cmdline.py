@@ -9,7 +9,6 @@ This is the command line interface for Rubber.
 import os
 import os.path
 import sys
-import string
 from getopt import getopt, GetoptError
 import shutil
 import tempfile
@@ -173,14 +172,14 @@ available options:
 				self.max_errors = int(arg)
 			elif opt in ("-m", "--module"):
 				self.prologue.append("module " +
-					string.replace(arg, ":", " ", 1))
+					arg.replace(":", " ", 1))
 			elif opt == "--only":
 				self.include_only = arg.split(",")
 			elif opt in ("-o", "--post"):
 				if self.rubber_mode == "info":
 					self.illegal_option (opt)
 				self.epilogue.append("module " +
-					string.replace(arg, ":", " ", 1))
+					arg.replace(":", " ", 1))
 			elif opt in ("-d", "--pdf"):
 				if using_dvips:
 					self.epilogue.append("module ps2pdf")
@@ -527,7 +526,7 @@ available options:
 				self.pipe_tempfile = srcfile.name
 				# copy stdin into the tempfile
 				msg.progress (_("saving the input in %s") % self.pipe_tempfile)
-				shutil.copyfileobj (sys.stdin, srcfile)
+				shutil.copyfileobj (sys.stdin.buffer, srcfile)
 		except IOError:
 			msg.error (_("cannot create temporary file for the main LaTeX source"))
 			rubber.util.abort_generic_error ()
@@ -543,8 +542,8 @@ available options:
 			filename = env.final.products[0]
 			try:
 				# dump the results on standard output
-				with open (filename, "r") as output:
-					shutil.copyfileobj (output, sys.stdout)
+				with open (filename, "rb") as output:
+					shutil.copyfileobj (output, sys.stdout.buffer)
 			except IOError:
 				msg.error (_("error copying the product '%s' to stdout") % filename)
 				rubber.util.abort_generic_error ()
@@ -598,8 +597,8 @@ actions:
 	def process_source (self, env):
 		if self.info_action == "deps":
 			from rubber.depend import Leaf
-			deps = [ k for k,n in env.depends.iteritems () if type (n) is Leaf ]
-			rubber.util.stdout_write (string.join (deps))
+			deps = [ k for k,n in env.depends.items () if type (n) is Leaf ]
+			rubber.util.stdout_write (" ".join (deps))
 
 		elif self.info_action == "rules":
 			seen = {}
@@ -607,13 +606,13 @@ actions:
 			while len(next) > 0:
 				node = next[0]
 				next = next[1:]
-				if seen.has_key(node):
+				if node in seen:
 					continue
 				seen[node] = None
 				if len(node.sources) == 0:
 					continue
-				print ("\n%s:" % string.join(node.products))
-				print (string.join(node.sources))
+				print ("\n%s:" % " ".join (node.products))
+				print (" ".join (node.sources))
 				next.extend(node.source_nodes())
 		else:
 			self.info_log (self.info_action)

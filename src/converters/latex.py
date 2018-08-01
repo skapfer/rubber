@@ -11,7 +11,6 @@ building a LaTeX document from start to finish.
 
 import os, os.path, sys, imp
 import re
-import string
 
 from rubber import _
 from rubber.util import *
@@ -41,14 +40,11 @@ class Modules:
 		"""
 		return self.objects[name]
 
-	def __contains__ (self, other):
-		return other in self.objects
-
-	def has_key (self, name):
+	def __contains__ (self, name):
 		"""
 		Check if a given module is loaded.
 		"""
-		return self.objects.has_key(name)
+		return name in self.objects
 
 	def register (self, name, context={}):
 		"""
@@ -57,7 +53,7 @@ class Modules:
 		load it, initialise it (using the context passed as optional argument)
 		and run any delayed commands for it.
 		"""
-		if self.has_key(name):
+		if name in self:
 			msg.debug(_("module %s already registered") % name, pkg='latex')
 			return 2
 
@@ -109,7 +105,7 @@ class Modules:
 
 		# Run any delayed commands.
 
-		if self.commands.has_key(name):
+		if name in self.commands:
 			for (cmd, args, vars) in self.commands[name]:
 				msg.push_pos(vars)
 				try:
@@ -138,10 +134,10 @@ class Modules:
 		Send a command to a particular module. If this module is not loaded,
 		store the command so that it will be sent when the module is register.
 		"""
-		if self.objects.has_key(mod):
+		if mod in self.objects:
 			self.objects[mod].command(cmd, args)
 		else:
-			if not self.commands.has_key(mod):
+			if mod not in self.commands:
 				self.commands[mod] = []
 			self.commands[mod].append((cmd, args, self.env.vars))
 
@@ -184,7 +180,7 @@ class LogCheck (object):
 		"""
 		self.lines = None
 		try:
-			with open (name) as fp:
+			with open (name, encoding='utf-8') as fp:
 				line = fp.readline ()
 				if not line or not re_loghead.match (line):
 					msg.log (_('empty log'), pkg='latex')
@@ -222,7 +218,7 @@ class LogCheck (object):
 				# sometimes issues warnings (like undefined references) in the
 				# form of errors...
 
-				if string.find(line, "pdfTeX warning") == -1:
+				if line.find("pdfTeX warning") == -1:
 					return 1
 		return 0
 
@@ -291,7 +287,7 @@ class LogCheck (object):
 					m = re_cseq.match(line)
 					if m:
 						seq = m.group("seq")
-						if cseqs.has_key(seq):
+						if seq in cseqs:
 							error = None
 						else:
 							cseqs[seq] = None
@@ -303,7 +299,7 @@ class LogCheck (object):
 				if m:
 					parsing = 0
 					skipping = 1
-					pdfTeX = string.find(line, "pdfTeX warning") != -1
+					pdfTeX = line.find("pdfTeX warning") != -1
 					if error is not None and ((pdfTeX and warnings) or (errors and not pdfTeX)):
 						if pdfTeX:
 							d = {
@@ -320,7 +316,7 @@ class LogCheck (object):
 						m = re_ignored.search(error)
 						if m:
 							d["file"] = last_file
-							if d.has_key("code"):
+							if "code" in d:
 								del d["code"]
 							d.update( m.groupdict() )
 						elif pos[-1] is None:
@@ -371,7 +367,7 @@ class LogCheck (object):
 
 			if prefix is not None:
 				if line[:len(prefix)] == prefix:
-					text.append(string.strip(line[len(prefix):]))
+					text.append(line[len(prefix):].strip())
 				else:
 					text = " ".join(text)
 					m = re_online.search(text)
@@ -515,7 +511,7 @@ class SourceParser (rubber.tex.Parser):
 			if match is None:
 				return True
 
-			vars = dict(self.latex_dep.vars.items())
+			vars = self.latex_dep.vars.to_dict ()
 			vars['line'] = self.pos_line
 			args = parse_line(match.group("arg"), vars)
 
@@ -532,11 +528,11 @@ class SourceParser (rubber.tex.Parser):
 			self.pos_char += match.end()
 			return
 
-class EndDocument:
+class EndDocument (Exception):
 	""" This is the exception raised when \\end{document} is found. """
 	pass
 
-class EndInput:
+class EndInput (Exception):
 	""" This is the exception raised when \\endinput is found. """
 	pass
 
@@ -769,7 +765,7 @@ class LaTeXDep (rubber.depend.Node):
 		This method is called when an included file is processed. The argument
 		must be a valid file name.
 		"""
-		if self.processed_sources.has_key(path):
+		if path in self.processed_sources:
 			msg.debug(_("%s already parsed") % path, pkg='latex')
 			return
 		self.processed_sources[path] = None
@@ -843,7 +839,7 @@ class LaTeXDep (rubber.depend.Node):
 			pos = self.vars
 		# Calls to this method are actually translated into calls to "do_*"
 		# methods, except for calls to module directives.
-		lst = string.split(cmd, ".", 1)
+		lst = cmd.split(".", 1)
 		#try:
 		if len(lst) > 1:
 			self.modules.command(lst[0], lst[1], args)
@@ -856,7 +852,7 @@ class LaTeXDep (rubber.depend.Node):
 		#	msg.warn(_("wrong syntax for '%s'") % cmd, **pos)
 
 	def do_alias (self, name, val):
-		if self.hooks.has_key(val):
+		if val in self.hooks:
 			self.hooks[name] = self.hooks[val]
 			self.hooks_changed = True
 
@@ -908,7 +904,7 @@ class LaTeXDep (rubber.depend.Node):
 		try:
 			self.vars = Variables (self.vars,
 					{ "file": name, "line": None })
-			with open(name) as file:
+			with open(name, encoding='utf-8') as file:
 				lineno = 0
 				for line in file:
 					lineno += 1
@@ -980,11 +976,11 @@ class LaTeXDep (rubber.depend.Node):
 	# Now the macro handlers:
 
 	def h_begin (self, loc, env):
-		if self.begin_hooks.has_key(env):
+		if env in self.begin_hooks:
 			self.begin_hooks[env](loc)
 
 	def h_end (self, loc, env):
-		if self.end_hooks.has_key(env):
+		if env in self.end_hooks:
 			self.end_hooks[env](loc)
 
 	def h_pdfoutput (self, loc):
@@ -1043,7 +1039,7 @@ class LaTeXDep (rubber.depend.Node):
 		source in a way very similar to \\input, except that LaTeX also
 		creates .aux files for them, so we have to notice this.
 		"""
-		if self.include_only and not self.include_only.has_key(filename):
+		if self.include_only and filename not in self.include_only:
 			return
 		file, _ = self.input_file(filename, loc)
 		if file:
@@ -1082,7 +1078,7 @@ class LaTeXDep (rubber.depend.Node):
 		unless there is a supporting module in the current directory,
 		otherwise it is treated as a package.
 		"""
-		for name in string.split(names, ","):
+		for name in names.split(","):
 			name = name.strip()
 			if name == '': continue  # \usepackage{a,}
 			file = self.env.find_file(name + ".sty")
@@ -1219,7 +1215,7 @@ class LaTeXDep (rubber.depend.Node):
 				paths.append("." + p[len(prefix):])
 			else:
 				paths.append(p)
-		inputs = string.join(paths, ":")
+		inputs = ":".join (paths)
 
 		if inputs == "":
 			env = {}
@@ -1355,7 +1351,7 @@ class ScriptModule (rubber.module_interface.Module):
 			'file': filename,
 			'line': None })
 		lineno = 0
-		with open(filename) as file:
+		with open(filename, encoding='utf-8') as file:
 			for line in file:
 				line = line.strip()
 				lineno = lineno + 1

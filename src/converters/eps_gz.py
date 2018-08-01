@@ -7,7 +7,7 @@ Extraction of bounding box information from gzipped PostScript figures.
 from rubber import _, msg
 import rubber.depend
 
-from gzip import GzipFile
+import gzip
 import re
 
 re_bbox = re.compile("%[%\w]*BoundingBox:")
@@ -28,10 +28,10 @@ class Dep (rubber.depend.Node):
 		single line.
 		"""
 		msg.progress(_("extracting bounding box from %s") % self.source)
-		with GzipFile(self.source) as source:
+		with gzip.open(self.source, mode='rt', encoding='utf-8') as source:
 			for line in source:
 				if re_bbox.match(line):
-					with open(self.target, "w") as target:
+					with open(self.target, "w", encoding='utf-8') as target:
 						target.write(line)
 					return True
 		msg.error(_("no bounding box was found in %s!") % self.source)

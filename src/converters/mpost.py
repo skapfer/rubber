@@ -9,7 +9,7 @@ Metapost's log files after the process. Is it enough?
 """
 
 import os, os.path
-import re, string
+import re
 
 from rubber.util import _
 from rubber.util import *
@@ -40,7 +40,7 @@ class MPLogCheck (rubber.converters.latex.LogCheck):
 		The read() method in LogCheck checks that the log is produced by TeX,
 		here we check that it is produced by MetaPost.
 		"""
-		with open (name) as file:
+		with open (name, encoding='utf-8') as file:
 			line = file.readline()
 			if not line or line.find("This is MetaPost,") == -1:
 				return 1
@@ -80,7 +80,7 @@ class MPLogCheck (rubber.converters.latex.LogCheck):
 
 			# read mpxerr.tex to read line unmbers from it
 
-			with open(os.path.join(self.pwd, "mpxerr.tex")) as tex_file:
+			with open(os.path.join(self.pwd, "mpxerr.tex"), encoding='utf-8') as tex_file:
 				tex = tex_file.readlines()
 
 			# get the name of the mpxNNN.tex source
@@ -131,7 +131,7 @@ class Dep (rubber.depend.Node):
 		if self.env.path == [""]:
 			self.penv = {}
 		else:
-			path = string.join(self.env.path, ":")
+			path = ':'.join (self.env.path)
 			self.penv = {
 				"TEXINPUTS": "%s:%s" % (path, os.getenv("TEXINPUTS", "")),
 				"MPINPUTS": "%s:%s" % (path, os.getenv("MPINPUTS", "")) }
@@ -149,7 +149,7 @@ class Dep (rubber.depend.Node):
 		elif not os.path.exists(file):
 			return
 		self.add_source (file)
-		with open(file) as fd:
+		with open(file, encoding='utf-8') as fd:
 			for line in fd:
 				m = re_input.search(line)
 				if m:

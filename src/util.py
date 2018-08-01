@@ -10,7 +10,7 @@ import hashlib
 import os, stat, time
 import errno
 import imp
-import re, string
+import re
 import shutil
 from string import whitespace
 import sys
@@ -63,8 +63,8 @@ class Message (object):
 			if text[0:13] == "LaTeX Error: ":
 				text = text[13:]
 			self(0, self.format_pos(info, text))
-			if info.has_key("code") and info["code"] and not self.short:
-				if info.has_key("macro"):
+			if "code" in info and info["code"] and not self.short:
+				if "macro" in info:
 					del info["macro"]
 				self(0, self.format_pos(info,
 					_("leading text: ") + info["code"]))
@@ -99,26 +99,26 @@ class Message (object):
 		the dictionary given as first argument.
 		"""
 		if len(self.pos) > 0:
-			if where is None or not where.has_key("file"):
+			if where is None or "file" not in where:
 				where = self.pos[-1]
 		elif where is None or where == {}:
 			return text
 
-		if where.has_key("file") and where["file"] is not None:
+		if "file" in where and where["file"] is not None:
 			pos = self.simplify(where["file"])
-			if where.has_key("line") and where["line"]:
+			if "line" in where and where["line"]:
 				pos = "%s:%d" % (pos, int(where["line"]))
-				if where.has_key("last"):
+				if "last" in where:
 					if where["last"] != where["line"]:
 						pos = "%s-%d" % (pos, int(where["last"]))
 			pos = pos + ": "
 		else:
 			pos = ""
-		if where.has_key("macro"):
+		if "macro" in where:
 			text = "%s (in macro %s)" % (text, where["macro"])
-		if where.has_key("page"):
+		if "page" in where:
 			text = "%s (page %d)" % (text, int(where["page"]))
-		if where.has_key("pkg"):
+		if "pkg" in where:
 			text = "[%s] %s" % (where["pkg"], text)
 		return pos + text
 
@@ -150,7 +150,7 @@ def md5_file (fname):
 	"""
 	try:
 		m = hashlib.md5()
-		with open(fname) as file:
+		with open(fname, 'rb') as file:
 			for line in file:
 				m.update(line)
 		return m.digest()
@@ -189,7 +189,7 @@ def parse_keyval (str):
 			val, str = match_brace(str)
 			dict[d["key"]] = val
 		else:
-			dict[d["key"]] = string.strip(d["val"])
+			dict[d["key"]] = d["val"].strip()
 	return dict
 
 def match_brace (str):
@@ -223,7 +223,7 @@ def prog_available (prog):
 	"""
 	pathsep = ";" if os.name == "nt" else ":"
 	fileext = ".exe" if os.name == "nt" else ""
-	if checked_progs.has_key(prog):
+	if prog in checked_progs:
 		return checked_progs[prog]
 	for path in os.getenv("PATH").split(pathsep):
 		file = os.path.join(path, prog) + fileext
@@ -238,13 +238,11 @@ def prog_available (prog):
 
 #-- Variable handling --{{{1
 
-import UserDict
-
-class Variables (UserDict.DictMixin):
+class Variables:
 	"""
 	This class represent an environment containing variables. It can be
 	accessed as a dictionary, except that every key must be declared using the
-	method 'new_key' before it can be accessed for reading or writing.
+	constructor.
 
 	Environments are stacked, i.e. each environment can have a parent
 	environment that contains other variables. The variables declared in an
@@ -269,10 +267,10 @@ class Variables (UserDict.DictMixin):
 		"""
 		object = self
 		while object is not None:
-			if object.dict.has_key(key):
+			if key in object.dict:
 				return object.dict[key]
 			object = object.parent
-		raise KeyError
+		raise KeyError (key)
 
 	def __setitem__ (self, key, value):
 		"""
@@ -282,31 +280,33 @@ class Variables (UserDict.DictMixin):
 		"""
 		object = self
 		while object is not None:
-			if object.dict.has_key(key):
+			if key in object.dict:
 				object.dict[key] = value
 				return
 			object = object.parent
-		raise KeyError
+		raise KeyError (key)
 
-	def keys (self):
+	def to_dict (self):
 		"""
-		Return the set of keys defined in this environment and its parents.
+		Construct a dict with the same keys and values,
+		that can be  modified independently of self and its parents.
 		"""
-		if self.parent is None:
-			return set(self.dict.keys())
-		else:
-			return set(self.parent.keys()) | set(self.dict.keys())
+		result = {}
+		object = self
+		while object is not None:
+			for key, value in object.dict.items():
+				if key not in result:
+					result[key] = value
+			object = object.parent
+		return result
 
-	def new_key (self, key, value):
-		"""
-		Declare a new variable with an initial value in the current
-		environment. If the variable already exists in this environment,
-		raises 'KeyError'. If the variable exists in a parent environment, it
-		is hidden by the new variable.
-		"""
-		if self.dict.has_key(key):
-			raise KeyError
-		self.dict[key] = value
+	def __contains__ (self, key):
+		object = self
+		while object is not None:
+			if key in object.dict:
+				return True
+			object = object.parent
+		return False
 
 #-- Parsing commands --{{{1
 
@@ -379,7 +379,7 @@ def parse_line (line, dict):
 				# Append the variable or its name.
 
 				if dict:
-					if dict.has_key(name):
+					if name in dict:
 						arg = arg + str(dict[name])
 					# Send a warning for undefined variables ?
 				else:

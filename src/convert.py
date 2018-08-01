@@ -4,7 +4,7 @@ rule management.
 """
 
 import re, imp, os.path
-from ConfigParser import *
+from configparser import ConfigParser
 
 from rubber.util import _, msg
 import rubber.util
@@ -217,7 +217,7 @@ class Converter (object):
 
 		candidates.sort()
 		for cost, source, target, rule in candidates:
-			instance = rubber.util.Variables(context, dict(rule))
+			instance = rubber.util.Variables(context, rule.to_dict())
 			instance['source'] = source
 			instance['target'] = target
 			if check is not None and not check(instance):

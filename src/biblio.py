@@ -11,7 +11,6 @@ import rubber.util
 import rubber.depend
 import os, os.path
 import re
-import string
 import subprocess
 
 class BibToolDep (rubber.depend.Node):
@@ -155,7 +154,7 @@ class BibTeXDep (BibToolDep):
 		self.tool = tool
 
 	def hook_bibliography (self, loc, bibs):
-		for name in string.split (bibs, ","):
+		for name in bibs.split (","):
 			filename = self.find_bib (name)
 			if filename is not None:
 				self.db[name] = filename

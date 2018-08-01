@@ -7,8 +7,8 @@ and the class Environment, which contains all information about a given
 building process.
 """
 
-import os, os.path, sys, subprocess, thread
-import re, string
+import os, os.path, sys, subprocess
+import re
 from subprocess import Popen
 
 from rubber.util import _
@@ -85,12 +85,12 @@ class Environment:
 
 			# Define a check function, according to preferences.
 
-			if self.conv_prefs.has_key(t):
+			if t in self.conv_prefs:
 				prefs = self.conv_prefs[t]
 				def do_check (vars, prefs=prefs):
 					if prefs is not None:
 						for key, val in prefs.items():
-							if not (vars.has_key(key) and vars[key] == val):
+							if not (key in vars and vars[key] == val):
 								return 0
 					return 1
 			else:
@@ -133,7 +133,7 @@ class Environment:
 		environment when running the program. The standard output is passed
 		line by line to the `out' function (or discarded by default).
 		"""
-		msg.info(_("executing: %s") % string.join(prog))
+		msg.info(_("executing: %s") % " ".join (prog))
 		if pwd:
 			msg.log(_("  in directory %s") % pwd)
 		if env != {}:

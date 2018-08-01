@@ -7,7 +7,7 @@ Classes and functions from this module can be used without Rubber.
 """
 
 import codecs, re
-from StringIO import StringIO
+from io import StringIO
 
 # The catcodes
 
@@ -152,7 +152,7 @@ class ParserBase (object):
 		"""
 		Return the catcode of a character.
 		"""
-		if self.catcodes.has_key(char):
+		if char in self.catcodes:
 			return self.catcodes[char]
 		else:
 			return OTHER

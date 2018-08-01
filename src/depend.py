@@ -47,7 +47,7 @@ class Node (object):
 		Register a new source for this node. If the source is unknown, a leaf
 		node is made for it.
 		"""
-		if not self.set.has_key(name):
+		if name not in self.set:
 			self.set[name] = Leaf(self.set, name)
 		if name not in self.sources:
 			self.sources.append(name)
@@ -63,7 +63,7 @@ class Node (object):
 		Remove a source for this node.
 		"""
 		self.sources.remove (name)
-		if self.md5_for_source.has_key (name):
+		if name in self.md5_for_source:
 			del self.md5_for_source[name]
 
 	def add_product (self, name):
@@ -108,7 +108,7 @@ class Node (object):
 				msg.debug(_("Not rebuilding %s from %s: unknown source timestamp") % (self.products[0], source_name), pkg="depend")
 			elif source.date < self.date:
 				msg.debug(_("Not rebuilding %s from %s: up to date") % (self.products[0], source_name), pkg="depend")
-			elif not self.md5_for_source.has_key (source_name):
+			elif source_name not in self.md5_for_source:
 				msg.debug(_("Rebuilding %s from %s: outdated, source not tracked") % (self.products[0], source_name), pkg="depend")
 				return True
 			elif self.md5_for_source [source_name] == None:
