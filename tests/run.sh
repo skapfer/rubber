@@ -5,7 +5,7 @@
 
 SOURCE_DIR="$(cd ..; pwd)"
 tmpdir=tmp
-python=python2
+python=python3
 
 set -e                          # Stop at first failure.
 

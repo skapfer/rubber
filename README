@@ -13,37 +13,37 @@ dependency relations or post-compilation diagnostics.
 
 * Installation
 
-Running Rubber just requires Python version 2.6 or newer.  Of course it won't
+Running Rubber just requires Python3.  Of course it won't
 be of much use without a working LaTeX environment (Rubber is known to work on
 TeXLive and VTeX on various flavors of Unix including Darwin and Cygwin, any
 feedback is welcome about other systems).
 
 For compilation, you will need the Python Distutils, which are usually included
-in development packages (in Debian, this is the python-dev package).  To build
+in development packages (in Debian, this is the python3-dev package).  To build
 the documentation, you need texinfo (Debian package: texinfo).
 
 To compile and install Rubber, just follow the usual procedure:
 
-# python2 setup.py --help
-# python2 setup.py install
-# python2 setup.py clean --all
+# python3 setup.py --help
+# python3 setup.py install
+# python3 setup.py clean --all
 
 
 Some useful options to setup.py include:
 
 Disabling info docs:
 
-# python2 setup.py build --info=False install
+# python3 setup.py build --info=False install
 
 and similar for --html, --man, --pdf.
 
 Changing the installation path for manpages:
 
-# python2 setup.py install --mandir=/path/to/man/pages
+# python3 setup.py install --mandir=/path/to/man/pages
 
 Installing to a staging directory instead of the root/prefix:
 
-# python2 setup.py install --root=/staging/directory
+# python3 setup.py install --root=/staging/directory
 
 Note that if you need build and install to be two different steps
 (for example when building packages for distribution purposes),
@@ -64,8 +64,8 @@ prefix  = /usr
 
 Finally, invoke
 
-# python2 setup.py build
-# python2 setup.py install --root=/staging/directory
+# python3 setup.py build
+# python3 setup.py install --root=/staging/directory
 
 
 * Usage
