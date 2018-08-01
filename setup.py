@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim: et:ts=4
 #
 # This is the setup script for Rubber. It acts both as a part of the

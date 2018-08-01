@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # vim: noet:ts=4
 from rubber.tex import *
 import unittest
