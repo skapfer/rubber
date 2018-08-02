@@ -24,7 +24,6 @@ _rubber_arguments () {
       {-z,--gzip}'[compress the final document]' \
       '(- *)'{-h,--help}'[show help]' \
       '--into=[go to directory DIR before compiling]:directory:_files -/' \
-      {-l,--landscape}'[change paper orientation (if relevant)]' \
       {-n,--maxerr}'=[display at most NUM errors]:num' \
       \*{-m,--module}'=[use module]:module:($_rubber_modules)' \
       '--only=[only include the specified SOURCES]:sources' \

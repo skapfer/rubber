@@ -123,13 +123,6 @@ compilation du document et l’envoi du résultat sur la sortie standard.
 Le document temporaire est nommé rubtmpX.tex, où X est un nombre tel qu’aucun
 fichier de ce nom n’existe au départ.
 .TP
-.B \-l, \-\-landscape
-Produit un document orienté en paysage.
-Cette option n’a d’effet qu’avec
-.B dvips
-et
-.BR dvipdfm .
-.TP
 .BI \-n,\ \-\-maxerr \ <num>
 Définit le nombre maximum d’erreurs affichées.
 Par défaut, au plus 10 erreurs sont rapportées, l’option

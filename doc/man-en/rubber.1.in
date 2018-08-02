@@ -122,13 +122,6 @@ document and dumping the results on standard output.
 The temporary document is named rubtmpX.tex, where X is a number such that no
 file of that name exists initially.
 .TP
-.B \-l, \-\-landscape
-Specify that the final document should use landscape orientation.
-This is relevant only when using
-.B dvips
-or
-.BR dvipdfm .
-.TP
 .BI \-n,\ \-\-maxerr \ <num>
 Set the maximum number of displayed errors.
 By default, up to 10 errors are reported, saying
