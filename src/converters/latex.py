@@ -363,7 +363,7 @@ class LogCheck (object):
 			if line[:17] == "Output written on":
 				continue
 
-			if line.startswith ('Missing character: ')
+			if line.startswith ('Missing character: '):
 				error = line
 				parsing = 0
 				continue
