@@ -588,6 +588,7 @@ class LaTeXDep (rubber.depend.Node):
 
 		# the initial hooks:
 
+		self.hooks_version = 0
 		self.hooks = {
 			"begin": ("a", self.h_begin),
 			"end": ("a", self.h_end),
@@ -616,7 +617,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.end_hooks = {
 			"document": self.h_end_document
 		}
-		self.hooks_changed = True
 
 		self.include_only = {}
 
@@ -743,12 +743,11 @@ class LaTeXDep (rubber.depend.Node):
 		the included sources.
 		"""
 		parser = SourceParser(file, self)
-		parser.set_hooks(self.hooks.keys())
-		self.hooks_changed = False
+		hooks_version = -1
 		while True:
-			if self.hooks_changed:
+			if hooks_version != self.hooks_version:
 				parser.set_hooks(self.hooks.keys())
-				self.hooks_changed = False
+				hooks_version = self.hooks_version
 			token = parser.next_hook()
 			if token.cat == EOF:
 				break
@@ -859,7 +858,7 @@ class LaTeXDep (rubber.depend.Node):
 	def do_alias (self, name, val):
 		if val in self.hooks:
 			self.hooks[name] = self.hooks[val]
-			self.hooks_changed = True
+			self.hooks_version += 1
 
 	def do_clean (self, *args):
 		for file in args:
@@ -970,7 +969,7 @@ class LaTeXDep (rubber.depend.Node):
 
 	def hook_macro (self, name, format, fun):
 		self.hooks[name] = (format, fun)
-		self.hooks_changed = True
+		self.hooks_version += 1
 
 	def hook_begin (self, name, fun):
 		self.begin_hooks[name] = fun
