@@ -39,7 +39,7 @@ Analyse the source files and produce a space-separated list of all the files
 that the document depends on and that Rubber cannot rebuild.
 .TP
 .B \-\-errors
-Extract from the log file the list of errors that occured during the last
+Extract from the log file the list of errors that occurred during the last
 compilation.
 .TP
 .B \-h, \-\-help
