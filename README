@@ -79,12 +79,13 @@ precise usage information.
 * Author
 
 Rubber was originally written by Emmanuel Beffara <emmanuel@beffara.org>.
-It is currently maintained by Sebastian Kapfer <sebastian.kapfer@fau.de>.
+It is currently maintained by Sebastian Kapfer <sebastian.kapfer@fau.de>
+and Nicolas Boulenguez <nicolas@debian.org>.
 
 Its homepage can be found at https://launchpad.net/rubber.
 
 Thanks to all those who provided testing, comments and suggestions, and
 re-thanks to those who wrote patches and bugfixes.
 
-Any kind of feedback is appreciated, in order to make this program as useful,
-robust and powerful as possible.
+Any kind of feedback is appreciated, in order to make this program as useful
+and robust as possible.

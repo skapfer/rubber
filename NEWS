@@ -1,3 +1,23 @@
+Version 1.5 (2018-08-06)
+
+  This version requires Python3.
+
+  It assumes that all files are encoded in utf-8. This should not
+  cause new problems, previous versions were silently assuming ASCII.
+
+  Features:
+  - Remove support for selection of paper size and orientation.
+  - Prohibit onchange directive unless --unsafe mode.
+
+  Bugfixes:
+  - Fix stacktrace when parsing BibTeX errors (LP: #1533723).
+  - Use open mode r+ for /dev/null instead of rw (LP: #1543622)
+  - Always give a relative source path to fig2dev (Debian: #345954).
+  - Detect "Missing character" messages in log files (Debian: #384155).
+  - Update hooks for all parsers (Debian: #813855, LP: #1470988).
+  - Accept uppercase image extensions (LP: #1583475).
+    Patch from Matthias Goldhoorn <matthias@goldhoorn.eu>.
+
 Version 1.4 (2015-12-11)
 
   This version of Rubber officially requires Python 2.6 and up.
