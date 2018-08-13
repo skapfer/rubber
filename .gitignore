@@ -1,5 +1,3 @@
-Makefile
-settings.py
 *.pyc
 src/version.py
 build
