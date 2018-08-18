@@ -13,7 +13,7 @@ dependency relations or post-compilation diagnostics.
 
 * Installation
 
-Running Rubber just requires Python3.  Of course it won't
+Running Rubber just requires Python 3.5.  Of course it won't
 be of much use without a working LaTeX environment (Rubber is known to work on
 TeXLive and VTeX on various flavors of Unix including Darwin and Cygwin, any
 feedback is welcome about other systems).
