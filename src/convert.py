@@ -84,18 +84,6 @@ def expand_cases (string, vars):
 	suffix = string[start:]
 	return cases + [s + suffix for s in current], pos
 
-class Rule (rubber.util.Variables):
-	"""
-	This class represents a single rule, as described in rules.ini. It is
-	essentially a dictionary, but also includes a compiled form of the regular
-	expression for the target.
-	"""
-	def __init__ (self, context, dict):
-		# We do not inherit from object, no super() available.
-		rubber.util.Variables.__init__ (self, context, dict)
-		self.cost = dict['cost']
-		self.re_target = re.compile(dict['target'] + '$')
-
 class Converter (object):
 	"""
 	This class represents a set of translation rules that may be used to
@@ -124,7 +112,7 @@ class Converter (object):
 		"""
 		self.set = set
 		self.modules = {}
-		self.rules = {}
+		self.rules = []
 
 	def read_ini (self, filename):
 		"""
@@ -161,7 +149,8 @@ class Converter (object):
 			if not self.load_module(dict['rule']):
 				msg.warn(_("ignoring rule `%s' (module `%s' not found)") %
 						(name, dict['rule']), file=filename)
-			self.rules[name] = Rule(None, dict)
+			dict.re_target = re.compile (dict ['target'] + '$')
+			self.rules.append (dict)
 
 	def load_module (self, name):
 		"""
@@ -184,7 +173,7 @@ class Converter (object):
 		this converter, i.e. if it matches one of the target regular
 		expressions.
 		"""
-		for rule in self.rules.values():
+		for rule in self.rules:
 			if rule.re_target.match(name):
 				return True
 		return False
@@ -202,7 +191,7 @@ class Converter (object):
 		"""
 		candidates = []
 
-		for rule in self.rules.values():
+		for rule in self.rules:
 			match = rule.re_target.match(target)
 			if not match:
 				continue
@@ -217,7 +206,8 @@ class Converter (object):
 
 		candidates.sort()
 		for cost, source, target, rule in candidates:
-			instance = rubber.util.Variables(context, rule.to_dict())
+			instance = rubber.util.Variables(context, rule)
+			# Replace in this instance generic patterns set from rule with actual paths.
 			instance['source'] = source
 			instance['target'] = target
 			if check is not None and not check(instance):
