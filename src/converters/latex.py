@@ -785,6 +785,8 @@ class LaTeXDep (rubber.depend.Node):
 				file = open(path)
 				try:
 					self.parse_file(file)
+				except UnicodeDecodeError as e:
+					raise RuntimeError ('error decoding unicode in file ' + path)
 				finally:
 					file.close()
 
