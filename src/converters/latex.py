@@ -1169,16 +1169,14 @@ class LaTeXDep (rubber.depend.Node):
 
 		if self.set_job:
 			if self.vars["engine"] == "VTeX":
-				msg.error(_("I don't know how set the job name with %s.")
-					% self.vars["engine"])
+				msg.error(_("I don't know how set the job name with VTeX."))
 			else:
 				cmd.append("-jobname=" + self.vars["job"])
 
 		specials = self.vars["src-specials"]
 		if specials != "":
 			if self.vars["engine"] == "VTeX":
-				msg.warn(_("I don't know how to make source specials with %s.")
-					% self.vars["engine"])
+				msg.warn(_("I don't know how to make source specials with VTeX."))
 				self.vars["src-specials"] = ""
 			elif specials == "yes":
 				cmd.append("-src-specials")
