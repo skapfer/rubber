@@ -1025,6 +1025,8 @@ Ideally, rubber should understand macros from the inputenc LaTeX
 package. This is more complex that it may seem. When the encoding
 changes inside an included source, all parents sources should be open
 again from their current byte with the new encoding.
+Moreover, TeX allows encoding errors inside comments,
+as long as it finds something looking like and end of line.
 
 Instead, rubber attempts to circumvent the problem by ignoring all
 encoding issues.  As far as we know, this only implies the limitations
@@ -1042,8 +1044,10 @@ When contents are written back, the output remains valid for the
 original encoding, since rubber only modifies ASCII characters.
 
 As long as rubber searches for ASCII patterns, this should only change
-its behaviour in exceptional circumstances, for example when an utf_8
+its behaviour in exceptional circumstances, for example when a multibyte
 sequence contains an ASCII closing brace or bracket.
+This issue should never affect utf_8, because this encoding ensures that
+no continuation byte represents an ASCII character.
 
 A more serious limitation is that if the underlying file system uses a
 different encoding, extracted paths will be wrongly reencoded.
