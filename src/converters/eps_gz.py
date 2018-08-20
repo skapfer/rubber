@@ -28,7 +28,7 @@ class Dep (rubber.depend.Node):
 		single line.
 		"""
 		msg.progress(_("extracting bounding box from %s") % self.source)
-		with gzip.open(self.source, encoding='latin_1') as source:
+		with gzip.open(self.source, mode='rt', encoding='latin_1') as source:
 			for line in source:
 				if re_bbox.match(line):
 					with open(self.target, 'w', encoding='latin_1') as target:
