@@ -24,7 +24,7 @@ class Module (rubber.module_interface.Module):
 
     def clean (self):
         if os.path.exists (self.maf):
-            with open (self.maf, "r", encoding='utf-8') as list:
+            with open (self.maf, encoding='latin_1') as list:
                 for name in list:
                     name = name.rstrip ()
                     verbose_remove (name, pkg = "minitoc")

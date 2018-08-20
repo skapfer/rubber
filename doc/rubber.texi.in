@@ -65,6 +65,7 @@ makeindex, Metapost, etc. to produce appropriate data files.
 * Directives::    Directives in LaTeX comments.
 * Modules::       List of standard modules.
 * Graphics::      Support for graphics conversion.
+* Encoding::      Handling of source encoding.
 * Index::         Directive and modules index.
 @end menu
 
@@ -975,7 +976,7 @@ command-line tools like @command{convert} (from ImageMagick),
 @command{epstopdf}.
 @end table
 
-@node rules.ini, Index, Standard rules, Graphics
+@node rules.ini, Encoding, Standard rules, Graphics
 @section Syntax of @command{rules.ini}
 
 The rules file has a format in the style of Wind*ws INI files. The lines that
@@ -1017,9 +1018,41 @@ The cost of the rule, as an integer. In the default file, this ranges between
 0 and 12.
 @end table
 
+@node Encoding, Index, rules.ini, Top
+@chapter Handling of source encoding
+
+Ideally, rubber should understand macros from the inputenc LaTeX
+package. This is more complex that it may seem. When the encoding
+changes inside an included source, all parents sources should be open
+again from their current byte with the new encoding.
+
+Instead, rubber attempts to circumvent the problem by ignoring all
+encoding issues.  As far as we know, this only implies the limitations
+described below.
+
+If you encounter encoding problems, please start with updating to
+version 1.6 or later.  Versions until 1.4 were handling encoding issues
+differently, and 1.5 was assuming utf_8.
+
+For now, rubber opens all external files with the latin_1 encoding.
+
+A full 8-bit encoding ensures the absence of errors while reading, even
+if most non-ASCII characters will be wrongly translated.
+When contents are written back, the output remains valid for the
+original encoding, since rubber only modifies ASCII characters.
+
+As long as rubber searches for ASCII patterns, this should only change
+its behaviour in exceptional circumstances, for example when an utf_8
+sequence contains an ASCII closing brace or bracket.
+
+A more serious limitation is that if the underlying file system uses a
+different encoding, extracted paths will be wrongly reencoded.
+This issue should become very rare now that more and more systems use
+utf_8 by default for both text contents and paths.
+
 @c ---  Indices  ---
 
-@node Index, Directive index, rules.ini, Top
+@node Index, Directive index, Encoding, Top
 @chapter Index
 
 @menu

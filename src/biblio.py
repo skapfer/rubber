@@ -57,7 +57,7 @@ class BibToolDep (rubber.depend.Node):
 		Read the log file, identify error messages and report them.
 		"""
 		try:
-			log = open (self.blg, "r")
+			log = open (self.blg, encoding='latin_1')
 		except:
 			msg.warn (_("cannot open BibTeX logfile: %s") % self.blg, pkg="biblio")
 			return

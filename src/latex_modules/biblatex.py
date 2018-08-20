@@ -104,7 +104,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		current_bib = None
 
 		try:
-			log = open (self.blg, "r")
+			log = open (self.blg, encoding='latin_1')
 		except:
 			msg.warn (_("cannot open Biber logfile: %s") % self.blg, pkg="biblatex")
 			return

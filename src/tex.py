@@ -6,7 +6,7 @@ General-purpose classes for reading TeX code.
 Classes and functions from this module can be used without Rubber.
 """
 
-import codecs, re
+import re
 from io import StringIO
 
 # The catcodes
@@ -385,18 +385,14 @@ class Parser (ParserBase):
 	tokens. This advantage of this method is that is is much faster than
 	reading tokens one by one.
 	"""
-	def __init__ (self, input, coding=None):
+	def __init__ (self, input):
 		"""
-		Initialise the parser with a file as input. If the argument 'coding'
-		is used, then the input is translated from this coding to Unicode
-		before parsing. If 'input' is None, then input can only be provided by
+		Initialise the parser with a file as input.
+		If 'input' is None, then input can only be provided by
 		the 'put_token' and 'put_list' methods.
 		"""
 		super (Parser, self).__init__()
-		if coding is None:
-			self.input = input
-		else:
-			self.input = codecs.lookup(coding).streamreader(input)
+		self.input = input
 		self.line = ""
 		self.pos_line = 1
 		self.pos_char = 1
