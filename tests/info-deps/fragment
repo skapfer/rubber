@@ -1,3 +1,7 @@
 rubber -d doc.tex
-test $(rubber-info --deps doc | wc -w) -eq 2
+# the result depends on the verbosity level.
+case "`rubber-info --deps doc | wc -w`" in
+    2|24|38) true ;;
+    *)       false;;
+esac
 rubber -d --clean doc
