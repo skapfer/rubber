@@ -558,11 +558,17 @@ class LaTeXDep (rubber.depend.Node):
 
 	#--  Initialization  {{{2
 
-	def __init__ (self, env, src, job):
+	def __init__ (self, env, path, jobname):
 		"""
 		Initialize the environment. This prepares the processing steps for the
 		given file (all steps are initialized empty) and sets the regular
 		expressions and the hook dictionary.
+
+		path specifies the main source for the document. The exact path and file name
+		are determined, and the source building process is updated if needed,
+		according the the source file's extension. The argument
+		'jobname' specifies the job name to something else that
+		the base of the file name.
 		"""
 		super (LaTeXDep, self).__init__(env.depends)
 		self.env = env
@@ -635,16 +641,6 @@ class LaTeXDep (rubber.depend.Node):
 
 		self.failed_module = None
 
-		self.set_source (src, job)
-
-	def set_source (self, path, jobname):
-		"""
-		Specify the main source for the document. The exact path and file name
-		are determined, and the source building process is updated if needed,
-		according the the source file's extension. The optional argument
-		'jobname' can be used to specify the job name to something else that
-		the base of the file name.
-		"""
 		assert os.path.exists(path)
 		self.sources = []
 		self.vars['source'] = path
@@ -685,8 +681,6 @@ class LaTeXDep (rubber.depend.Node):
 		# always expect a primary aux file
 		self.new_aux_file (self.basename (with_suffix=".aux"))
 		self.add_product (self.basename (with_suffix=".synctex.gz"))
-
-		return 0
 
 	def basename (self, with_suffix=""):
 		return self.vars["job"] + with_suffix
