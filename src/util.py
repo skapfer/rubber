@@ -405,13 +405,6 @@ def parse_line (line, dict):
 
 	return elems
 
-devnull_fp = None
-def devnull ():
-	global devnull_fp
-	if not devnull_fp:
-		devnull_fp = open(os.devnull, 'r+')
-	return devnull_fp
-
 def explode_path (name = "PATH"):
 	"""
 	Parse an environment variable into a list of paths, and return it as an array.

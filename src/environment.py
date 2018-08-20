@@ -9,7 +9,6 @@ building process.
 
 import os, os.path, sys, subprocess
 import re
-from subprocess import Popen
 
 from rubber.util import _
 from rubber.util import *
@@ -148,11 +147,11 @@ class Environment:
 		for (key,val) in env.items():
 			penv[key] = val
 
-		process = Popen(prog,
+		process = subprocess.Popen(prog,
 			executable = progname,
 			env = penv,
 			cwd = pwd,
-			stdin = devnull(),
+			stdin = subprocess.DEVNULL,
 			stdout = subprocess.PIPE,
 			stderr = None)
 

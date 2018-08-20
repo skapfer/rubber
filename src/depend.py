@@ -4,9 +4,9 @@ This module contains code for handling dependency graphs.
 # vim: noet:ts=4
 
 import os, time
-from subprocess import Popen
+import subprocess
 import rubber.util
-from rubber.util import _, msg, devnull
+from rubber.util import _, msg
 
 # constants for the return value of Node.make:
 
@@ -272,7 +272,9 @@ class Shell (Node):
 
 	def run (self):
 		msg.progress(_("running: %s") % ' '.join(self.command))
-		process = Popen(self.command, stdin=devnull(), stdout=self.stdout)
+		process = subprocess.Popen (self.command,
+			stdin=subprocess.DEVNULL,
+			stdout=self.stdout)
 		if process.wait() != 0:
 			msg.error(_("execution of %s failed") % self.command[0])
 			return False

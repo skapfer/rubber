@@ -20,7 +20,6 @@ class BibToolDep (rubber.depend.Node):
 		self.environ = os.environ.copy ()
 		self.bib_paths = rubber.util.explode_path ("BIBINPUTS")
 		self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
-		self.devnull = rubber.util.devnull ()
 
 	def bib_command (self, cmd, args):
 		getattr (self, "do_"+cmd) (*args)
@@ -41,8 +40,10 @@ class BibToolDep (rubber.depend.Node):
 		command = self.build_command ()
 
 		msg.progress (_("running: %s") % " ".join (command))
-		process = subprocess.Popen (command, stdin = self.devnull,
-			stdout = self.devnull, env = self.environ)
+		process = subprocess.Popen (command,
+			stdin = subprocess.DEVNULL,
+			stdout = subprocess.DEVNULL,
+			env = self.environ)
 		if process.wait() != 0:
 			msg.error (_("There were errors running %s.") % self.tool, pkg="biblio")
 			return False
