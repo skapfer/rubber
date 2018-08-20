@@ -68,6 +68,7 @@ class build (distutils.command.build.build):
         def repl (match_object):
             return subs [match_object.group (1)]
         def func (in_path, out_path):
+            # Rubber sources are encoded in utf_8.
             with open (in_path, encoding='utf-8') as in_file:
                 with open (out_path, "w", encoding='utf-8') as out_file:
                     for in_line in in_file:
