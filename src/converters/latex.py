@@ -46,11 +46,11 @@ class Modules:
 		"""
 		return name in self.objects
 
-	def register (self, name, context={}):
+	def register (self, name, opt=None):
 		"""
 		Attempt to register a module with the specified name. If the module is
 		already loaded, do nothing. If it is found and not yet loaded, then
-		load it, initialise it (using the context passed as optional argument)
+		load it, initialise it (using the opt passed as optional argument)
 		and run any delayed commands for it.
 		"""
 		if name in self:
@@ -100,7 +100,7 @@ class Modules:
 				msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
 				return 0
 
-			mod = source.Module (document=self.env, context=context)
+			mod = source.Module (document=self.env, opt=opt)
 			msg.log (_("built-in module %s registered") % name, pkg='latex')
 
 		# Run any delayed commands.
@@ -888,7 +888,7 @@ class LaTeXDep (rubber.depend.Node):
 		self.env.conv_set(file, vars)
 
 	def do_module (self, mod, opt=None):
-		self.modules.register (mod, context = {'arg':mod, 'opt':opt})
+		self.modules.register (mod, opt=opt)
 
 	def do_onchange (self, file, cmd):
 		if not self.env.is_in_unsafe_mode_:
@@ -1015,7 +1015,7 @@ class LaTeXDep (rubber.depend.Node):
 			if 'pdftex' in self.modules:
 				self.modules['pdftex'].mode_dvi()
 			else:
-				self.modules.register('pdftex', {'opt': 'dvi'})
+				self.modules.register ('pdftex', opt='dvi')
 		else:
 			if 'pdftex' in self.modules:
 				self.modules['pdftex'].mode_pdf()
@@ -1072,8 +1072,7 @@ class LaTeXDep (rubber.depend.Node):
 		if file:
 			self.process(file)
 		else:
-			self.modules.register (name,
-				context = Variables (self.vars, {'opt': opt}))
+			self.modules.register (name, opt=opt)
 
 	def h_usepackage (self, loc, opt, names):
 		"""
@@ -1089,8 +1088,7 @@ class LaTeXDep (rubber.depend.Node):
 			if file and not os.path.exists(name + ".py"):
 				self.process(file)
 			else:
-				self.modules.register (name,
-					context = Variables (self.vars, {'opt':opt}))
+				self.modules.register (name, opt=opt)
 
 	def h_tableofcontents (self, loc):
 		self.add_product(self.basename (with_suffix=".toc"))

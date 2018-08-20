@@ -6,7 +6,7 @@ Dependency analysis for package 'ltxtable' in Rubber.
 
 import rubber.module_interface
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         document.hook_macro ('LTXtable', 'aa', self.hook_ltxtable)
 

@@ -19,7 +19,7 @@ from rubber.util import verbose_remove
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.maf = document.basename (with_suffix = ".maf")
 
     def clean (self):

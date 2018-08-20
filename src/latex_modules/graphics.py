@@ -51,7 +51,7 @@ drv_suffixes = {
 
 class Module (rubber.module_interface.Module):
 
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         document.hook_macro ('includegraphics', '*oa', self.hook_includegraphics)
         document.hook_macro ('graphicspath', 'a', self.hook_graphicspath)
@@ -78,7 +78,7 @@ class Module (rubber.module_interface.Module):
         # If the package was loaded with an option that matches the name of a
         # driver, use that driver instead.
 
-        opts = parse_keyval(context['opt'])
+        opts = parse_keyval (opt)
 
         for opt in opts.keys():
             if opt in drv_suffixes:

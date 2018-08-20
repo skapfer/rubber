@@ -14,9 +14,9 @@ import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
 
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         document.vars['engine'] = 'VTeX'
-        if context['opt'] == 'ps':
+        if opt == 'ps':
             if document.env.final != document and document.products[0][-4:] != '.ps':
                 msg.error(_("there is already a post-processor registered"))
                 sys.exit(2)

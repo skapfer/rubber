@@ -48,7 +48,7 @@ def inline_option (option_string, default):
     return value == None or value == "true"
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.asy_environments = 0
         self.doc = document
 
@@ -63,7 +63,7 @@ class Module (rubber.module_interface.Module):
         else:
             self.format = ".eps"
 
-        self.global_inline = inline_option (context ['opt'], default=False)
+        self.global_inline = inline_option (opt, default=False)
 
         document.hook_begin ("asy", self.on_begin_asy)
 

@@ -12,7 +12,7 @@ from rubber import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc=document
         document.hook_macro('externaldocument', 'oa', self.hook_externaldocument)
 

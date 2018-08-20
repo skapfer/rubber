@@ -13,10 +13,10 @@ import re
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
-	def __init__ (self, document, context):
+	def __init__ (self, document, opt):
 		doc = document
 
-		options = rubber.util.parse_keyval (context["opt"])
+		options = rubber.util.parse_keyval (opt)
 		backend = options.setdefault ("backend", "biber")
 
 		if backend not in ("biber", "bibtex", "bibtex8", "bibtexu"):

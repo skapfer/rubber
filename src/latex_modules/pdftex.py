@@ -12,15 +12,11 @@ from rubber import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         self.mode = None
         document.vars['program'] = 'pdflatex'
         document.vars['engine'] = 'pdfTeX'
-        try:
-            opt = context['opt']
-        except KeyError:
-            opt = None
         if opt == 'dvi':
             self.mode_dvi()
         else:

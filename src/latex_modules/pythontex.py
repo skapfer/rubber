@@ -44,5 +44,5 @@ class PythonTeXDep (rubber.depend.Shell):
 		return super (PythonTeXDep, self).clean ()
 
 class Module (rubber.module_interface.Module):
-	def __init__ (self, document, context):
+	def __init__ (self, document, opt):
 		PythonTeXDep (document.set, document)

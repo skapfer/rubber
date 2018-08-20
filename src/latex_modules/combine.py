@@ -19,7 +19,7 @@ import rubber.module_interface
 # .log .tex files, or a new LatexDep node, or ..?
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         self.combine_level = 0
         document.hook_begin('document', self.begin)

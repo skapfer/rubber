@@ -12,7 +12,7 @@ from rubber.util import parse_keyval
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         document.do_module('graphics')
         _, self.hook_includegraphics = document.hooks['includegraphics']
         # We proceed as if \epsfbox and \includegraphics were equivalent.

@@ -41,12 +41,12 @@ class Module:
     provides all required methods with no effects.
 
     The constructor is mandatory. Its profile must be
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt=None):
 
     'document' is the compiling environment (an instance of
     converters.latex.LaTeXDep)
 
-    'context' is a dictionary that describes the command that caused
+    'opt' describes the option given to the macro that caused
     the module to load.
     """
 

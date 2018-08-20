@@ -6,7 +6,7 @@ Dependency analysis and environment parsing for package 'moreverb' in Rubber.
 
 import rubber.module_interface
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         document.hook_macro('verbatimtabinput', 'oa', self.hook_verbatimtabinput)
         document.hook_macro('listinginput', 'oaa', self.hook_listinginput)

@@ -29,7 +29,7 @@ from rubber.util import _, msg
 import rubber.biblio
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.btsect_environments = []
         self.current_style = "plain"
         self.doc = document

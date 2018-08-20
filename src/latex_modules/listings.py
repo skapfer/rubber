@@ -6,7 +6,7 @@ Dependency analysis and environment parsing for package 'listings' in Rubber.
 
 import rubber.module_interface
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         document.hook_macro ('lstinputlisting', 'oa', self.hook_input)
         document.hook_macro ('lstnewenvironment', 'a', self.hook_newenvironment)

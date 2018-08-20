@@ -28,7 +28,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
     # This class may not be instantiated directly, only subclassed.
     __metaclass__ = abc.ABCMeta
 
-    def __init__ (self, document, context, tool):
+    def __init__ (self, document, tool):
         super (Module, self).__init__ (document.env.depends)
 
         self.tool = tool

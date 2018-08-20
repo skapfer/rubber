@@ -25,7 +25,7 @@ re_optarg = re.compile(r'\((?P<list>[^()]*)\) *')
 
 class Module (rubber.module_interface.Module):
 
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         self.doc = document
         self.bibs = {}
         self.defaults = []

@@ -11,7 +11,7 @@ import rubber.module_interface
 import rubber.util
 
 class Module (rubber.module_interface.Module):
-    def __init__ (self, document, context):
+    def __init__ (self, document, opt):
         env = document.env
         if env.final.products[0][-3:] != '.ps':
              msg.error(_("I can't use ps2pdf when not producing a PS"))
