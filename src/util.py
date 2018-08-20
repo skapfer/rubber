@@ -259,7 +259,7 @@ class Variables:
 		if parent is not None and not isinstance(parent, Variables):
 			raise ValueError()
 		self.parent = parent
-		self.dict = items
+		self.dict = items.copy ()
 
 	def __getitem__ (self, key):
 		"""
