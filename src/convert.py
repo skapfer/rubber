@@ -149,7 +149,7 @@ class Converter (object):
 			if not self.load_module(dict['rule']):
 				msg.warn(_("ignoring rule `%s' (module `%s' not found)") %
 						(name, dict['rule']), file=filename)
-			dict.re_target = re.compile (dict ['target'] + '$')
+			dict ["re_target"] = re.compile (dict ['target'] + '$')
 			self.rules.append (dict)
 
 	def load_module (self, name):
@@ -174,7 +174,7 @@ class Converter (object):
 		expressions.
 		"""
 		for rule in self.rules:
-			if rule.re_target.match(name):
+			if rule ["re_target"].match(name):
 				return True
 		return False
 
@@ -192,7 +192,7 @@ class Converter (object):
 		candidates = []
 
 		for rule in self.rules:
-			match = rule.re_target.match(target)
+			match = rule ["re_target"].match(target)
 			if not match:
 				continue
 			templates, _ = expand_cases(rule['source'], {})
