@@ -26,7 +26,7 @@ class Modules:
 	"""
 	This class gathers all operations related to the management of modules.
 	The modules are	searched for first in the current directory, then as
-	scripts in the 'modules' directory in the program's data directort, then
+	scripts in the 'modules' directory in the program's data directory, then
 	as a Python module in the package `rubber.latex'.
 	"""
 	def __init__ (self, env):
