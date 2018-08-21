@@ -37,5 +37,6 @@ class Dep (rubber.depend.Node):
 		msg.error(_("no bounding box was found in %s!") % self.source)
 		return False
 
-def convert (source, target, context, set):
+def convert (source, target, context, env):
+	set = env.depends
 	return Dep(set, target, source)

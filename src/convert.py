@@ -101,16 +101,16 @@ class Converter (object):
 		from the rule and possibly additional user settings. If the function
 		is absent, conversion is always assumed to be possible.
 
-	- convert(source, target, context, set):
-	    Produce a dependency node in the given 'set' to produce 'target' from
-		'source', using settings from the 'context'.
+	- convert(source, target, context, env):
+	    Produce a dependency node in the given set (via env.depends) to produce 'target' from
+		'source', using settings from the environment 'env'.
 	"""
-	def __init__ (self, set):
+	def __init__ (self, env):
 		"""
 		Initialize the converter, associated with a given dependency set, with
 		an empty set of rules.
 		"""
-		self.set = set
+		self.env = env
 		self.modules = {}
 		self.rules = []
 
@@ -178,7 +178,7 @@ class Converter (object):
 				return True
 		return False
 
-	def best_rule (self, target, check=None, context=None):
+	def best_rule (self, target, check, context):
 		"""
 		Search for an applicable rule for the given target with the least
 		cost. The returned value is a dictionary that describes the best rule
@@ -186,8 +186,7 @@ class Converter (object):
 		is a function that takes the rule parameters as arguments (as a
 		dictionary that contains at least 'source' and 'target') and can
 		return false if the rule is refused. The optional argument 'context'
-		is a dictionary that contains additional parameters passed to the
-		converters.
+		is expected to be a Variables instance attached to a Node.
 		"""
 		candidates = []
 
@@ -214,7 +213,7 @@ class Converter (object):
 				continue
 			module = self.modules[rule['rule']]
 			if hasattr(module, 'check'):
-				if not module.check(source, target, instance):
+				if not module.check (source=source, target=target, context=instance):
 					continue
 			return instance
 
@@ -228,4 +227,7 @@ class Converter (object):
 		"""
 		module = self.modules[instance['rule']]
 		return module.convert(
-				instance['source'], instance['target'], instance, self.set)
+				source = instance['source'],
+				target = instance['target'],
+				context = instance,
+				env     = self.env)

@@ -11,7 +11,8 @@ from rubber.depend import Shell
 def check (source, target, context):
 	return prog_available('fig2dev')
 
-def convert (source, target, context, set):
+def convert (source, target, context, env):
+	set = env.depends
 
 	# The source path is embedded by fig2dev into the target,
 	# causing problem with LaTeX and non-ASCII characters.

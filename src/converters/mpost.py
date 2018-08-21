@@ -117,13 +117,14 @@ class Dep (rubber.depend.Node):
 	method simply creates one node for the figures and one leaf node for all
 	sources.
 	"""
-	def __init__ (self, set, target, source, context):
+	def __init__ (self, env, target, source):
+		set = env.depends
 		self.cmd_pwd = os.path.dirname(source)
 		super (Dep, self).__init__(set)
 		self.add_product (target)
 		self.include (os.path.basename (source))
 		msg.log(_("%s is made from %r") % (target, self.sources))
-		self.env = context['_environment']
+		self.env = env
 		self.base = source[:-3]
 		self.cmd = ["mpost", "\\batchmode;input %s" %
 			os.path.basename(self.base)]
@@ -207,11 +208,11 @@ class Dep (rubber.depend.Node):
 
 files = {}
 
-def convert (source, target, context, set):
+def convert (source, target, context, env):
 	if source in files:
 		dep = files[source]
 		dep.add_product(target)
 	else:
-		dep = Dep(set, target, source, context)
+		dep = Dep(env, target, source)
 		files[source] = dep
 	return dep

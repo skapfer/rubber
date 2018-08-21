@@ -27,14 +27,14 @@ class Environment:
 		working directory.
 		"""
 		if cwd is None: cwd = os.getcwd()
-		self.vars = Variables(items = { 'cwd': cwd, '_environment': self })
+		self.vars = Variables(items = { 'cwd': cwd })
 		self.path = [cwd]
 		self.conv_prefs = {}
 
 		# Represents a set of dependency nodes. Nodes can be accessed by absolute
 		# path name using the dictionary interface.
 		self.depends = dict()
-		self.converter = Converter(self.depends)
+		self.converter = Converter (self)
 		self.converter.read_ini (os.path.join (rubber.__path__[0], 'rules.ini'))
 
 		self.doc_requires_shell_ = False
