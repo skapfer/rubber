@@ -12,7 +12,7 @@ building a LaTeX document from start to finish.
 import os, os.path, sys, imp
 import re
 
-from rubber.util import _, msg, parse_line, Variables
+from rubber.util import _, msg, parse_line
 import rubber.depend
 import rubber.latex_modules
 import rubber.module_interface
@@ -501,8 +501,8 @@ class SourceParser (rubber.tex.Parser):
 			if match is None:
 				return True
 
-			vars = rubber.util.Variables (parent = self.latex_dep.vars,
-			                              items  = {'line':self.pos_line})
+			vars = self.latex_dep.vars.copy ()
+			vars ['line'] = self.pos_line
 			args = parse_line(match.group("arg"), vars)
 
 			self.latex_dep.command(match.group("cmd"), args, vars)
@@ -561,14 +561,14 @@ class LaTeXDep (rubber.depend.Node):
 		self.log = LogCheck()
 		self.modules = Modules(self)
 
-		self.vars = Variables(parent=None, items={
+		self.vars = {
 			"arguments": [],
 			"src-specials": "",
 			"source": None,
 			"target": None,
 			"job": None,
 			"logfile_limit": 1000000,
-		})
+		}
 		self.program = 'latex'
 		self.engine = 'TeX'
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
@@ -746,11 +746,11 @@ class LaTeXDep (rubber.depend.Node):
 			self.add_source(path)
 
 		try:
-			saved_vars = self.vars
+			saved_vars = self.vars.copy ()
 			try:
 				msg.log(_("parsing %s") % path, pkg='latex')
-				self.vars = Variables(saved_vars,
-					{ "file": path, "line": None })
+				self.vars ["file"] = path
+				self.vars ["line"] = None
 				file = open(path, encoding='latin_1')
 				try:
 					self.parse_file(file)
@@ -817,12 +817,12 @@ class LaTeXDep (rubber.depend.Node):
 		if len(lst) > 1:
 			self.modules.command(lst[0], lst[1], args)
 		elif not hasattr(self, "do_" + cmd):
-			msg.warn(_("unknown directive '%s'") % cmd, **pos.to_dict())
+			msg.warn(_("unknown directive '%s'") % cmd, **pos)
 		else:
 			msg.log(_("directive: %s") % ' '.join([cmd]+args), pkg='latex')
 			getattr(self, "do_" + cmd)(*args)
 		#except TypeError:
-		#	msg.warn(_("wrong syntax for '%s'") % cmd, **pos.to_dict())
+		#	msg.warn(_("wrong syntax for '%s'") % cmd, **pos)
 
 	def do_alias (self, name, val):
 		if val in self.hooks:
@@ -839,7 +839,7 @@ class LaTeXDep (rubber.depend.Node):
 			if file:
 				self.add_source(file)
 			else:
-				msg.warn(_("dependency '%s' not found") % arg, **self.vars.to_dict ())
+				msg.warn(_("dependency '%s' not found") % arg, **self.vars)
 
 	def do_make (self, file, *args):
 		vars = { "target": file }
@@ -852,7 +852,7 @@ class LaTeXDep (rubber.depend.Node):
 				break
 			args = args[2:]
 		if len(args) != 0:
-			msg.error(_("invalid syntax for 'make'"), **self.vars.to_dict())
+			msg.error(_("invalid syntax for 'make'"), **self.vars)
 			return
 		self.env.conv_set(file, vars)
 
@@ -875,8 +875,9 @@ class LaTeXDep (rubber.depend.Node):
 	def do_read (self, name):
 		saved_vars = self.vars
 		try:
-			self.vars = Variables (self.vars,
-					{ "file": name, "line": None })
+			self.vars = self.vars.copy ()
+			self.vars ["file"] = name
+			self.vars ["line"] = None
 			with open(name, encoding='latin_1') as file:
 				lineno = 0
 				for line in file:
@@ -888,14 +889,14 @@ class LaTeXDep (rubber.depend.Node):
 					lst = parse_line(line, self.vars)
 					self.command(lst[0], lst[1:])
 		except IOError:
-			msg.warn(_("cannot read option file %s") % name, **self.vars.to_dict())
+			msg.warn(_("cannot read option file %s") % name, **self.vars)
 		finally:
 			self.vars = saved_vars
 
 	def do_rules (self, file):
 		name = self.env.find_file(file)
 		if name is None:
-			msg.warn(_("cannot read rule file %s") % file, **self.vars.to_dict())
+			msg.warn(_("cannot read rule file %s") % file, **self.vars)
 		else:
 			self.env.converter.read_ini(name)
 
@@ -912,7 +913,7 @@ class LaTeXDep (rubber.depend.Node):
 					return
 			self.vars[name] = val
 		except KeyError:
-			msg.warn(_("unknown variable: %s") % name, **self.vars.to_dict())
+			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
 	def do_shell_escape (self):
 		self.env.doc_requires_shell_ = True
@@ -924,7 +925,7 @@ class LaTeXDep (rubber.depend.Node):
 		try:
 			self.vars[name] = list(val)
 		except KeyError:
-			msg.warn(_("unknown variable: %s") % name, **self.vars.to_dict())
+			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
 	def do_produce (self, *args):
 		for arg in args:

@@ -205,7 +205,9 @@ class Converter (object):
 
 		candidates.sort()
 		for cost, source, target, rule in candidates:
-			instance = rubber.util.Variables(context, rule)
+			instance = context.copy ()
+			for k, v in rule.items ():
+				instance [k] = v
 			# Replace in this instance generic patterns set from rule with actual paths.
 			instance['source'] = source
 			instance['target'] = target

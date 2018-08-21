@@ -329,8 +329,7 @@ available options:
 
 			env.path.extend (self.path)
 
-			saved_vars = env.main.vars
-			env.main.vars = rubber.util.Variables (saved_vars)
+			saved_vars = env.main.vars.copy ()
 			for cmd in self.prologue:
 				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
@@ -341,8 +340,7 @@ available options:
 
 			env.main.parse()
 
-			saved_vars = env.main.vars
-			env.main.vars = rubber.util.Variables (saved_vars)
+			saved_vars = env.main.vars.copy ()
 			for cmd in self.epilogue:
 				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
