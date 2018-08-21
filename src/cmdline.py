@@ -590,7 +590,7 @@ actions:
 		if self.info_action == "deps":
 			from rubber.depend import Leaf
 			deps = [ k for k,n in env.depends.items () if type (n) is Leaf ]
-			rubber.util.stdout_write (" ".join (deps))
+			sys.stdout.write ((" ".join (deps)) + '\n')
 
 		elif self.info_action == "rules":
 			seen = {}
