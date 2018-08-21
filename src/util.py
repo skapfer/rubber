@@ -33,7 +33,6 @@ class Message (object):
 		self.level = 1
 		self.write = sys.stderr.write
 		self.short = 0
-		self.pos = []
 
 	def increase_verbosity (self):
 		self.level += 1
@@ -48,11 +47,6 @@ class Message (object):
 
 	def shorten_messages (self):
 		self.short = 1
-
-	def push_pos (self, pos):
-		self.pos.append(pos)
-	def pop_pos (self):
-		del self.pos[-1]
 
 	def display (self, kind, text, **info):
 		"""
@@ -99,10 +93,7 @@ class Message (object):
 		information in the standard format. Position information is taken from
 		the dictionary given as first argument.
 		"""
-		if len(self.pos) > 0:
-			if where is None or "file" not in where:
-				where = self.pos[-1]
-		elif where is None or where == {}:
+		if where is None or where == {}:
 			return text
 
 		if "file" in where and where["file"] is not None:

@@ -28,8 +28,8 @@ class Modules:
 	scripts in the 'modules' directory in the program's data directory, then
 	as a Python module in the package `rubber.latex'.
 	"""
-	def __init__ (self, env):
-		self.env = env
+	def __init__ (self, latexdep):
+		self.latexdep = latexdep
 		self.objects = {}
 		self.commands = {}
 
@@ -73,7 +73,7 @@ class Modules:
 		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
-				mod = ScriptModule(self.env, file)
+				mod = ScriptModule(self.latexdep, file)
 				msg.log(_("script module %s registered") % name, pkg='latex')
 				break
 
@@ -99,30 +99,19 @@ class Modules:
 				msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
 				return 0
 
-			mod = source.Module (document=self.env, opt=opt)
+			mod = source.Module (document=self.latexdep, opt=opt)
 			msg.log (_("built-in module %s registered") % name, pkg='latex')
 
 		# Run any delayed commands.
 
 		if name in self.commands:
-			for (cmd, args, vars) in self.commands[name]:
-				msg.push_pos(vars)
+			for (cmd, args) in self.commands[name]:
 				try:
-					# put the variables as they were when the directive was
-					# found
-					saved_vars = self.env.vars
-					self.env.vars = vars
-					try:
-						# call the command
-						mod.command(cmd, args)
-					finally:
-						# restore the variables to their current state
-						self.env.vars = saved_vars
+					mod.command (cmd, args)
 				except AttributeError:
 					msg.warn(_("unknown directive '%s.%s'") % (name, cmd))
 				except TypeError:
 					msg.warn(_("wrong syntax for '%s.%s'") % (name, cmd))
-				msg.pop_pos()
 			del self.commands[name]
 
 		self.objects[name] = mod
@@ -138,7 +127,7 @@ class Modules:
 		else:
 			if mod not in self.commands:
 				self.commands[mod] = []
-			self.commands[mod].append((cmd, args, self.env.vars))
+			self.commands[mod].append((cmd, args))
 
 
 #----  Log parser  ----{{{1
@@ -575,7 +564,8 @@ class LaTeXDep (rubber.depend.Node):
 		self.log = LogCheck()
 		self.modules = Modules(self)
 
-		self.vars = Variables(env.vars, {
+		self.vars = Variables(parent=None, items={
+			"cwd": env.cwd (),
 			"program": "latex",
 			"engine": "TeX",
 			"arguments": [],
@@ -1198,7 +1188,7 @@ class LaTeXDep (rubber.depend.Node):
 		# with special characters if there are any (except that ':' in paths
 		# is not handled).
 
-		prefix = self.env.vars["cwd"]
+		prefix = self.env.cwd ()
 		prefix_ = os.path.join(prefix, "")
 		paths = []
 		for p in self.env.path:
@@ -1339,8 +1329,8 @@ class ScriptModule (rubber.module_interface.Module):
 	"""
 	This class represents modules that are defined as Rubber scripts.
 	"""
-	def __init__ (self, env, filename):
-		vars = Variables(env.vars, {
+	def __init__ (self, latexdep, filename):
+		vars = Variables (parent=latexdep.vars, items={
 			'file': filename,
 			'line': None })
 		lineno = 0
@@ -1352,4 +1342,4 @@ class ScriptModule (rubber.module_interface.Module):
 					continue
 				vars['line'] = lineno
 				lst = parse_line(line, vars)
-				env.command(lst[0], lst[1:], vars)
+				latexdep.command(lst[0], lst[1:], vars)

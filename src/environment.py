@@ -10,7 +10,7 @@ building process.
 import os, os.path, sys, subprocess
 import re
 
-from rubber.util import _, msg, Variables, prog_available
+from rubber.util import _, msg, prog_available
 import rubber.converters
 import rubber.depend
 from rubber.convert import Converter
@@ -20,14 +20,14 @@ class Environment:
 	This class contains all state information related to the building process
 	for a whole document, the dependency graph and conversion rules.
 	"""
-	def __init__ (self, cwd=None):
+	def __init__ (self, cwd):
 		"""
 		Initialize the environment. The optional argument is the path to the
 		reference directory for compilation, by default it is the current
 		working directory.
 		"""
-		if cwd is None: cwd = os.getcwd()
-		self.vars = Variables(items = { 'cwd': cwd })
+		# The path list should always increase. If the first
+		# element ever changes, the cwd() method must be adapted.
 		self.path = [cwd]
 		self.conv_prefs = {}
 
@@ -41,6 +41,9 @@ class Environment:
 		self.synctex = False
 		self.main = None
 		self.final = None
+
+	def cwd (self):
+		return self.path [0]
 
 	def find_file (self, name, suffix=None):
 		"""

@@ -313,7 +313,7 @@ available options:
 			# step, or dumping stdin.  thus, the input filename may change.
 			# in case of build mode, preprocessors will be run as part of
 			# prepare_source.
-			env = self.env = Environment ()
+			env = self.env = Environment (cwd=cwd)
 			src = self.prepare_source (src)
 
 			# safe mode is off during the prologue
