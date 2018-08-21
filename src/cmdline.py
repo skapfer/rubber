@@ -372,8 +372,6 @@ available options:
 
 			self.process_source (env)
 
-		exit (0)
-
 	def clean (self, env):
 		"""
 		Remove all products.
@@ -430,7 +428,6 @@ available options:
 		"""
 		try:
 			self.main (cmdline)
-			assert False
 		except KeyboardInterrupt:
 			msg(0, _("*** interrupted"))
 			rubber.util.abort_generic_error ()

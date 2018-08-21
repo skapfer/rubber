@@ -14,4 +14,4 @@ if '--clean' in args:
 else:
     cmdline = Build ()
 
-sys.exit (cmdline (args))
+cmdline (args)
