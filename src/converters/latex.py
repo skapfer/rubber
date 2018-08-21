@@ -131,7 +131,7 @@ class Modules:
 	def command (self, mod, cmd, args):
 		"""
 		Send a command to a particular module. If this module is not loaded,
-		store the command so that it will be sent when the module is register.
+		store the command so that it will be sent when the module is registered.
 		"""
 		if mod in self.objects:
 			self.objects[mod].command(cmd, args)
