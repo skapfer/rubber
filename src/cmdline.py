@@ -299,12 +299,12 @@ available options:
 			src = os.path.join(initial_dir, srcname)
 
 			# Go to the appropriate directory
+			if self.place is None:
+				cwd = os.path.dirname (src)
+			else:
+				cwd = self.place
 			try:
-				if self.place != ".":
-					if self.place is None:
-						os.chdir(os.path.dirname(src))
-					else:
-						os.chdir(self.place)
+				os.chdir (cwd)
 			except OSError as e:
 				msg.error(_("Error changing to working directory: %s") % e.strerror)
 				rubber.util.abort_generic_error ()
