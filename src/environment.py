@@ -2,8 +2,8 @@
 # (c) Emmanuel Beffara, 2002--2006
 # vim: noet:ts=4
 """
-This module contains the code for formatted message output (the Message class)
-and the class Environment, which contains all information about a given
+This module contains the code for
+the class Environment, which contains all information about a given
 building process.
 """
 
