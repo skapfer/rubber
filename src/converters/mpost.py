@@ -127,11 +127,8 @@ class Dep (rubber.depend.Node):
 		self.base = source[:-3]
 		self.cmd = ["mpost", "\\batchmode;input %s" %
 			os.path.basename(self.base)]
-		if self.env.path == [""]:
-			self.penv = {}
-		else:
-			path = ':'.join (self.env.path)
-			self.penv = {
+		path = ':'.join (self.env.path)
+		self.penv = {
 				"TEXINPUTS": "%s:%s" % (path, os.getenv("TEXINPUTS", "")),
 				"MPINPUTS": "%s:%s" % (path, os.getenv("MPINPUTS", "")) }
 		self.log = None
