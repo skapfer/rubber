@@ -10,8 +10,7 @@ building process.
 import os, os.path, sys, subprocess
 import re
 
-from rubber.util import _
-from rubber.util import *
+from rubber.util import _, msg, Variables, prog_available
 import rubber.converters
 import rubber.depend
 from rubber.convert import Converter

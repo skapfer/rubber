@@ -16,7 +16,7 @@ argument, they apply to all bibliographies.
 """
 
 import os, os.path, re
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.util
 import rubber.biblio
 import rubber.module_interface

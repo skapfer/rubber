@@ -4,7 +4,7 @@
 Extraction of bounding box information from gzipped PostScript figures.
 """
 
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.depend
 
 import gzip

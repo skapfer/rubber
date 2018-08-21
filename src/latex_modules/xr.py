@@ -8,7 +8,7 @@ The xr package allows one to put references in one document to other
 file, so this support package registers these files as dependencies.
 """
 
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):

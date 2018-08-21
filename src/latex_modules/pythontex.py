@@ -6,7 +6,7 @@
 pythontex support for Rubber
 """
 
-from rubber import _, msg
+from rubber.util import _, msg
 
 import os.path
 

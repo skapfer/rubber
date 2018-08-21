@@ -8,7 +8,7 @@ When this module is loaded with the otion 'dvi', the document is compiled to
 DVI using pdfTeX.
 """
 
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):

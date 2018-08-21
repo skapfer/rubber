@@ -18,7 +18,7 @@ incomplete, because \\includegraphics can have a complex format.
 import os, os.path
 import re
 
-from rubber import _, msg
+from rubber.util import _, msg
 from rubber.util import parse_keyval
 from rubber.tex import parse_string
 import rubber.module_interface

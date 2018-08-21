@@ -11,8 +11,7 @@ Metapost's log files after the process. Is it enough?
 import os, os.path
 import re
 
-from rubber.util import _
-from rubber.util import *
+from rubber.util import _, msg, prog_available
 import rubber.depend
 import rubber.converters.latex
 
@@ -161,7 +160,7 @@ class Dep (rubber.depend.Node):
 		next to their source file.
 		"""
 		msg.progress(_("running Metapost on %s") %
-				msg.simplify(self.base + ".mp"))
+				os.path.relpath (self.base + ".mp"))
 		if self.env.execute (self.cmd, self.penv, pwd=self.cmd_pwd) == 0:
 			return True
 

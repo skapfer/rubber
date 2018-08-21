@@ -28,7 +28,7 @@ each time a .rub file is read.
 """
 
 import abc
-from rubber import msg, _
+from rubber.util import _, msg
 import rubber.util
 
 class Module:

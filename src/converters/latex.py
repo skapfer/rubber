@@ -12,8 +12,7 @@ building a LaTeX document from start to finish.
 import os, os.path, sys, imp
 import re
 
-from rubber import _
-from rubber.util import *
+from rubber.util import _, msg, parse_line, Variables
 import rubber.depend
 import rubber.latex_modules
 import rubber.module_interface
@@ -1147,7 +1146,7 @@ class LaTeXDep (rubber.depend.Node):
 		Run one LaTeX compilation on the source. Return true on success or
 		false if errors occured.
 		"""
-		msg.progress(_("compiling %s") % msg.simplify(self.source()))
+		msg.progress(_("compiling %s") % os.path.relpath (self.source()))
 
 		file = self.source()
 
@@ -1226,7 +1225,7 @@ class LaTeXDep (rubber.depend.Node):
 			return False
 		if not os.access(self.products[0], os.F_OK):
 			msg.error(_("Output file `%s' was not produced.") %
-				msg.simplify(self.products[0]))
+				os.path.relpath (self.products[0]))
 			return False
 		return True
 

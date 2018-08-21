@@ -7,7 +7,7 @@ by the modules for various tasks.
 """
 
 import hashlib
-import os, stat, time
+import os.path, stat, time
 import errno
 import imp
 import re
@@ -22,35 +22,37 @@ def _ (txt): return txt
 
 class Message (object):
 	"""
-	All messages in the program are output using the `msg' object in the
-	main package. This class defines the interface for this object.
+	All messages in the program are output using the `msg' object below.
+	This class defines the interface for this object.
+
+	Typical use:
+	from rubber.messages import _, msg
+	msg.log (_("Writing: %.").format (os.path.relpath (file)))
 	"""
-	def __init__ (self, level=1, write=None):
-		"""
-		Initialize the object with the specified verbosity level and an
-		optional writing function. If no such function is specified, no
-		message will be output until the 'write' field is changed.
-		"""
-		self.level = level
-		self.write = write
+	def __init__ (self):
+		self.level = 1
+		self.write = sys.stderr.write
 		self.short = 0
-		self.path = ""
-		self.cwd = "./"
 		self.pos = []
+
+	def increase_verbosity (self):
+		self.level += 1
+	def decrease_verbosity (self):
+		if 0 < self.level:
+                        self.level -= 1
+	def show_only_warnings (self):
+		self.level = 0
+
+	def write_to_stdout (self):
+		self.write = sys.stdout.write
+
+	def shorten_messages (self):
+		self.short = 1
 
 	def push_pos (self, pos):
 		self.pos.append(pos)
 	def pop_pos (self):
 		del self.pos[-1]
-
-	def __call__ (self, level, text):
-		"""
-		This is the low level printing function, it receives a line of text
-		with an associated verbosity level, so that output can be filtered
-		depending on command-line options.
-		"""
-		if self.write and level <= self.level:
-			self.write (text)
 
 	def display (self, kind, text, **info):
 		"""
@@ -62,37 +64,36 @@ class Message (object):
 		if kind == "error":
 			if text[0:13] == "LaTeX Error: ":
 				text = text[13:]
-			self(0, self.format_pos(info, text))
+			self.warn (text, **info)
 			if "code" in info and info["code"] and not self.short:
 				if "macro" in info:
 					del info["macro"]
-				self(0, self.format_pos(info,
-					_("leading text: ") + info["code"]))
+				self.warn (_("leading text: ") + info["code"], **info)
 
 		elif kind == "abort":
 			if self.short:
 				msg = _("compilation aborted ") + info["why"]
 			else:
 				msg = _("compilation aborted: %s %s") % (text, info["why"])
-			self(0, self.format_pos(info, msg))
+			self.warn (msg, **info)
 
 		elif kind == "warning":
-			self(0, self.format_pos(info, text))
+			self.warn (text, **info)
 
 	def error (self, text, **info):
 		self.display(kind="error", text=text, **info)
 	def warn (self, what, **where):
-		self(0, self.format_pos(where, what))
+		if 0 <= self.level: self.write (self._format (where, what) + "\n")
 	def progress (self, what, **where):
-		self(1, self.format_pos(where, what + "..."))
+		if 1 <= self.level: self.write (self._format (where, what) + "\n")
 	def info (self, what, **where):
-		self(2, self.format_pos(where, what))
+		if 2 <= self.level: self.write (self._format (where, what) + "\n")
 	def log (self, what, **where):
-		self(3, self.format_pos(where, what))
+		if 3 <= self.level: self.write (self._format (where, what) + "\n")
 	def debug (self, what, **where):
-		self(4, self.format_pos(where, what))
+		if 4 <= self.level: self.write (self._format (where, what) + "\n")
 
-	def format_pos (self, where, text):
+	def _format (self, where, text):
 		"""
 		Format the given text into a proper error message, with file and line
 		information in the standard format. Position information is taken from
@@ -105,7 +106,7 @@ class Message (object):
 			return text
 
 		if "file" in where and where["file"] is not None:
-			pos = self.simplify(where["file"])
+			pos = os.path.relpath (where["file"])
 			if "line" in where and where["line"]:
 				pos = "%s:%d" % (pos, int(where["line"]))
 				if "last" in where:
@@ -121,16 +122,6 @@ class Message (object):
 		if "pkg" in where:
 			text = "[%s] %s" % (where["pkg"], text)
 		return pos + text
-
-	def simplify (self, name):
-		"""
-		Simplify an path name by removing the current directory if the
-		specified path is in a subdirectory.
-		"""
-		path = os.path.normpath(os.path.join(self.path, name))
-		if path[:len(self.cwd)] == self.cwd:
-			return path[len(self.cwd):]
-		return path
 
 	def display_all (self, generator):
 		something = 0
@@ -447,24 +438,18 @@ def verbose_remove (path, **kwargs):
 	except OSError as e:
 		if e.errno != errno.ENOENT:
 			msg.log (_("error removing '{filename}': {strerror}").format ( \
-				filename=msg.simplify (path), strerror=e.strerror), **kwargs)
+				filename=os.path.relpath (path), strerror=e.strerror), **kwargs)
 		return
-	msg.log (_("removing {filename}").format (filename=msg.simplify (path)), **kwargs)
+	msg.log (_("removing {filename}").format (filename=os.path.relpath (path)), **kwargs)
 
 def verbose_rmtree (tree):
 	"""
 	Remove a directory and notify the user of it.
 	This is meant for --clean;  failures are ignored.
 	"""
-	msg.log (_("removing tree {dirname}").format (dirname=msg.simplify (tree)))
+	msg.log (_("removing tree {dirname}").format (dirname=os.path.relpath (tree)))
 	# FIXME proper error reporting
 	shutil.rmtree (tree, ignore_errors=True)
-
-def stderr_write (text):
-	sys.stderr.write (text + "\n")
-
-def stdout_write (text):
-	sys.stdout.write (text + "\n")
 
 def abort_rubber_syntax_error ():
 	"""signal invalid Rubber command-line"""

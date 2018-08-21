@@ -24,8 +24,6 @@ class Main (object):
 	def __init__ (self, mode):
 		self.rubber_mode = mode  # can be "build", "clean", "info" or "pipe"
 		self.max_errors = 10
-		msg.write = rubber.util.stderr_write
-
 		self.place = "."
 		self.path = []
 		self.prologue = []
@@ -189,7 +187,7 @@ available options:
 				self.epilogue.append("module dvips")
 				using_dvips = True
 			elif opt in ("-q", "--quiet"):
-				msg.level = msg.level - 1
+				msg.decrease_verbosity ()
 			# we continue to accept --shell-escape for now
 			elif opt in ("--unsafe", "--shell-escape"):
 				self.unsafe = True
@@ -198,13 +196,13 @@ available options:
 			elif opt in ("-S", "--src-specials"):
 				self.prologue.append("set src-specials yes")
 			elif opt in ("-s", "--short"):
-				msg.short = 1
+				msg.shorten_messages ()
 			elif opt in ("--synctex"):
 				self.prologue.append("synctex")
 			elif opt in ("-I", "--texpath"):
 				self.path.append(arg)
 			elif opt in ("-v", "--verbose"):
-				msg.level = msg.level + 1
+				msg.increase_verbosity ()
 			elif opt in ("-W", "--warn"):
 				self.warn = 1
 				if arg == "all":
@@ -288,13 +286,11 @@ available options:
 		args = self.parse_opts (cmdline)
 
 		initial_dir = os.getcwd()
-		msg.cwd = os.path.join(initial_dir, "")
 
 		if self.place == ".":
 			self.place = initial_dir
 
 		if self.place is not None:
-			msg.path = self.place
 			self.place = os.path.abspath(self.place)
 
 		msg.log (_("This is Rubber version %s.") % rubber_version)
@@ -306,7 +302,6 @@ available options:
 			try:
 				if self.place != ".":
 					if self.place is None:
-						msg.path = os.path.dirname(src)
 						os.chdir(os.path.dirname(src))
 					else:
 						os.chdir(self.place)
@@ -410,7 +405,7 @@ available options:
 				rubber.util.abort_generic_error ()
 
 			if ret == UNCHANGED:
-				msg(1, _("nothing to be done for %s") % srcname)
+				msg.progress(_("nothing to be done for %s") % srcname)
 
 			if self.warn:
 				# FIXME
@@ -429,7 +424,7 @@ available options:
 		try:
 			self.main (cmdline)
 		except KeyboardInterrupt:
-			msg(0, _("*** interrupted"))
+			msg.warn(_("*** interrupted"))
 			rubber.util.abort_generic_error ()
 
 class Clean (Main):
@@ -460,7 +455,7 @@ class Pipe (Main):
 	def __init__ (self):
 		super (Pipe, self).__init__ (mode="pipe")
 		# FIXME why?
-		msg.level = 0
+		msg.show_only_warnings ()
 
 	def help (self):
 		sys.stderr.write (_("""\
@@ -556,7 +551,7 @@ class Info (Main):
 		# FIXME why?
 		self.max_errors = -1
 		# FIXME why?
-		msg.write = rubber.util.stdout_write
+		msg.write_to_stdout ()
 
 	def short_help (self):
 		sys.stderr.write (_("""\

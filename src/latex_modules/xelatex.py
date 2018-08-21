@@ -1,4 +1,4 @@
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):

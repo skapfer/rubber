@@ -14,7 +14,7 @@ the produced files is quite complex (see shortext option for example).
 
 import os.path
 
-from rubber import _, msg
+from rubber.util import _, msg
 from rubber.util import verbose_remove
 import rubber.module_interface
 

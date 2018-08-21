@@ -4,7 +4,7 @@
 Compressing the output of Rubber.
 """
 
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.depend
 
 class Node (rubber.depend.Node):

@@ -13,7 +13,7 @@ instance), then "odvips" is used instead of "dvips".
 """
 
 import abc
-from rubber import _, msg
+from rubber.util import _, msg
 import rubber.converters
 import rubber.depend
 import rubber.module_interface
