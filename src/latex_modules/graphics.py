@@ -84,7 +84,7 @@ class Module (rubber.module_interface.Module):
             if opt in drv_suffixes:
                 self.suffixes = drv_suffixes[opt]
 
-        document.vars['graphics_suffixes'] = self.suffixes
+        document.env.graphics_suffixes = self.suffixes
 
     # Supported macros
 

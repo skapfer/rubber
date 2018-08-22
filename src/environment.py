@@ -39,6 +39,7 @@ class Environment:
 		self.synctex = False
 		self.main = None
 		self.final = None
+		self.graphics_suffixes = []
 
 	def find_file (self, name, suffix=None):
 		"""

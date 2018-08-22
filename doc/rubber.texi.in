@@ -528,8 +528,6 @@ as the argument of the @command{-src-specials} switch of the compiler.
 
 @end table
 
-@c FIXME document variables: program cwd graphics_suffixes source
-
 @c ---  Modules  ---
 
 @node Modules, Packages, Variables, Top

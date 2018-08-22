@@ -573,7 +573,7 @@ class LaTeXDep (rubber.depend.Node):
 			"target": None,
 			"job": None,
 			"logfile_limit": 1000000,
-			"graphics_suffixes" : [] })
+		})
 
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
 

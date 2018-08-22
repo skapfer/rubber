@@ -44,14 +44,7 @@ def convert (source, target, context, env):
 		extension = target[the_dot+1:]
 		image_reference = base_name[base_name.rfind('/')+1:]
 
-		if 'graphics_suffixes' in context:
-			if '.pdf' in context['graphics_suffixes']:
-				language = 'pdftex'
-				image_file = base_name + '.pdf'
-			else:
-				language = 'pstex'
-				image_file = base_name + '.eps'
-		elif extension in ('pdftex_t', 'pdf_t'):
+		if '.pdf' in env.graphics_suffixes:
 			language = 'pdftex'
 			image_file = base_name + '.pdf'
 		else:
