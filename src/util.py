@@ -290,8 +290,10 @@ def parse_line (line, dict):
 				if dict:
 					if name in dict:
 						arg = arg + str(dict[name])
-					elif name in ('cwd', 'base', 'ext', 'path', 'graphics_suffixes', 'latex', 'program', 'engine'):
+					elif name in ('cwd', 'base', 'ext', 'path', 'latex', 'program', 'engine', 'file', 'line', ):
 						msg.error (_ ('Obsolete variable: '+ name))
+					elif name in ('graphics_suffixes', 'src-specials', 'logfile_limit', ):
+						msg.error (_ ('Write-only variable: '+ name))
 					else:
 						msg.error (_ ('Unknown variable: '+ name))
 

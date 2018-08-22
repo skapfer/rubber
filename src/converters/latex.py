@@ -562,13 +562,13 @@ class LaTeXDep (rubber.depend.Node):
 		self.modules = Modules(self)
 
 		self.vars = {
-			"arguments": [],
-			"src-specials": "",
 			"source": None,
 			"target": None,
 			"job": None,
-			"logfile_limit": 1000000,
 		}
+		self.arguments = []
+		self.src_specials = ""
+		self.logfile_limit = 1000000
 		self.program = 'latex'
 		self.engine = 'TeX'
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
@@ -901,19 +901,23 @@ class LaTeXDep (rubber.depend.Node):
 			self.env.converter.read_ini(name)
 
 	def do_set (self, name, val):
-		try:
-			if type (self.vars[name]) is list:
+		if name in ('arguments',):
 				msg.warn (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
-				return
-			if type (self.vars[name]) is int:
+		elif name in ('job',):
+			msg.warn (_("variable %s is read-only, please see the manual") % name)
+		elif name in ('logfile_limit',):
 				try:
 					val = int (val)
 				except:
 					msg.warn (_("cannot set int variable %s to value %s (ignored)") % (name, val))
-					return
-			self.vars[name] = val
-		except KeyError:
-			msg.warn(_("unknown variable: %s") % name, **self.vars)
+				else:
+					setattr (self, name, val)
+		elif name in ('src-specials',):
+			setattr (self, name, val)
+		elif name in ('engine', 'file', 'line',):
+			msg.warn (_("variable %s is deprecated, please see the manual") % name)
+		else:
+			msg.warn(_("unknown variable: %s") % name, **self.vars.to_dict())
 
 	def do_shell_escape (self):
 		self.env.doc_requires_shell_ = True
@@ -922,10 +926,10 @@ class LaTeXDep (rubber.depend.Node):
 		self.env.synctex = True
 
 	def do_setlist (self, name, *val):
-		try:
-			self.vars[name] = list(val)
-		except KeyError:
-			msg.warn(_("unknown variable: %s") % name, **self.vars)
+		if name in ('arguments',):
+			self.arguments.extend (val)
+		else:
+			msg.warn(_("unknown list variable: %s") % name, **self.vars)
 
 	def do_produce (self, *args):
 		for arg in args:
@@ -1138,13 +1142,13 @@ class LaTeXDep (rubber.depend.Node):
 			if self.engine == "VTeX":
 				msg.error(_("I don't know how set the job name with VTeX."))
 			else:
-				cmd.append("-jobname=" + self.vars["job"])
+				cmd.append("-jobname=" + self.basename ())
 
-		specials = self.vars["src-specials"]
+		specials = self.src_specials
 		if specials != "":
 			if self.engine == "VTeX":
 				msg.warn(_("I don't know how to make source specials with VTeX."))
-				self.vars["src-specials"] = ""
+				self.src_specials = ""
 			elif specials == "yes":
 				cmd.append("-src-specials")
 			else:
@@ -1158,14 +1162,11 @@ class LaTeXDep (rubber.depend.Node):
 		if self.env.synctex:
 			cmd += [ "-synctex=1" ]
 
-		# make sure the arguments actually are a list, otherwise the
-		# characters of the string might be passed as individual arguments
-		assert type (self.vars["arguments"]) is list
 		# arguments inserted by the document allowed only in unsafe mode, since
 		# this could do arbitrary things such as enable shell escape (write18)
 		if self.env.is_in_unsafe_mode_:
-			cmd += self.vars["arguments"]
-		elif len (self.vars["arguments"]) > 0:
+			cmd += self.arguments
+		elif len (self.arguments) > 0:
 			msg.error (_("the document tries to modify the LaTeX command line which could be dangerous.  use rubber --unsafe if the document is trusted."))
 
 		cmd += [x.replace("%s",file) for x in self.cmdline]
@@ -1198,7 +1199,7 @@ class LaTeXDep (rubber.depend.Node):
 
 	def parse_log (self):
 		logfile_name = self.basename (with_suffix=".log")
-		logfile_limit = self.vars["logfile_limit"]
+		logfile_limit = self.logfile_limit
 		return self.log.readlog (logfile_name, logfile_limit)
 
 	def pre_compile (self):

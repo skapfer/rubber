@@ -499,6 +499,7 @@ Deprecated.  Please use a module to change the compiler, as described in
 @ref{Compiler choice}.
 
 @item file
+Deprecated.
 The name of the current file (this is set during parsing).
 
 @item job
@@ -512,6 +513,7 @@ Specify how much of the LaTeX logfile Rubber reads.
 The default is 1 MB, which should be ample for any real document.
 
 @item line
+Deprecated.
 The current line number in the current file (this is set during parsing).
 
 @item src-specials
