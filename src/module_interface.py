@@ -41,7 +41,7 @@ class Module:
     provides all required methods with no effects.
 
     The constructor is mandatory. Its profile must be
-    def __init__ (self, document, opt=None):
+    def __init__ (self, document, opt):
 
     'document' is the compiling environment (an instance of
     converters.latex.LaTeXDep)
