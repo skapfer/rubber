@@ -508,11 +508,6 @@ Note that changing the value of this variable does not affect compilation; in
 order to actually change the job name, use the command line option
 @option{--jobname}.
 
-@item latex
-Specify which program should be used for compiling. By default this is
-@command{latex}, various modules can change it in order to use a different
-compiler instead, see @ref{Compiler choice}.
-
 @item logfile_limit
 Specify how much of the LaTeX logfile Rubber reads.
 The default is 1 MB, which should be ample for any real document.
