@@ -55,10 +55,10 @@ class Module (rubber.module_interface.Module):
         document.add_product (document.basename (with_suffix = ".pre"))
         Shell_Restoring_Aux.initialize (document)
 
-        if (document.vars ['engine'] == 'pdfTeX'
+        if (document.engine == 'pdfTeX'
             and document.products [0] [-4:] == '.pdf'):
             self.format = ".pdf"
-        elif (document.vars ['engine'] == 'VTeX'):
+        elif (document.engine == 'VTeX'):
             msg.error(_("does not know how to handle VTeX"), pkg="asymptote")
         else:
             self.format = ".eps"

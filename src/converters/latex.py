@@ -565,8 +565,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.modules = Modules(self)
 
 		self.vars = Variables(parent=None, items={
-			"program": "latex",
-			"engine": "TeX",
 			"arguments": [],
 			"src-specials": "",
 			"source": None,
@@ -574,7 +572,8 @@ class LaTeXDep (rubber.depend.Node):
 			"job": None,
 			"logfile_limit": 1000000,
 		})
-
+		self.program = 'latex'
+		self.engine = 'TeX'
 		self.cmdline = ["\\nonstopmode", "\\input{%s}"]
 
 		# the initial hooks:
@@ -681,7 +680,7 @@ class LaTeXDep (rubber.depend.Node):
 		Use partial compilation, by appending a call to \\includeonly on the
 		command line on compilation.
 		"""
-		if self.vars["engine"] == "VTeX":
+		if self.engine == "VTeX":
 			msg.error(_("I don't know how to do partial compilation on VTeX."))
 			return
 		if self.cmdline[-2][:13] == "\\includeonly{":
@@ -1135,17 +1134,17 @@ class LaTeXDep (rubber.depend.Node):
 		if file.find(" ") >= 0:
 			file = '"%s"' % file
 
-		cmd = [self.vars["program"]]
+		cmd = [self.program]
 
 		if self.set_job:
-			if self.vars["engine"] == "VTeX":
+			if self.engine == "VTeX":
 				msg.error(_("I don't know how set the job name with VTeX."))
 			else:
 				cmd.append("-jobname=" + self.vars["job"])
 
 		specials = self.vars["src-specials"]
 		if specials != "":
-			if self.vars["engine"] == "VTeX":
+			if self.engine == "VTeX":
 				msg.warn(_("I don't know how to make source specials with VTeX."))
 				self.vars["src-specials"] = ""
 			elif specials == "yes":

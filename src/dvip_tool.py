@@ -51,7 +51,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
     def run (self):
         # build command line
         tool = self.tool
-        if tool == 'dvips' and self.doc.vars ['engine'] == 'Omega':
+        if tool == 'dvips' and self.doc.engine == 'Omega':
             tool = 'odvips'
         cmd = [ tool ]
         cmd.extend (self.extra_args)

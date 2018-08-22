@@ -15,17 +15,17 @@ import rubber.module_interface
 class Module (rubber.module_interface.Module):
 
     def __init__ (self, document, opt):
-        document.vars['engine'] = 'VTeX'
+        document.engine = 'VTeX'
         if opt == 'ps':
             if document.env.final != document and document.products[0][-4:] != '.ps':
                 msg.error(_("there is already a post-processor registered"))
                 sys.exit(2)
-            document.vars['program'] = 'vlatexp'
+            document.program = 'vlatexp'
             document.set_primary_product_suffix (".ps")
         else:
             if document.env.final != document and document.products[0][-4:] != '.pdf':
                 msg.error(_("there is already a post-processor registered"))
                 sys.exit(2)
-            document.vars['program'] = 'vlatex'
+            document.program = 'vlatex'
             document.set_primary_product_suffix (".pdf")
         document.cmdline = ['-n1', '@latex', '%s']

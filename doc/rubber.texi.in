@@ -495,9 +495,8 @@ compilers. This variable contains a list of strings, it should be set using
 the @code{setlist} directive.
 
 @item engine
-The name of the TeX engine used. By default this is @samp{TeX}, this can be
-changed to @samp{VTeX}, @samp{pdfTeX}, @samp{Omega} or others by the modules
-that change the compiler, see @ref{Compiler choice}.
+Deprecated.  Please use a module to change the compiler, as described in
+@ref{Compiler choice}.
 
 @item file
 The name of the current file (this is set during parsing).

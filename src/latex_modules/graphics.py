@@ -68,9 +68,9 @@ class Module (rubber.module_interface.Module):
             suffixes += [x.upper() for x in suffixes]
 
         # I take dvips as the default, but it is not portable.
-        if document.vars['engine'] == 'pdfTeX' and document.products[0][-4:] == '.pdf':
+        if document.engine == 'pdfTeX' and document.products[0][-4:] == '.pdf':
             self.suffixes = drv_suffixes['pdftex']
-        elif document.vars['engine'] == 'VTeX':
+        elif document.engine == 'VTeX':
             self.suffixes = drv_suffixes['vtex']
         else:
             self.suffixes = drv_suffixes['dvips']

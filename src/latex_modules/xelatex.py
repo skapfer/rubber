@@ -4,8 +4,8 @@ import rubber.module_interface
 class Module (rubber.module_interface.Module):
 
     def __init__ (self, document, opt):
-        document.vars['program'] = 'xelatex'
-        document.vars['engine'] = 'XeLaTeX'
+        document.program = 'xelatex'
+        document.engine = 'XeLaTeX'
 
         if document.env.final != document and document.products[0][-4:] != '.pdf':
             msg.error(_("there is already a post-processor registered"))
