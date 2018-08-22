@@ -520,9 +520,6 @@ The default is 1 MB, which should be ample for any real document.
 @item line
 The current line number in the current file (this is set during parsing).
 
-@item path
-The path name of the main output file.
-
 @item src-specials
 The kind of source @command{\special}s that should be generated. When empty
 (which is the case by default), no @command{\special}s are generated. When set

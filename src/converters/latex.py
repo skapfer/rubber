@@ -571,7 +571,6 @@ class LaTeXDep (rubber.depend.Node):
 			"src-specials": "",
 			"source": None,
 			"target": None,
-			"path": None,
 			"job": None,
 			"logfile_limit": 1000000,
 			"graphics_suffixes" : [] })
@@ -631,7 +630,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.sources = []
 		self.vars['source'] = path
 		(src_path, name) = os.path.split(path)
-		self.vars['path'] = src_path
 		# derive jobname, which latex uses as the basename for all output
 		(job, _) = os.path.splitext(name)
 		if jobname is None:
