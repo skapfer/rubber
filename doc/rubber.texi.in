@@ -494,10 +494,6 @@ is potentially dangerous and has no reason to be portable across different
 compilers. This variable contains a list of strings, it should be set using
 the @code{setlist} directive.
 
-@item base
-The base name of the main source file, including its path but without the
-extension.
-
 @item engine
 The name of the TeX engine used. By default this is @samp{TeX}, this can be
 changed to @samp{VTeX}, @samp{pdfTeX}, @samp{Omega} or others by the modules

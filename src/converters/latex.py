@@ -572,7 +572,6 @@ class LaTeXDep (rubber.depend.Node):
 			"source": None,
 			"target": None,
 			"path": None,
-			"base": None,
 			"ext": None,
 			"job": None,
 			"logfile_limit": 1000000,
@@ -644,10 +643,8 @@ class LaTeXDep (rubber.depend.Node):
 		self.vars['job'] = job
 		if src_path == "":
 			src_path = "."
-			self.vars['base'] = job
 		else:
 			self.env.path.append(src_path)
-			self.vars['base'] = os.path.join(src_path, job)
 
 		source = path
 
