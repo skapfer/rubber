@@ -332,10 +332,10 @@ available options:
 				msg.error (_("LaTeX source file not found: '%s'") % src)
 				rubber.util.abort_generic_error ()
 
+			env.path.extend (self.path)
+
 			saved_vars = env.main.vars
 			env.main.vars = rubber.util.Variables (saved_vars, { "cwd": initial_dir })
-			for dir in self.path:
-				env.main.do_path(dir)
 			for cmd in self.prologue:
 				cmd = rubber.util.parse_line (cmd, env.main.vars)
 				env.main.command(cmd[0], cmd[1:], {'file': 'command line'})
