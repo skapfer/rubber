@@ -650,12 +650,8 @@ class LaTeXDep (rubber.depend.Node):
 			self.vars['base'] = os.path.join(src_path, job)
 
 		source = path
-		prefix = os.path.join (self.env.cwd (), "")
 
-		if source[:len(prefix)] == prefix:
-			comp_name = source[len(prefix):]
-		else:
-			comp_name = source
+		comp_name = os.path.relpath (source)
 		if comp_name.find('"') >= 0:
 			msg.error(_("The filename contains \", latex cannot handle this."))
 			return 1
@@ -1140,9 +1136,8 @@ class LaTeXDep (rubber.depend.Node):
 
 		file = self.source()
 
-		prefix = os.path.join (self.env.cwd (), "")
-		if file[:len(prefix)] == prefix:
-			file = file[len(prefix):]
+		file = os.path.relpath (file)
+
 		if file.find(" ") >= 0:
 			file = '"%s"' % file
 
@@ -1184,20 +1179,11 @@ class LaTeXDep (rubber.depend.Node):
 
 		cmd += [x.replace("%s",file) for x in self.cmdline]
 
-		# Remove the CWD from elements inthe path, to avoid potential problems
+		# Remove the CWD from elements in the path, to avoid potential problems
 		# with special characters if there are any (except that ':' in paths
 		# is not handled).
 
-		prefix = self.env.cwd ()
-		prefix_ = os.path.join(prefix, "")
-		paths = []
-		for p in self.env.path:
-			if p == prefix:
-				paths.append(".")
-			elif p[:len(prefix_)] == prefix_:
-				paths.append("." + p[len(prefix):])
-			else:
-				paths.append(p)
+		paths = map (os.path.relpath, self.env.path)
 		inputs = ":".join (paths)
 
 		if inputs == "":

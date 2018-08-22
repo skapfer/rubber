@@ -285,26 +285,21 @@ available options:
 		"""
 		args = self.parse_opts (cmdline)
 
-		initial_dir = os.getcwd()
-
-		if self.place == ".":
-			self.place = initial_dir
+		args = map (os.path.abspath, args)
 
 		if self.place is not None:
 			self.place = os.path.abspath(self.place)
 
 		msg.log (_("This is Rubber version %s.") % rubber_version)
 
-		for srcname in args:
-			src = os.path.join(initial_dir, srcname)
+		for src in args:
 
 			# Go to the appropriate directory
-			if self.place is None:
-				cwd = os.path.dirname (src)
-			else:
-				cwd = self.place
 			try:
-				os.chdir (cwd)
+				if self.place is None:
+					os.chdir (os.path.dirname (src))
+				else:
+					os.chdir (self.place)
 			except OSError as e:
 				msg.error(_("Error changing to working directory: %s") % e.strerror)
 				rubber.util.abort_generic_error ()
@@ -313,7 +308,7 @@ available options:
 			# step, or dumping stdin.  thus, the input filename may change.
 			# in case of build mode, preprocessors will be run as part of
 			# prepare_source.
-			env = self.env = Environment (cwd=cwd)
+			env = self.env = Environment ()
 			src = self.prepare_source (src)
 
 			# safe mode is off during the prologue
