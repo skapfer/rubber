@@ -565,7 +565,6 @@ class LaTeXDep (rubber.depend.Node):
 		self.modules = Modules(self)
 
 		self.vars = Variables(parent=None, items={
-			"cwd": env.cwd (),
 			"program": "latex",
 			"engine": "TeX",
 			"arguments": [],
@@ -651,7 +650,8 @@ class LaTeXDep (rubber.depend.Node):
 			self.vars['base'] = os.path.join(src_path, job)
 
 		source = path
-		prefix = os.path.join(self.vars["cwd"], "")
+		prefix = os.path.join (self.env.cwd (), "")
+
 		if source[:len(prefix)] == prefix:
 			comp_name = source[len(prefix):]
 		else:
@@ -1140,7 +1140,7 @@ class LaTeXDep (rubber.depend.Node):
 
 		file = self.source()
 
-		prefix = os.path.join(self.vars["cwd"], "")
+		prefix = os.path.join (self.env.cwd (), "")
 		if file[:len(prefix)] == prefix:
 			file = file[len(prefix):]
 		if file.find(" ") >= 0:
