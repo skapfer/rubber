@@ -572,7 +572,6 @@ class LaTeXDep (rubber.depend.Node):
 			"source": None,
 			"target": None,
 			"path": None,
-			"ext": None,
 			"job": None,
 			"logfile_limit": 1000000,
 			"graphics_suffixes" : [] })
@@ -634,7 +633,7 @@ class LaTeXDep (rubber.depend.Node):
 		(src_path, name) = os.path.split(path)
 		self.vars['path'] = src_path
 		# derive jobname, which latex uses as the basename for all output
-		(job, self.vars['ext']) = os.path.splitext(name)
+		(job, _) = os.path.splitext(name)
 		if jobname is None:
 			self.set_job = 0
 		else:

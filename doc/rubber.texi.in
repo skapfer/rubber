@@ -499,9 +499,6 @@ The name of the TeX engine used. By default this is @samp{TeX}, this can be
 changed to @samp{VTeX}, @samp{pdfTeX}, @samp{Omega} or others by the modules
 that change the compiler, see @ref{Compiler choice}.
 
-@item ext
-The extension of the main source file.
-
 @item file
 The name of the current file (this is set during parsing).
 
