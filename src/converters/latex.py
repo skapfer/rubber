@@ -73,34 +73,31 @@ class Modules:
 		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
-				mod = ScriptModule(self.latexdep, file)
-				msg.log(_("script module %s registered") % name, pkg='latex')
-				break
+				msg.error(_('please replace deprecated .rub scripts with python modules.', file=file))
 
 		# Then look for a Python module
 
-		if not mod:
-			f = None # so finally works even if find_module raises an exception
-			try:
-				(f, path, (suffix, mode, file_type)) = imp.find_module (
-					name,
-				rubber.latex_modules.__path__)
-				if f == None or suffix != ".py" or file_type != imp.PY_SOURCE:
-					raise ImportError
-				source = imp.load_module (name, f, path, (suffix, mode, file_type))
-			except ImportError:
-				msg.debug(_("no support found for %s") % name, pkg='latex')
-				return 0
-			finally:
-				if f != None:
-					f.close ()
-			if not (hasattr (source, "Module")
-				and issubclass (source.Module, rubber.module_interface.Module)):
-				msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
-				return 0
+		f = None # so finally works even if find_module raises an exception
+		try:
+			(f, path, (suffix, mode, file_type)) = imp.find_module (
+				name,
+			rubber.latex_modules.__path__)
+			if f == None or suffix != ".py" or file_type != imp.PY_SOURCE:
+				raise ImportError
+			source = imp.load_module (name, f, path, (suffix, mode, file_type))
+		except ImportError:
+			msg.debug(_("no support found for %s") % name, pkg='latex')
+			return 0
+		finally:
+			if f != None:
+				f.close ()
+		if not (hasattr (source, "Module")
+			and issubclass (source.Module, rubber.module_interface.Module)):
+			msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
+			return 0
 
-			mod = source.Module (document=self.latexdep, opt=opt)
-			msg.log (_("built-in module %s registered") % name, pkg='latex')
+		mod = source.Module (document=self.latexdep, opt=opt)
+		msg.log (_("built-in module %s registered") % name, pkg='latex')
 
 		# Run any delayed commands.
 
@@ -1302,23 +1299,3 @@ class LaTeXDep (rubber.depend.Node):
 		for suffix in list:
 			file = self.basename (with_suffix=suffix)
 			rubber.util.verbose_remove (file, pkg = "latex")
-
-class ScriptModule (rubber.module_interface.Module):
-	# TODO: the constructor is not conformant with the one of the parent class.
-	"""
-	This class represents modules that are defined as Rubber scripts.
-	"""
-	def __init__ (self, latexdep, filename):
-		vars = Variables (parent=latexdep.vars, items={
-			'file': filename,
-			'line': None })
-		lineno = 0
-		with open(filename, encoding='latin_1') as file:
-			for line in file:
-				line = line.strip()
-				lineno = lineno + 1
-				if line == "" or line[0] == "%":
-					continue
-				vars['line'] = lineno
-				lst = parse_line(line, vars)
-				latexdep.command(lst[0], lst[1:], vars)
