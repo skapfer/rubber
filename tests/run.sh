@@ -25,6 +25,19 @@ while [ 1 -le $# ]; do
             VERBOSE="$VERBOSE $1"
             shift
             ;;
+        --debchroot)
+            # Dependencies inside Debian.
+            apt install -y \
+                debhelper dh-python python3 texlive-latex-base asymptote \
+                biber imagemagick python-prompt-toolkit python-pygments \
+                python3-prompt-toolkit python3-pygments r-cran-knitr \
+                texlive-bibtex-extra texlive-binaries texlive-extra-utils \
+                texlive-latex-extra texlive-latex-recommended \
+                texlive-metapost texlive-omega texlive-pictures transfig
+            # Dependencies outside Debian.
+            rm -fr combine
+            shift
+            ;;
         *)
             break
     esac
