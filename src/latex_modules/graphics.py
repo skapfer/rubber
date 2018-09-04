@@ -91,18 +91,29 @@ class Module (rubber.module_interface.Module):
     def hook_includegraphics (self, loc, starred, optional, name):
         # no suffixes are tried when the extension is explicit
 
-        allowed_suffixes = self.suffixes
-
         options = parse_keyval(optional)
         if 'ext' in options:
+             # \includepackage[ext=.png]{foo}
              allowed_suffixes = ['']
              if options['ext']:
                  name = name + options['ext']
-
-        for suffix in self.suffixes:
-            if name[-len(suffix):] == suffix:
-                allowed_suffixes = ['']
-                break
+        elif name.startswith ('{{') and name.endswith ('}}'):
+            # \includepackage{{{foo}}}
+            allowed_suffixes = self.suffixes
+            name = name [2:-2]
+        elif name.startswith ('{'):
+            # \includepackage{{foo.1}.png}
+            i = name.index ('}')
+            assert 1 <= i
+            name = name [1:i] + name [i+1:]
+            allowed_suffixes = ['']
+        else:
+            for suffix in self.suffixes:
+                if suffix and name.endswith (suffix):
+                    allowed_suffixes = ['']
+                    break
+            else:
+                allowed_suffixes = self.suffixes
 
         # If the file name looks like it contains a control sequence or a macro
         # argument, forget about this \includegraphics.
