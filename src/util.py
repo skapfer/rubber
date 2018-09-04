@@ -363,7 +363,11 @@ def parse_line (line, dict):
 				if dict:
 					if name in dict:
 						arg = arg + str(dict[name])
-					# Send a warning for undefined variables ?
+					elif name in ('cwd', ):
+						msg.error (_ ('Obsolete variable: '+ name))
+					else:
+						msg.error (_ ('Unknown variable: '+ name))
+
 				else:
 					composed.append("$" + name)
 				continue
