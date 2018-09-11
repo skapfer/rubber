@@ -11,6 +11,7 @@ set -e                          # Stop at first failure.
 
 KEEP=false
 VERBOSE=
+DEBCHROOT=
 while [ 1 -le $# ]; do
     case $1 in
         --rmtmp)
@@ -26,6 +27,7 @@ while [ 1 -le $# ]; do
             shift
             ;;
         --debchroot)
+            DEBCHROOT=yes
             # Dependencies inside Debian.
             apt install -y \
                 debhelper dh-python python3 texlive-latex-base asymptote \
@@ -34,8 +36,6 @@ while [ 1 -le $# ]; do
                 texlive-bibtex-extra texlive-binaries texlive-extra-utils \
                 texlive-latex-extra texlive-latex-recommended \
                 texlive-metapost texlive-omega texlive-pictures transfig
-            # Dependencies outside Debian.
-            rm -fr combine
             shift
             ;;
         *)
@@ -61,8 +61,13 @@ for main; do
     case "$main" in
         run.sh | shared | $tmpdir)
             continue;;
+        combine)
+            # combine is not packaged for Debian.
+            if test -n "$DEBCHROOT"; then
+                continue
+            fi
+            ;;
     esac
-
     [ -d $main ] || {
         echo "$main must be a directory"
         exit 1
