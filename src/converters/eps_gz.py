@@ -28,10 +28,20 @@ class Dep (rubber.depend.Node):
 		single line.
 		"""
 		msg.progress(_("extracting bounding box from %s") % self.source)
-		with gzip.open(self.source, mode='rt', encoding='utf-8') as source:
+		# Binary mode causes no decoding errors, but makes
+		# difficult in Python to split UTF-8 input in lines.
+
+		# Usual TeX encodings and UTF-8 share the property
+		# that we can search for an ASCII pattern, and avoid
+		# data corruption if other bytes are copied unchanged,
+		# whichever character they represent.
+
+		# Any 8-bit character has the advantage over UTF-8
+		# that it never causes UnicodeDecodeError.
+		with gzip.open(self.source, mode='rt', encoding='latin_1') as source:
 			for line in source:
 				if re_bbox.match(line):
-					with open(self.target, "w", encoding='utf-8') as target:
+					with open(self.target, 'w', encoding='latin_1') as target:
 						target.write(line)
 					return True
 		msg.error(_("no bounding box was found in %s!") % self.source)

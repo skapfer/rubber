@@ -288,7 +288,7 @@ class Pipe (Shell):
 		self.add_product (product)
 
 	def run (self):
-		self.stdout = open(self.products[0], 'w')
+		self.stdout = open(self.products[0], 'bw')
 		ret = super (Pipe, self).run ()
 		self.stdout.close()
 		return ret
