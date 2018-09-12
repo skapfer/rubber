@@ -1,3 +1,11 @@
+Version 1.5.1 (2018-09-12)
+
+  Fix two severe regressions in the python3 port.
+
+  Bugfixes:
+  - Restore support for 8-bits encoded .tex sources (Debian: #907937, #907988).
+  - Fix many crashing log/warning/error messages.
+
 Version 1.5 (2018-08-06)
 
   This version requires Python3.
