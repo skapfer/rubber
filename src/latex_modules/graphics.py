@@ -134,7 +134,7 @@ class Module (rubber.module_interface.Module):
                 self.doc.add_source(file)
             self.files.append(node)
         else:
-            msg.warn(_("graphics `%s' not found") % name, **dict(loc))
+            msg.warn(_("graphics `%s' not found") % name, **loc.to_dict())
 
     def hook_graphicspath (self, loc, arg):
         # The argument of \graphicspath is a list (in the sense of TeX) of
