@@ -73,7 +73,7 @@ class Modules:
 		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
-				msg.error(_('please replace deprecated .rub scripts with python modules.', file=file))
+				msg.error(_('please replace deprecated .rub scripts with python modules.'), file=file)
 
 		# Then look for a Python module
 
