@@ -165,7 +165,7 @@ class LogCheck (object):
 		"""
 		self.lines = None
 		try:
-			with open (name, encoding='latin_1') as fp:
+			with open (name, encoding='utf_8', errors='replace') as fp:
 				line = fp.readline ()
 				if not line or not re_loghead.match (line):
 					msg.log (_('empty log'), pkg='latex')
@@ -751,11 +751,8 @@ class LaTeXDep (rubber.depend.Node):
 				msg.log(_("parsing %s") % path, pkg='latex')
 				self.vars ["file"] = path
 				self.vars ["line"] = None
-				file = open(path, encoding='latin_1')
-				try:
+				with open (path, encoding='utf_8', errors='replace') as file:
 					self.parse_file(file)
-				finally:
-					file.close()
 
 			finally:
 				self.vars = saved_vars
@@ -878,7 +875,7 @@ class LaTeXDep (rubber.depend.Node):
 			self.vars = self.vars.copy ()
 			self.vars ["file"] = name
 			self.vars ["line"] = None
-			with open(name, encoding='latin_1') as file:
+			with open (name, encoding='utf_8', errors='replace') as file:
 				lineno = 0
 				for line in file:
 					lineno += 1

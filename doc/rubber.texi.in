@@ -65,7 +65,7 @@ makeindex, Metapost, etc. to produce appropriate data files.
 * Directives::    Directives in LaTeX comments.
 * Modules::       List of standard modules.
 * Graphics::      Support for graphics conversion.
-* Encoding::      Handling of source encoding.
+* Encoding::      Encoding issues.
 * Index::         Directive and modules index.
 @end menu
 
@@ -1003,40 +1003,105 @@ The cost of the rule, as an integer. In the default file, this ranges between
 @end table
 
 @node Encoding, Index, rules.ini, Top
-@chapter Handling of source encoding
+@chapter Encoding issues
 
-Ideally, rubber should understand macros from the inputenc LaTeX
-package. This is more complex that it may seem. When the encoding
-changes inside an included source, all parents sources should be open
-again from their current byte with the new encoding.
-Moreover, TeX allows encoding errors inside comments,
-as long as it finds something looking like and end of line.
+@menu
+* Design choices about encoding::   Design choices about input and output encoding
+* Conversion to UTF-8::             Conversion of legacy sources to UTF-8
+* Non UTF-8 sources::               Handling of unconverted legacy sources
+@end menu
 
-Instead, rubber attempts to circumvent the problem by ignoring all
-encoding issues.  As far as we know, this only implies the limitations
-described below.
+@node Design choices about encoding, Conversion to UTF-8, Encoding, Encoding
+@section Design choices about input and output encoding.
 
-If you encounter encoding problems, please start with updating to
-version 1.6 or later.  Versions until 1.4 were handling encoding issues
-differently, and 1.5 was assuming utf_8.
+Since version 1.5, rubber decodes @file{.tex} sources and log files
+with the UTF-8 encoding.
+Legacy 8-bits encodings are quite common,
+but can easily be converted,
+and should become rare now that the LaTeX community recommends UTF-8
+for new documents.
 
-For now, rubber opens all external files with the latin_1 encoding.
+For data exchanged with the underlying operating system,
+like arguments received from the command line,
+paths passed to subprocesses
+or messages displayed on the console,
+it makes sense that rubber uses the system default encoding:
+generally UTF-8,
+a code page depending on local settings on Windows.
 
-A full 8-bit encoding ensures the absence of errors while reading, even
-if most non-ASCII characters will be wrongly translated.
-When contents are written back, the output remains valid for the
-original encoding, since rubber only modifies ASCII characters.
+In the rare cases where it converts auxiliary files by itself, rubber
+simply avoids to decode, and only deals with bytes between 0 and 127.
 
-As long as rubber searches for ASCII patterns, this should only change
-its behaviour in exceptional circumstances, for example when a multibyte
-sequence contains an ASCII closing brace or bracket.
-This issue should never affect utf_8, because this encoding ensures that
-no continuation byte represents an ASCII character.
+@node Conversion to UTF-8, Non UTF-8 sources, Design choices about encoding, Encoding
+@section Conversion of legacy sources to UTF-8
 
-A more serious limitation is that if the underlying file system uses a
-different encoding, extracted paths will be wrongly reencoded.
-This issue should become very rare now that more and more systems use
-utf_8 by default for both text contents and paths.
+Most text editors allow you to explicitly select this encoding for
+newly created files.
+
+An existing source with any other encoding can be converted, either by
+selecting the appropriate option when saving from your favorite
+editor, or with a dedicated tool.
+For example, the following commands translate @file{doc.tex} from the
+@option{latin1} encoding.
+@example
+cp doc.tex doc.tex.bak
+iconv doc.tex.bak -f latin1 -o doc.tex -t utf-8
+@end example
+You should then update the @code{inputenc} line,
+check that the compilation goes well,
+and finally remove the @file{doc.tex.bak} backup.
+
+Legacy US-ASCII sources, only containing bytes betwen 0 and 127 and
+relying on TeX constructs like @code{\'e} to encode local characters,
+are valid UTF-8 sources, and will be decoded correctly.  No conversion
+is needed.
+
+More generally, conversion from usual (8-bits, US-ASCII-compatible)
+encodings will only replace bytes from 128 to 255 with new UTF-8 byte
+sequences, but US-ASCII bytes will remain unchanged.
+
+@node Non UTF-8 sources, Encoding, Conversion to UTF-8, Encoding
+@section Handling of unconverted legacy sources
+
+For various reasons, some sources cannot be converted.
+Rubber attempts to deal with them,
+but the result will never be perfect.
+
+Accurate detection of the source encoding is not as easy as it seems.
+An @code{inputenc} command anywhere in an included @file{.tex} source
+can affect remaining bytes in all including files.
+Its arguments can be generated,
+or depend on the result of a test.
+In other words, rubber would need a full TeX interpreter,
+including features that the author now consider as bugs,
+like tolerating encoding errors inside comments.
+
+Instead, rubber translates
+bytes from 0 to 127 to the right ASCII character,
+most bytes from 128 to 255 to the Unicode replacement character
+ (often displayed as an empty square),
+and rare sequences of such bytes as random non-ASCII characters.
+
+All encodings encountered in the TeX world share the
+property that a byte between 0 and 127 anywhere in the file always
+represents a single US-ASCII character, and that such characters
+cannot be represented by another byte sequence.
+Since rubber searches for TeX commands expressed with such characters,
+it will most of the time be able to work even if it ignores all other bytes.
+
+Non-ASCII characters will look ugly in log messages displayed on the
+screen, and this is acceptable.
+
+Real problems may occur when commands intended for cooperation with
+the underlying operating system,
+like @code{\includegraphics} or @code{\input},
+receive arguments, like paths, containing non-ASCII characters.
+
+These characters will be decoded incorrectly, resulting in various
+problems later (no file found with the given path, for example).
+This problem is not specific to rubber,
+and such path arguments should always be formed of ASCII characters,
+ideally roman letters, decimal digits and a dot for the extension.
 
 @c ---  Indices  ---
 
