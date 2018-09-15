@@ -917,7 +917,7 @@ class LaTeXDep (rubber.depend.Node):
 		elif name in ('engine', 'file', 'line',):
 			msg.warn (_("variable %s is deprecated, please see the manual") % name)
 		else:
-			msg.warn(_("unknown variable: %s") % name, **self.vars.to_dict())
+			msg.warn(_("unknown variable: %s") % name, **self.vars)
 
 	def do_shell_escape (self):
 		self.env.doc_requires_shell_ = True
