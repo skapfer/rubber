@@ -224,7 +224,7 @@ Metapost compilation).\
         "rubber" : "src",
     },
     package_data = {
-        "rubber" : [ "latex_modules/*.rub", "rules.ini" ],
+        "rubber" : ("rules.ini", ),
     },
     scripts = (
         "rubber",
