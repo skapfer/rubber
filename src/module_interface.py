@@ -82,15 +82,13 @@ class Module:
         except AttributeError:
             # there is no do_ method for this directive, which means there
             # is no such directive.
-            msg.error (_("no such directive '%s'") % cmd, pkg=self.__module__)
-            rubber.util.abort_rubber_syntax_error ()
+            raise rubber.SyntaxError (_("no such directive '%s' (in module %s)") % (cmd, self.__module__))
         try:
             return handler (*args)
         except TypeError:
             # Python failed to coerce the arguments given into whatever
             # the handler would like to see.  report a generic failure.
-            msg.error (_("invalid syntax for directive '%s'") % cmd, pkg=self.__module__)
-            rubber.util.abort_rubber_syntax_error ()
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s' (in module %s)") % (cmd, self.__module__))
 
     def get_errors (self):
         """

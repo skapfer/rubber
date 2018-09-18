@@ -20,8 +20,8 @@ class Module (rubber.module_interface.Module):
 		backend = options.setdefault ("backend", "biber")
 
 		if backend not in ("biber", "bibtex", "bibtex8", "bibtexu"):
-			msg.error (_("Garbled biblatex backend: backend=%s (aborting)") % backend)
-			rubber.util.abort_generic_error () # abort rather than guess
+			# abort rather than guess
+			raise rubber.GenericError (_("Garbled biblatex backend: backend=%s (aborting)") % backend)
 
 		self.dep = BibLaTeXDep (doc, backend)
 		doc.hook_macro ("bibliography", "a", self.dep.add_bibliography)

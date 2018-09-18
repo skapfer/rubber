@@ -14,8 +14,7 @@ class Module (rubber.module_interface.Module):
     def __init__ (self, document, opt):
         env = document.env
         if env.final.products[0][-3:] != '.ps':
-             msg.error(_("I can't use ps2pdf when not producing a PS"))
-             rubber.util.abort_generic_error ()
+            raise rubber.GenericError (_("I can't use ps2pdf when not producing a PS"))
         ps = env.final.products[0]
         pdf = ps[:-2] + 'pdf'
         cmd = ['ps2pdf']

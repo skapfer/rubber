@@ -374,11 +374,3 @@ def verbose_rmtree (tree):
 	msg.log (_("removing tree {dirname}").format (dirname=os.path.relpath (tree)))
 	# FIXME proper error reporting
 	shutil.rmtree (tree, ignore_errors=True)
-
-def abort_rubber_syntax_error ():
-	"""signal invalid Rubber command-line"""
-	sys.exit (1)
-
-def abort_generic_error ():
-	"""errors running LaTeX, finding essential files, etc."""
-	sys.exit (2)

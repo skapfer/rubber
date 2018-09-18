@@ -50,8 +50,7 @@ class Module (rubber.module_interface.Module):
         self.btsect_environments.append (e)
 
     def hook_bibliography (self, loc, bibs):
-        msg.error(_("incompatible with \\bibliography"), pkg="bibtopic")
-        rubber.util.abort_generic_error ()
+        raise rubber.GenericError (_("\\usepackage{bibtopic} and \\bibliography are incompatible"))
 
     def hook_bibliographystyle (self, loc, name):
         self.current_style = name

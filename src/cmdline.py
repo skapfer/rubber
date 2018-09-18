@@ -42,24 +42,24 @@ class Main (object):
 			self.main (arguments)
 		except KeyboardInterrupt:
 			msg.warn(_("*** interrupted"))
-			rubber.util.abort_generic_error ()
+			sys.exit (1)
+		except rubber.SyntaxError as e:
+			print (str (e), file=sys.stderr)
+			sys.exit (1)
+		except rubber.GenericError as e:
+			print (str (e), file=sys.stderr)
+			sys.exit (2)
 
 	def short_help (self):
 		"""
 		Display a short description of the command line.
 		"""
-		sys.stderr.write (_("""\
+		raise rubber.SyntaxError (_("""\
 usage: rubber [options] sources...
-For more information, try `rubber --help'.
-"""))
-		rubber.util.abort_rubber_syntax_error ()
+For more information, try `rubber --help'."""))
 
 	def ignored_option (self, opt):
 		msg.warn (_("warning: ignoring option %s") % opt)
-
-	def illegal_option (self, opt):
-		msg.error (_("error: illegal option %s") % opt)
-		rubber.util.abort_rubber_syntax_error ()
 
 	def help (self):
 		"""
@@ -118,8 +118,7 @@ available options:
 				 "boxes", "check", "deps", "errors", "refs", "rules", "warnings",
 				 "warn="])
 		except GetoptError as e:
-			msg.error (_("getopt error: %s") % str (e))
-			rubber.util.abort_rubber_syntax_error ()
+			raise rubber.SyntaxError (_("getopt error: %s") % str (e))
 
 		extra = []
 		using_dvips = False
@@ -131,16 +130,16 @@ available options:
 				self.ignored_option (opt)
 			elif opt in ("--readopts", "-l", "--landscape" ):
 				# undocumented option which is no longer supported
-				self.illegal_option (opt)
+				raise rubber.SyntaxError (_("error: illegal option %s") % opt)
 
 			# info
 			elif opt in ("-h", "--help"):
 				self.help ()
-				exit (0)
+				sys.exit (0)
 			elif opt == "--version":
 				sys.stdout.write ("Rubber version: %s\n" % \
 					rubber_version)
-				exit (0)
+				sys.exit (0)
 
 			# mode of operation
 			elif opt == "--clean":
@@ -150,7 +149,7 @@ available options:
 					self.keep_temp = True
 				else:
 					# does not make any sense except in pipe mode
-					self.illegal_option (opt)
+					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
 
 			# compression etc. which affects which products exist
 			elif opt in ("-b", "--bzip2", "-z", "--gzip"):
@@ -180,7 +179,7 @@ available options:
 				self.include_only = arg.split(",")
 			elif opt in ("-o", "--post"):
 				if isinstance (self, Info):
-					self.illegal_option (opt)
+					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
 				self.epilogue.append("module " +
 					arg.replace(":", " ", 1))
 			elif opt in ("-d", "--pdf"):
@@ -222,11 +221,10 @@ available options:
 					self.warn_refs = 1
 			elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
 				if not isinstance (self, Info):
-					self.illegal_option (opt)
+					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
 				if self.info_action is not None:
-					msg.error (_("error: cannot have both '--%s' and '%s'") \
+					raise rubber.SyntaxError (_("error: cannot have both '--%s' and '%s'") \
 						% (self.info_action, opt))
-					rubber.util.abort_rubber_syntax_error ()
 				self.info_action = opt[2:]
 
 			elif arg == "":
@@ -237,8 +235,7 @@ available options:
 		ret = extra + args
 
 		if self.jobname is not None and len (ret) > 1:
-			msg.error (_("error: cannot give jobname and have more than one input file"))
-			rubber.util.abort_rubber_syntax_error ()
+			raise rubber.SyntaxError (_("error: cannot give jobname and have more than one input file"))
 
 		return ret
 
@@ -254,8 +251,7 @@ available options:
 		path = rubber.util.find_resource (filename, suffix=".tex")
 
 		if not path:
-			msg.error (_("Main document not found: '%s'") % filename)
-			rubber.util.abort_generic_error ()
+			raise rubber.GenericError (_("Main document not found: '%s'") % filename)
 
 		base, ext = os.path.splitext (path)
 
@@ -266,13 +262,11 @@ available options:
 			src_node = lpp[ext] (self.env.depends, src, path)
 			if isinstance (self, Build):
 				if not self.unsafe:
-					msg.error (_("Running external commands requires --unsafe."))
-					rubber.util.abort_rubber_syntax_error ()
+					raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
 				# Produce the source from its dependency rules, if needed.
 				if src_node.make () == ERROR:
-					msg.error (_("Producing the main LaTeX file failed: '%s'") \
+					raise rubber.GenericError (_("Producing the main LaTeX file failed: '%s'") \
 						% src)
-					rubber.util.abort_generic_error ()
 		else:
 			src = path
 
@@ -306,8 +300,7 @@ available options:
 				else:
 					os.chdir (self.place)
 			except OSError as e:
-				msg.error(_("Error changing to working directory: %s") % e.strerror)
-				rubber.util.abort_generic_error ()
+				raise rubber.GenericError (_("Error changing to working directory: %s") % e.strerror)
 
 			# prepare the source file.  this may require a pre-processing
 			# step, or dumping stdin.  thus, the input filename may change.
@@ -329,8 +322,7 @@ available options:
 			# from within via rubber directives, so that wouldn't make a
 			# whole lot of sense.
 			if not os.path.exists (src):
-				msg.error (_("LaTeX source file not found: '%s'") % src)
-				rubber.util.abort_generic_error ()
+				raise rubber.GenericError (_("LaTeX source file not found: '%s'") % src)
 
 			env.path.extend (self.path)
 
@@ -400,7 +392,8 @@ available options:
 						break
 					msg.display(**err)
 					number -= 1
-				rubber.util.abort_generic_error ()
+				# Ensure a message even with -q.
+				raise rubber.GenericError (_("Stopping because of compilation errors."))
 
 			if ret == UNCHANGED:
 				msg.progress(_("nothing to be done for %s") % srcname)
@@ -478,7 +471,7 @@ available options:
 			self.ignored_option (arg)
 		# --inplace nonsensical since we don't have a filename
 		if self.place is None:
-			self.illegal_option ("--inplace")
+			raise rubber.SyntaxError (_("error: illegal option %s") % "--inplace")
 		# hack: force is required by self.build
 		self.force = False
 		return [ "-" ]   # this will be stdin
@@ -501,8 +494,7 @@ available options:
 				msg.progress (_("saving the input in %s") % self.pipe_tempfile)
 				shutil.copyfileobj (sys.stdin.buffer, srcfile)
 		except IOError:
-			msg.error (_("cannot create temporary file for the main LaTeX source"))
-			rubber.util.abort_generic_error ()
+			raise rubber.GenericError (_("cannot create temporary file for the main LaTeX source"))
 
 		return super (Pipe, self).prepare_source (self.pipe_tempfile)
 
@@ -518,8 +510,7 @@ available options:
 				with open (filename, "rb") as output:
 					shutil.copyfileobj (output, sys.stdout.buffer)
 			except IOError:
-				msg.error (_("error copying the product '%s' to stdout") % filename)
-				rubber.util.abort_generic_error ()
+				raise rubber.GenericError (_("error copying the product '%s' to stdout") % filename)
 		finally:
 			# clean the intermediate files
 			if not self.keep_temp:
@@ -535,11 +526,9 @@ class Info (Main):
 		msg.write_to_stdout ()
 
 	def short_help (self):
-		sys.stderr.write (_("""\
+		raise rubber.SyntaxError (_("""\
 usage: rubber-info [options] source
-For more information, try `rubber-info --help'.
-"""))
-		rubber.util.abort_rubber_syntax_error ()
+For more information, try `rubber-info --help'."""))
 
 	def help (self):
 		sys.stderr.write (_("""\
@@ -598,8 +587,7 @@ actions:
 		"""
 		log = self.env.main.log
 		if not self.env.main.parse_log ():
-			msg.error(_("Parsing the log file failed"))
-			rubber.util.abort_generic_error ()
+			raise rubber.GenericError (_("Parsing the log file failed"))
 
 		if act == "boxes":
 			if not msg.display_all(log.get_boxes()):
