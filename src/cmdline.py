@@ -58,9 +58,6 @@ class Main (object):
 usage: rubber [options] sources...
 For more information, try `rubber --help'."""))
 
-	def ignored_option (self, opt):
-		msg.warn (_("warning: ignoring option %s") % opt)
-
 	help = """\
 This is Rubber version %s.
 usage: rubber [options] sources...
@@ -122,11 +119,9 @@ available options:
 		for (opt,arg) in opts:
 			# obsolete options
 			if opt == "--cache":
-				# unimplemented option (harmless)
-				self.ignored_option (opt)
+				msg.warn (_("ignoring unimplemented option %s") % opt)
 			elif opt in ("--readopts", "-l", "--landscape" ):
-				# undocumented option which is no longer supported
-				raise rubber.SyntaxError (_("error: illegal option %s") % opt)
+				raise rubber.SyntaxError (_("option %s is no longer supported") % opt)
 
 			# info
 			elif opt in ("-h", "--help"):
@@ -138,21 +133,23 @@ available options:
 
 			# mode of operation
 			elif opt == "--clean":
-				self.ignored_option (opt)
+				msg.warn (_("ignoring duplicate or incompatible option %s") % opt)
 			elif opt in ("-k", "--keep"):
 				if isinstance (self, Pipe):
 					self.keep_temp = True
 				else:
-					# does not make any sense except in pipe mode
-					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
+					raise rubber.SyntaxError (_("option %s only makes sense in pipe mode") % opt)
 
 			# compression etc. which affects which products exist
 			elif opt in ("-b", "--bzip2", "-z", "--gzip"):
 				algo = "bzip2" if opt in ("-b", "--bzip2") else "gzip"
-				if self.compress is not None and self.compress != algo:
-					self.ignored_option (opt)
-				else:
+				if self.compress is None:
 					self.compress = algo
+				elif self.compress == algo:
+					msg.info (_("ignoring redundant option %s") % opt)
+				else:
+					msg.warn (_("ignoring option {o} with compressor {c}").format (o=opt, c=self.compress))
+
 			elif opt in ("-c", "--command"):
 				self.prologue.append(arg)
 			elif opt in ("-e", "--epilogue"):
@@ -174,7 +171,7 @@ available options:
 				self.include_only = arg.split(",")
 			elif opt in ("-o", "--post"):
 				if isinstance (self, Info):
-					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
+					raise rubber.SyntaxError (_("%s not allowed for rubber-info") % opt)
 				self.epilogue.append("module " +
 					arg.replace(":", " ", 1))
 			elif opt in ("-d", "--pdf"):
@@ -216,7 +213,7 @@ available options:
 					self.warn_refs = 1
 			elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
 				if not isinstance (self, Info):
-					raise rubber.SyntaxError (_("error: illegal option %s") % opt)
+					raise rubber.SyntaxError (_("%s only allowed for rubber-info") % opt)
 				if self.info_action is not None:
 					raise rubber.SyntaxError (_("error: cannot have both '--%s' and '%s'") \
 						% (self.info_action, opt))
@@ -462,10 +459,9 @@ available options:
 		args = super (Pipe, self).parse_opts (cmdline)
 		# rubber-pipe doesn't take file arguments
 		for arg in args:
-			self.ignored_option (arg)
-		# --inplace nonsensical since we don't have a filename
+			msg.warn (_("rubber-pipe takes no file argument, ignoring %s") % arg)
 		if self.place is None:
-			raise rubber.SyntaxError (_("error: illegal option %s") % "--inplace")
+			raise rubber.SyntaxError (_("--inplace only allowed with a filename argument"))
 		# hack: force is required by self.build
 		self.force = False
 		return [ "-" ]   # this will be stdin
