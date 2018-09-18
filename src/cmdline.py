@@ -21,8 +21,7 @@ import rubber.util
 from rubber.version import version as rubber_version
 
 class Main (object):
-	def __init__ (self, mode):
-		self.rubber_mode = mode  # can be "build", "clean", "info" or "pipe"
+	def __init__ (self, arguments):
 		self.max_errors = 10
 		self.place = "."
 		self.path = []
@@ -38,6 +37,12 @@ class Main (object):
 		self.warn_boxes = 0
 		self.warn_misc = 0
 		self.warn_refs = 0
+
+		try:
+			self.main (arguments)
+		except KeyboardInterrupt:
+			msg.warn(_("*** interrupted"))
+			rubber.util.abort_generic_error ()
 
 	def short_help (self):
 		"""
@@ -141,7 +146,7 @@ available options:
 			elif opt == "--clean":
 				self.ignored_option (opt)
 			elif opt in ("-k", "--keep"):
-				if self.rubber_mode == "pipe":
+				if isinstance (self, Pipe):
 					self.keep_temp = True
 				else:
 					# does not make any sense except in pipe mode
@@ -174,7 +179,7 @@ available options:
 			elif opt == "--only":
 				self.include_only = arg.split(",")
 			elif opt in ("-o", "--post"):
-				if self.rubber_mode == "info":
+				if isinstance (self, Info):
 					self.illegal_option (opt)
 				self.epilogue.append("module " +
 					arg.replace(":", " ", 1))
@@ -216,7 +221,7 @@ available options:
 				elif arg == "refs":
 					self.warn_refs = 1
 			elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
-				if self.rubber_mode != "info":
+				if not isinstance (self, Info):
 					self.illegal_option (opt)
 				if self.info_action is not None:
 					msg.error (_("error: cannot have both '--%s' and '%s'") \
@@ -259,7 +264,7 @@ available options:
 			src = base + ".tex"
 			# FIXME kill src_node
 			src_node = lpp[ext] (self.env.depends, src, path)
-			if self.rubber_mode == "build":
+			if isinstance (self, Build):
 				if not self.unsafe:
 					msg.error (_("Running external commands requires --unsafe."))
 					rubber.util.abort_rubber_syntax_error ()
@@ -409,24 +414,10 @@ available options:
 				msg.display_all(log.parse(boxes=self.warn_boxes,
 					refs=self.warn_refs, warnings=self.warn_misc))
 
-	def __call__ (self, cmdline):
-		"""
-		This method is a wrapper around the main method,
-		catching the keyboard interruption signal.
-		"""
-		try:
-			self.main (cmdline)
-		except KeyboardInterrupt:
-			msg.warn(_("*** interrupted"))
-			rubber.util.abort_generic_error ()
-
 class Clean (Main):
 	"""
 	rubber --clean
 	"""
-	def __init__ (self):
-		super (Clean, self).__init__ (mode="clean")
-
 	def process_source (self, env):
 		self.clean (env)
 
@@ -434,9 +425,6 @@ class Build (Main):
 	"""
 	plain rubber
 	"""
-	def __init__ (self):
-		super (Build, self).__init__ (mode="build")
-
 	def parse_opts (self, cmdline):
 		self.force = False
 		return super (Build, self).parse_opts (cmdline)
@@ -445,8 +433,8 @@ class Build (Main):
 		self.build (env)
 
 class Pipe (Main):
-	def __init__ (self):
-		super (Pipe, self).__init__ (mode="pipe")
+	def __init__ (self, arguments):
+		super (Pipe, self).__init__ (arguments)
 		# FIXME why?
 		msg.show_only_warnings ()
 
@@ -539,8 +527,8 @@ available options:
 				rubber.util.verbose_remove (self.pipe_tempfile)
 
 class Info (Main):
-	def __init__ (self):
-		super (Info, self).__init__ (mode="info")
+	def __init__ (self, arguments):
+		super (Info, self).__init__ (arguments)
 		# FIXME why?
 		self.max_errors = -1
 		# FIXME why?

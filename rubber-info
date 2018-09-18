@@ -3,4 +3,4 @@
 # vim: et:ts=4
 import sys
 from rubber.cmdline import Info
-Info () (sys.argv[1:])
+Info (sys.argv [1:])

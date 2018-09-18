@@ -6,12 +6,13 @@ from rubber.cmdline import Build, Clean
 
 # --clean is actually a different mode of operation for rubber.
 # it changes the interpretation of several command-line flags,
-# so we pull it to the front
 args = sys.argv[1:]
-if '--clean' in args:
-    args.remove ('--clean')
-    cmdline = Clean ()
+try:
+    index = args.index ('--clean')
+except ValueError:
+    cmdline = Build
 else:
-    cmdline = Build ()
+    del args [index]
+    cmdline = Clean
 
 cmdline (args)

@@ -3,4 +3,4 @@
 # vim: et:ts=4
 import sys
 from rubber.cmdline import Pipe
-Pipe () (sys.argv[1:])
+Pipe (sys.argv [1:])
