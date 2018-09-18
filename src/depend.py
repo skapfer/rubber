@@ -227,7 +227,9 @@ class Node (object):
                 super (class, self).clean ()
 		"""
 		for file in self.products:
-			rubber.util.verbose_remove (file)
+			if os.path.exists (file):
+				msg.log (_("removing %s") % os.path.relpath (file), pgk='depend.py')
+				os.remove (file)
 		self.date = None
 
 class Leaf (Node):

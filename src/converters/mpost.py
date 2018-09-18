@@ -199,7 +199,8 @@ class Dep (rubber.depend.Node):
 				ext = file[ln:]
 				m = re_mpext.match(ext)
 				if m and ext[m.end():] == "":
-					rubber.util.verbose_remove (file, pkg="mpost")
+					msg.log (_("removing %s") % os.path.relpath (file), pkg="mpost")
+					os.remove (file)
 
 # The `files' dictionary associates dependency nodes to MetaPost sources. It
 # is used to detect when several figures from the same source are included. It

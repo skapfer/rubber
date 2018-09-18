@@ -505,7 +505,9 @@ available options:
 			# clean the intermediate files
 			if not self.keep_temp:
 				self.clean (env)
-				rubber.util.verbose_remove (self.pipe_tempfile)
+				if os.path.exists (self.pipe_tempfile):
+					msg.log (_("removing %s") % os.path.relpath (self.pipe_tempfile), pkg='cmdline')
+					os.remove (self.pipe_tempfile)
 
 class Info (Main):
 	def __init__ (self, arguments):

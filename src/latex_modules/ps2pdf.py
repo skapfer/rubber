@@ -8,13 +8,12 @@ PostScript to PDF conversion using GhostScript.
 from rubber.depend import Shell
 from rubber.util import _, msg
 import rubber.module_interface
-import rubber.util
 
 class Module (rubber.module_interface.Module):
     def __init__ (self, document, opt):
         env = document.env
         if env.final.products[0][-3:] != '.ps':
-            raise rubber.GenericError (_("I can't use ps2pdf when not producing a PS"))
+            raise rubber.GenericError (_("ps2pdf cannot produce PS"))
         ps = env.final.products[0]
         pdf = ps[:-2] + 'pdf'
         cmd = ['ps2pdf']
