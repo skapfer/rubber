@@ -42,9 +42,6 @@ class Message (object):
 	def show_only_warnings (self):
 		self.level = 0
 
-	def write_to_stdout (self):
-		self.write = sys.stdout.write
-
 	def shorten_messages (self):
 		self.short = 1
 

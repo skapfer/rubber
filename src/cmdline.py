@@ -512,8 +512,6 @@ class Info (Main):
 		super (Info, self).__init__ (arguments)
 		# FIXME why?
 		self.max_errors = -1
-		# FIXME why?
-		msg.write_to_stdout ()
 
 	def short_help (self):
 		raise rubber.SyntaxError (_("""\
