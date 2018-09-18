@@ -61,11 +61,7 @@ For more information, try `rubber --help'."""))
 	def ignored_option (self, opt):
 		msg.warn (_("warning: ignoring option %s") % opt)
 
-	def help (self):
-		"""
-		Display the description of all the options and exit.
-		"""
-		sys.stderr.write (_("""\
+	help = """\
 This is Rubber version %s.
 usage: rubber [options] sources...
 available options:
@@ -95,7 +91,7 @@ available options:
   -v, --verbose            increase verbosity
       --version            print version information and exit
   -W, --warn=TYPE          report warnings of the given TYPE (see man page)
-""") % rubber.version.version)
+"""
 
 	def parse_opts (self, cmdline):
 		"""
@@ -134,10 +130,10 @@ available options:
 
 			# info
 			elif opt in ("-h", "--help"):
-				self.help ()
+				print (_(self.help) % rubber.version.version)
 				sys.exit (0)
 			elif opt == "--version":
-				sys.stdout.write ("Rubber version: %s\n" % rubber.version.version)
+				print ("Rubber version: %s" % rubber.version.version)
 				sys.exit (0)
 
 			# mode of operation
@@ -430,8 +426,7 @@ class Pipe (Main):
 		# FIXME why?
 		msg.show_only_warnings ()
 
-	def help (self):
-		sys.stderr.write (_("""\
+	help = """\
 This is Rubber version %s.
 usage: rubber-pipe [options]
 available options:
@@ -455,7 +450,7 @@ available options:
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
       --version            print version information and exit
-""") % rubber.version.version)
+"""
 
 	def short_help (self):
 		# normally, Rubber prints a short help text if no arguments
@@ -529,8 +524,7 @@ class Info (Main):
 usage: rubber-info [options] source
 For more information, try `rubber-info --help'."""))
 
-	def help (self):
-		sys.stderr.write (_("""\
+	help = """\
 This is Rubber's information extractor version %s.
 usage: rubber-info [options] source
 available options:
@@ -545,7 +539,7 @@ actions:
   --rules     print the dependency rules including intermediate results
   --version   print the program's version and exit
   --warnings  show all LaTeX warnings
-""") % rubber.version.version)
+"""
 
 	def parse_opts (self, cmdline):
 		self.info_action = None
@@ -559,7 +553,7 @@ actions:
 		if self.info_action == "deps":
 			from rubber.depend import Leaf
 			deps = [ k for k,n in env.depends.items () if type (n) is Leaf ]
-			sys.stdout.write ((" ".join (deps)) + '\n')
+			print (" ".join (deps))
 
 		elif self.info_action == "rules":
 			seen = {}
@@ -610,7 +604,5 @@ actions:
 			if not msg.display_all(log.get_warnings()):
 				msg.info(_("There is no warning."))
 		else:
-			sys.stderr.write(_("\
+			raise rubber.GenericError (_("\
 I don't know the action `%s'. This should not happen.\n") % act)
-			return 1
-		return 0
