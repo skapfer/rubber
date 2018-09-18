@@ -18,7 +18,7 @@ from rubber.environment import Environment
 from rubber.depend import ERROR, CHANGED, UNCHANGED
 from rubber.util import _, msg
 import rubber.util
-from rubber.version import version as rubber_version
+import rubber.version
 
 class Main (object):
 	def __init__ (self, arguments):
@@ -137,8 +137,7 @@ available options:
 				self.help ()
 				sys.exit (0)
 			elif opt == "--version":
-				sys.stdout.write ("Rubber version: %s\n" % \
-					rubber_version)
+				sys.stdout.write ("Rubber version: %s\n" % rubber.version.version)
 				sys.exit (0)
 
 			# mode of operation
@@ -289,7 +288,7 @@ available options:
 		if self.place is not None:
 			self.place = os.path.abspath(self.place)
 
-		msg.log (_("This is Rubber version %s.") % rubber_version)
+		msg.log (_("This is Rubber version %s.") % rubber.version.version)
 
 		for src in args:
 
@@ -456,7 +455,7 @@ available options:
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
       --version            print version information and exit
-""") % rubber_version)
+""") % rubber.version.version)
 
 	def short_help (self):
 		# normally, Rubber prints a short help text if no arguments
@@ -546,7 +545,7 @@ actions:
   --rules     print the dependency rules including intermediate results
   --version   print the program's version and exit
   --warnings  show all LaTeX warnings
-""") % rubber_version)
+""") % rubber.version.version)
 
 	def parse_opts (self, cmdline):
 		self.info_action = None
