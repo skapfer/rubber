@@ -31,7 +31,6 @@ class Message (object):
 	def __init__ (self):
 		self.level = 1
 		self.write = sys.stderr.write
-		self.short = 0
 
 	def increase_verbosity (self):
 		self.level += 1
@@ -40,82 +39,45 @@ class Message (object):
                         self.level -= 1
 	def show_only_warnings (self):
 		self.level = 0
-
-	def shorten_messages (self):
-		self.short = 1
-
-	def display (self, kind, text, **info):
-		"""
-		Print an error or warning message. The argument 'kind' indicates the
-		kind of message, among "error", "warning", "abort", the argument
-		'text' is the main text of the message, the other arguments provide
-		additional information, including the location of the error.
-		"""
-		if kind == "error":
-			if text[0:13] == "LaTeX Error: ":
-				text = text[13:]
-			self.warn (text, **info)
-			if "code" in info and info["code"] and not self.short:
-				if "macro" in info:
-					del info["macro"]
-				self.warn (_("leading text: ") + info["code"], **info)
-
-		elif kind == "abort":
-			if self.short:
-				msg = _("compilation aborted ") + info["why"]
-			else:
-				msg = _("compilation aborted: %s %s") % (text, info["why"])
-			self.warn (msg, **info)
-
-		elif kind == "warning":
-			self.warn (text, **info)
-
 	def error (self, text, **info):
 		self.display(kind="error", text=text, **info)
 	def warn (self, what, **where):
-		if 0 <= self.level: self.write (self._format (where, what) + "\n")
+		if 0 <= self.level: self.write (_format (where, what) + "\n")
 	def progress (self, what, **where):
-		if 1 <= self.level: self.write (self._format (where, what) + "\n")
+		if 1 <= self.level: self.write (_format (where, what) + "\n")
 	def info (self, what, **where):
-		if 2 <= self.level: self.write (self._format (where, what) + "\n")
+		if 2 <= self.level: self.write (_format (where, what) + "\n")
 	def log (self, what, **where):
-		if 3 <= self.level: self.write (self._format (where, what) + "\n")
+		if 3 <= self.level: self.write (_format (where, what) + "\n")
 	def debug (self, what, **where):
-		if 4 <= self.level: self.write (self._format (where, what) + "\n")
+		if 4 <= self.level: self.write (_format (where, what) + "\n")
 
-	def _format (self, where, text):
-		"""
-		Format the given text into a proper error message, with file and line
-		information in the standard format. Position information is taken from
-		the dictionary given as first argument.
-		"""
-		if where is None or where == {}:
-			return text
+def _format (where, text):
+	"""
+	Format the given text into a proper error message, with file and line
+	information in the standard format. Position information is taken from
+	the dictionary given as first argument.
+	"""
+	if where is None or where == {}:
+		return text
 
-		if "file" in where and where["file"] is not None:
-			pos = os.path.relpath (where["file"])
-			if "line" in where and where["line"]:
-				pos = "%s:%d" % (pos, int(where["line"]))
-				if "last" in where:
-					if where["last"] != where["line"]:
-						pos = "%s-%d" % (pos, int(where["last"]))
-			pos = pos + ": "
-		else:
-			pos = ""
-		if "macro" in where:
-			text = "%s (in macro %s)" % (text, where["macro"])
-		if "page" in where:
-			text = "%s (page %d)" % (text, int(where["page"]))
-		if "pkg" in where:
-			text = "[%s] %s" % (where["pkg"], text)
-		return pos + text
-
-	def display_all (self, generator):
-		something = 0
-		for msg in generator:
-			self.display(**msg)
-			something = 1
-		return something
+	if "file" in where and where["file"] is not None:
+		pos = os.path.relpath (where["file"])
+		if "line" in where and where["line"]:
+			pos = "%s:%d" % (pos, int(where["line"]))
+			if "last" in where:
+				if where["last"] != where["line"]:
+					pos = "%s-%d" % (pos, int(where["last"]))
+		pos = pos + ": "
+	else:
+		pos = ""
+	if "macro" in where:
+		text = "%s (in macro %s)" % (text, where["macro"])
+	if "page" in where:
+		text = "%s (page %d)" % (text, int(where["page"]))
+	if "pkg" in where:
+		text = "[%s] %s" % (where["pkg"], text)
+	return pos + text
 
 msg = Message()
 

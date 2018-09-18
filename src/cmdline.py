@@ -31,6 +31,7 @@ class Main (object):
 		self.compress = None
 		self.jobname = None
 		self.unsafe = False
+		self.short = False
 
 		# FIXME when are these legal
 		self.warn = 0
@@ -192,7 +193,7 @@ available options:
 			elif opt in ("-S", "--src-specials"):
 				self.prologue.append("set src-specials yes")
 			elif opt in ("-s", "--short"):
-				msg.shorten_messages ()
+				self.short = True
 			elif opt in ("--synctex"):
 				self.prologue.append("synctex")
 			elif opt in ("-I", "--texpath"):
@@ -382,7 +383,7 @@ available options:
 					if number == 0:
 						msg.info(_("More errors."))
 						break
-					msg.display(**err)
+					self.display (**err)
 					number -= 1
 				# Ensure a message even with -q.
 				raise rubber.GenericError (_("Stopping because of compilation errors."))
@@ -396,8 +397,35 @@ available options:
 				if not env.main.parse_log ():
 					msg.error(_("cannot read the log file"))
 					return 1
-				msg.display_all(log.parse(boxes=self.warn_boxes,
-					refs=self.warn_refs, warnings=self.warn_misc))
+				for err in log.parse(boxes=self.warn_boxes,
+					refs=self.warn_refs, warnings=self.warn_misc):
+					self.display (**err)
+
+	def display (self, kind, text, **info):
+		"""
+		Print an error or warning message. The argument 'kind' indicates the
+		kind of message, among "error", "warning", "abort", the argument
+		'text' is the main text of the message, the other arguments provide
+		additional information, including the location of the error.
+		"""
+		if kind == "error":
+			if text[0:13] == "LaTeX Error: ":
+				text = text[13:]
+			msg.warn (text, **info)
+			if "code" in info and info["code"] and not self.short:
+				if "macro" in info:
+					del info["macro"]
+				msg.warn (_("leading text: ") + info["code"], **info)
+
+		elif kind == "abort":
+			if self.short:
+				m = _("compilation aborted ") + info["why"]
+			else:
+				m = _("compilation aborted: %s %s") % (text, info["why"])
+			msg.warn (m, **info)
+
+		elif kind == "warning":
+			msg.warn (text, **info)
 
 class Clean (Main):
 	"""
@@ -579,25 +607,46 @@ actions:
 			raise rubber.GenericError (_("Parsing the log file failed"))
 
 		if act == "boxes":
-			if not msg.display_all(log.get_boxes()):
+			for err in log.get_boxes():
+				self.display (**err)
+			else:
 				msg.info(_("There is no bad box."))
 		elif act == "check":
-			if msg.display_all(log.get_errors()): return 0
+			finished = False
+			for err in log.get_errors ():
+				self.display (**err)
+				finished = True
+			if finished:
+				return 0
 			msg.info(_("There was no error."))
-			if msg.display_all(log.get_references()): return 0
+			for err in log.get_references():
+				self.display (**err)
+				finished = True
+			if finished:
+				return 0
 			msg.info(_("There is no undefined reference."))
-			if not msg.display_all(log.get_warnings()):
+			for err in log.get_warnings():
+				self.display (**err)
+			else:
 				msg.info(_("There is no warning."))
-			if not msg.display_all(log.get_boxes()):
+			for err in log.get_boxes ():
+				self.display (*err)
+			else:
 				msg.info(_("There is no bad box."))
 		elif act == "errors":
-			if not msg.display_all(log.get_errors()):
+			for err in log.get_errors():
+				self.display (**err)
+			else:
 				msg.info(_("There was no error."))
 		elif act == "refs":
-			if not msg.display_all(log.get_references()):
+			for err in log.get_references():
+				self.display (**err)
+			else:
 				msg.info(_("There is no undefined reference."))
 		elif act == "warnings":
-			if not msg.display_all(log.get_warnings()):
+			for err in log.get_warnings ():
+				self.display (**err)
+			else:
 				msg.info(_("There is no warning."))
 		else:
 			raise rubber.GenericError (_("\
