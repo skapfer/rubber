@@ -4,7 +4,9 @@
 Extraction of bounding box information from gzipped PostScript figures.
 """
 
-from rubber.util import _, msg
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _
 import rubber.depend
 
 import gzip
@@ -27,7 +29,7 @@ class Dep (rubber.depend.Node):
 		bounding box indication. Then it creates the target file with this
 		single line.
 		"""
-		msg.progress(_("extracting bounding box from %s") % self.source)
+		msg.info(_("extracting bounding box from %s") % self.source)
 		# Binary mode causes no decoding errors, but makes
 		# difficult in Python to split UTF-8 input in lines.
 

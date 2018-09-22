@@ -6,8 +6,9 @@
 pythontex support for Rubber
 """
 
-from rubber.util import _, msg
-
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import os.path
 import shutil
 import rubber.module_interface
@@ -31,7 +32,7 @@ class PythonTeXDep (rubber.depend.Shell):
 		# check if the input file exists. if not, refuse to run.
 		if not os.path.exists (self.sources[0]):
 			msg.info (_('input file for %s does not yet exist, deferring')
-				% self.tool, pkg='pythontex')
+				% self.tool)
 			return True
 		if not self.doc.env.is_in_unsafe_mode_:
 			msg.error (_('The document tries to run embedded Python code which could be dangerous.  Use rubber --unsafe if the document is trusted.'))
@@ -39,7 +40,7 @@ class PythonTeXDep (rubber.depend.Shell):
 		return super (PythonTeXDep, self).run ()
 
 	def clean (self):
-		msg.log (_("removing tree %s") % os.path.relpath (self.pythontex_files))
+		msg.info (_("removing tree %s") % os.path.relpath (self.pythontex_files))
 		# FIXME proper error reporting
 		shutil.rmtree (self.pythontex_files, ignore_errors=True)
 		return super (PythonTeXDep, self).clean ()

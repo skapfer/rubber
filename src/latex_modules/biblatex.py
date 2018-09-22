@@ -6,7 +6,9 @@
 BibLaTeX support for Rubber
 """
 
-from rubber.util import _, msg
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _
 import rubber.util
 import rubber.biblio
 import re
@@ -66,7 +68,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		return [ self.tool, self.source ]
 
 	def add_bib_resource (self, doc, opt, name):
-		msg.log (_("bibliography resource discovered: %s" % name), pkg="biblio")
+		msg.debug (_("bibliography resource discovered: %s") % name)
 		options = rubber.util.parse_keyval (opt)
 
 		# If the file name looks like it contains a control sequence
@@ -80,7 +82,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 
 		filename = self.find_bib (name)
 		if filename is None:
-			msg.error (_ ("cannot find bibliography resource %s") % name, pkg="biblatex")
+			msg.error (_("cannot find bibliography resource %s") % name)
 		else:
 			self.add_source (filename)
 
@@ -89,7 +91,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 			self.add_bib_resource (doc, None, bib.strip ())
 
 	def bibliographystyle (self, loc, bibs):
-		msg.warn (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"), pkg="biblatex")
+		msg.warning (_("\\usepackage{biblatex} incompatible with \\bibliographystyle"))
 
 	def get_errors (self):
 		"""
@@ -106,7 +108,7 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 		try:
 			log = open (self.blg, encoding='utf_8', errors='replace')
 		except:
-			msg.warn (_("cannot open Biber logfile: %s") % self.blg, pkg="biblatex")
+			msg.warning (_("cannot open Biber logfile: %s") % self.blg)
 			return
 
 		with log:

@@ -5,9 +5,10 @@
 Common support for makeindex and xindy external tools.
 """
 import os.path
-
+import logging
+msg = logging.getLogger (__name__)
 import rubber.depend
-from rubber.util import _, msg
+from rubber.util import _
 
 # FIXME: this class may probably be simplified a lot if inheriting
 # from rubber.depend.Shell instead of rubber.depend.Node.
@@ -51,7 +52,7 @@ class Index (rubber.depend.Node):
 			if opt == "standard": self.opts = []
 			elif opt == "german": self.opts.append("-g")
 			elif opt == "letter": self.opts.append("-l")
-			else: msg.warn(
+			else: msg.warning(
 				_("unknown option '%s' for 'makeidx.order'") % opt)
 
 	def do_path (self, path):
@@ -67,7 +68,7 @@ class Index (rubber.depend.Node):
 
 	def run (self):
 		if not os.path.exists (self.cmd [1]):
-			msg.info (_ ("%s not yet generated" % self.cmd [1]))
+			msg.info (_("%s not yet generated") % self.cmd [1])
 			return True
 
 		# No more settings are expected, we compute the
@@ -82,14 +83,12 @@ class Index (rubber.depend.Node):
 				for opt in self.opts:
 					if opt == "-g":
 						if self.lang != "":
-							msg.warn(_("'language' overrides 'order german'"),
-								 pkg="index")
+							msg.warning(_("'language' overrides 'order german'"))
 						else:
 							self.lang = "german-din"
 					else: # opt == "-l"
 						self.modules.append("letter-ordering")
-						msg.warn(_("use 'module letter-ordering' instead of 'order letter'"),
-							 pkg="index")
+						msg.warning(_("use 'module letter-ordering' instead of 'order letter'"))
 				for mod in self.modules:
 					self.cmd.extend(["--module", mod])
 				if self.lang:

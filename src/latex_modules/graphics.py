@@ -17,8 +17,9 @@ incomplete, because \\includegraphics can have a complex format.
 
 import os, os.path
 import re
-
-from rubber.util import _, msg
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _
 from rubber.util import parse_keyval
 from rubber.tex import parse_string
 import rubber.module_interface
@@ -140,12 +141,12 @@ class Module (rubber.module_interface.Module):
                                      check=check, context=self.doc.vars)
 
         if node:
-            msg.log(_("graphics `%s' found") % name, pkg='graphics')
+            msg.debug(_("graphics `%s' found") % name)
             for file in node.products:
                 self.doc.add_source(file)
             self.files.append(node)
         else:
-            msg.warn(_("graphics `%s' not found") % name, **loc)
+            msg.warning (rubber.util._format (loc, _("graphics `%s' not found") % name))
 
     def hook_graphicspath (self, loc, arg):
         # The argument of \graphicspath is a list (in the sense of TeX) of
@@ -165,7 +166,7 @@ class Module (rubber.module_interface.Module):
         if read in self.suffixes:
             return
         self.suffixes.insert(0, read)
-        msg.log("*** FIXME ***  rule %s -> %s [%s]" % (ext.strip (), read, type), pkg='graphics')
+        msg.debug("*** FIXME ***  rule %s -> %s [%s]" % (ext.strip (), read, type))
 
     #  module interface
 
@@ -177,7 +178,7 @@ class Module (rubber.module_interface.Module):
             if not node.making:
                 node.make()
             else:
-                msg.log("*** FIXME ***  recursive making in graphics: %s" % str (node.products), pkg="graphics")
+                msg.debug("*** FIXME ***  recursive making in graphics: %s" % str (node.products))
         return True
 
     def clean (self):

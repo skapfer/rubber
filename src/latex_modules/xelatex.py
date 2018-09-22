@@ -1,4 +1,6 @@
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):

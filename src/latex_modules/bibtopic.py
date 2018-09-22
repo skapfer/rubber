@@ -24,7 +24,9 @@ interesting .bbl, and also a .bbl log.
 """
 
 import os.path
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.biblio
 
 class Module (rubber.module_interface.Module):
@@ -57,10 +59,10 @@ class Module (rubber.module_interface.Module):
     def clean (self):
         for name in ('btaux.aux', 'btbbl.aux'):
             if os.path.exists (name):
-                msg.log (_("removing %s") % os.path.relpath (name), pkg='bibtopic')
+                msg.info (_("removing %s") % os.path.relpath (name))
                 os.remove (name)
         for e in self.btsect_environments:
             name = e.aux
             if os.path.exists (name):
-                msg.log (_("removing %s") % os.path.relpath (name), pkg='bibtopic')
+                msg.info (_("removing %s") % os.path.relpath (name))
                 os.remove (name)

@@ -13,7 +13,9 @@ instance), then "odvips" is used instead of "dvips".
 """
 
 import abc
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.converters
 import rubber.depend
 import rubber.module_interface
@@ -38,7 +40,7 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         assert type (self.doc.env.final) is rubber.converters.latex.LaTeXDep
         self.source = self.doc.env.final.products[0]
         if not self.source.endswith ('.dvi'):
-            raise rubber.GenericError (_('I can\'t use %s when not producing a DVI') % tool)
+            raise rubber.GenericError (_('Tool %sonly produces DVI') % tool)
         self.doc.env.final = self
         self.add_product (self.source [:-3] + product_extension [tool])
         self.add_source (self.source)

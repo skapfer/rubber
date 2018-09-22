@@ -10,7 +10,9 @@ building process.
 import os, os.path, sys, subprocess
 import re
 
-from rubber.util import _, msg, prog_available
+from rubber.util import _, prog_available
+import logging
+msg = logging.getLogger (__name__)
 import rubber.converters
 import rubber.depend
 from rubber.convert import Converter
@@ -106,12 +108,12 @@ class Environment:
 			if prefs is None and os.path.exists(t):
 				if last is not None and last["cost"] <= 0:
 					break
-				msg.log(_("`%s' is `%s', no rule applied") % (target, t))
+				msg.debug(_("`%s' is `%s', no rule applied") % (target, t))
 				return rubber.depend.Leaf(self.depends, t)
 
 		if last is None:
 			return None
-		msg.log(_("`%s' is `%s', made from `%s' by rule `%s'") %
+		msg.debug(_("`%s' is `%s', made from `%s' by rule `%s'") %
 				(target, last["target"], last["source"], last["name"]))
 		return self.converter.apply(last)
 
@@ -132,9 +134,9 @@ class Environment:
 		"""
 		msg.info(_("executing: %s") % " ".join (prog))
 		if pwd:
-			msg.log(_("  in directory %s") % pwd)
+			msg.debug(_("  in directory %s") % pwd)
 		if env != {}:
-			msg.log(_("  with environment: %r") % env)
+			msg.debug(_("  with environment: %r") % env)
 
 		progname = prog_available(prog[0])
 		if not progname:
@@ -160,5 +162,5 @@ class Environment:
 			process.stdout.readlines()
 
 		ret = process.wait()
-		msg.log(_("process %d (%s) returned %d") % (process.pid, prog[0],ret))
+		msg.debug(_("process %d (%s) returned %d") % (process.pid, prog[0], ret))
 		return ret

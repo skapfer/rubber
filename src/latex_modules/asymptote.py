@@ -36,7 +36,9 @@ import os.path
 import rubber.depend
 import rubber.module_interface
 import rubber.util
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 
 # Returns None if inline is unset, else a boolean.
 def inline_option (option_string, default):
@@ -59,7 +61,7 @@ class Module (rubber.module_interface.Module):
             and document.products [0] [-4:] == '.pdf'):
             self.format = ".pdf"
         elif (document.engine == 'VTeX'):
-            msg.error(_("does not know how to handle VTeX"), pkg="asymptote")
+            msg.error(_("does not know how to handle VTeX"))
         else:
             self.format = ".eps"
 
@@ -108,16 +110,13 @@ of /usr/bin/asy flushes the .aux file.
     def run (self):
         source = self.sources [0]
         if not os.path.exists (source):
-            msg.info(_("{} not yet generated").format (os.path.relpath (source)),
-                     pkg="asymptote")
+            msg.info(_("{} not yet generated").format (os.path.relpath (source)))
             return True
         os.rename (self.aux, self.bak)
-        msg.log (_ ("saving {} to {}").format (os.path.relpath (self.aux),
-                                               os.path.relpath (self.bak)),
-                 pkg="asymptote")
+        msg.debug (_("saving {} to {}").format (os.path.relpath (self.aux),
+                                                os.path.relpath (self.bak)))
         ret = super (Shell_Restoring_Aux, self).run ()
-        msg.log (_ ("restoring {} to {}").format (os.path.relpath (self.aux),
-                                                  os.path.relpath (self.bak)),
-                pkg="asymptote")
+        msg.debug (_ ("restoring {} to {}").format (os.path.relpath (self.aux),
+                                                    os.path.relpath (self.bak)))
         os.rename (self.bak, self.aux)
         return ret

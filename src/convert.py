@@ -5,9 +5,9 @@ rule management.
 
 import re, imp, os.path
 from configparser import ConfigParser
-
-from rubber.util import _, msg
-import rubber.util
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _
 import rubber.converters
 
 re_variable = re.compile('[a-zA-Z]+')
@@ -123,7 +123,7 @@ class Converter (object):
 		try:
 			cp.read(filename)
 		except ParsingError:
-			msg.error(_("parse error, ignoring this file"), file=filename)
+			msg.error (rubber.util._format ({'file':filename}, _("parse error, ignoring it")))
 			return
 		for name in cp.sections():
 			dict = { 'name': name }
@@ -132,23 +132,18 @@ class Converter (object):
 			try:
 				dict['cost'] = cp.getint(name, 'cost')
 			except NoOptionError:
-				msg.warn(_("ignoring rule `%s' (no cost found)") % name,
-						file=filename)
+				msg.warning (rubber.util._format ({'file':filename}, _("ignoring rule `%s' (no cost found)") % name))
 				continue
 			except ValueError:
-				msg.warn(_("ignoring rule `%s' (invalid cost)") % name,
-						file=filename)
+				msg.warning (rubber.util._format ({'file':filename}, _("ignoring rule `%s' (invalid cost)") % name))
 				continue
 			if 'target' not in dict:
-				msg.warn(_("ignoring rule `%s' (no target found)") % name,
-						file=filename)
+				msg.warning (rubber.util._format ({'file':filename}, _("ignoring rule `%s' (no target found)") % name))
 				continue
 			if 'rule' not in dict:
-				msg.warn(_("ignoring rule `%s' (no module found)") % name,
-						file=filename)
+				msg.warning (rubber.util._format ({'file':filename}, _("ignoring rule `%s' (no module found)") % name))
 			if not self.load_module(dict['rule']):
-				msg.warn(_("ignoring rule `%s' (module `%s' not found)") %
-						(name, dict['rule']), file=filename)
+				msg.warning (rubber.util._format ({'file':filename}, _("ignoring rule `%s' (module `%s' not found)") % (name, dict['rule'])))
 			dict ["re_target"] = re.compile (dict ['target'] + '$')
 			self.rules.append (dict)
 

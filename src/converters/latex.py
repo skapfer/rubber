@@ -11,8 +11,9 @@ building a LaTeX document from start to finish.
 
 import os, os.path, sys, imp
 import re
-
-from rubber.util import _, msg, parse_line
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _, parse_line
 import rubber.depend
 import rubber.latex_modules
 import rubber.module_interface
@@ -53,7 +54,7 @@ class Modules:
 		and run any delayed commands for it.
 		"""
 		if name in self:
-			msg.debug(_("module %s already registered") % name, pkg='latex')
+			msg.debug(_("module %s already registered") % name)
 			return 2
 
 		assert name != ''
@@ -73,7 +74,7 @@ class Modules:
 		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
-				msg.error(_('please replace deprecated .rub scripts with python modules.'), file=file)
+				msg.error (rubber.util._format ({'file':file}, _('please replace deprecated .rub scripts with python modules.')))
 
 		# Then look for a Python module
 
@@ -86,18 +87,18 @@ class Modules:
 				raise ImportError
 			source = imp.load_module (name, f, path, (suffix, mode, file_type))
 		except ImportError:
-			msg.debug(_("no support found for %s") % name, pkg='latex')
+			msg.debug (_("no support found for %s") % name)
 			return 0
 		finally:
 			if f != None:
 				f.close ()
 		if not (hasattr (source, "Module")
 			and issubclass (source.Module, rubber.module_interface.Module)):
-			msg.error (_("{}.Module must subclass rubber.module_interface.Module".format (name)))
+			msg.error (_("{}.Module must subclass rubber.module_interface.Module").format (name))
 			return 0
 
 		mod = source.Module (document=self.latexdep, opt=opt)
-		msg.log (_("built-in module %s registered") % name, pkg='latex')
+		msg.debug (_("built-in module %s registered") % name)
 
 		# Run any delayed commands.
 
@@ -106,9 +107,9 @@ class Modules:
 				try:
 					mod.command (cmd, args)
 				except AttributeError:
-					msg.warn(_("unknown directive '%s.%s'") % (name, cmd))
+					msg.warning(_("unknown directive '%s.%s'") % (name, cmd))
 				except TypeError:
-					msg.warn(_("wrong syntax for '%s.%s'") % (name, cmd))
+					msg.warning(_("wrong syntax for '%s.%s'") % (name, cmd))
 			del self.commands[name]
 
 		self.objects[name] = mod
@@ -168,17 +169,17 @@ class LogCheck (object):
 			with open (name, encoding='utf_8', errors='replace') as fp:
 				line = fp.readline ()
 				if not line or not re_loghead.match (line):
-					msg.log (_('empty log'), pkg='latex')
+					msg.debug (_('empty log'))
 					return False
 				# do not read the whole log unconditionally
 				whole_file = fp.read (limit)
 				self.lines = whole_file.split ('\n')
 				if fp.read (1) != '':
 					# more data to be read
-					msg.warn (_('log file is very long, and will not be read completely.'), pkg='latex')
+					msg.warning (_('log file is very long, and will not be read completely.'))
 			return True
 		except IOError:
-			msg.log (_('IO Error with log'), pkg='latex')
+			msg.debug (_('IO Error with log'))
 			return False
 
 	#-- Process information {{{2
@@ -647,7 +648,7 @@ class LaTeXDep (rubber.depend.Node):
 			return 1
 		for c in " \n\t()":
 			if source.find(c) >= 0:
-				msg.warn(_("Source path uses special characters, error tracking might get confused."))
+				msg.warning(_("Source path uses special characters, error tracking might get confused."))
 				break
 
 		self.add_product (self.basename (with_suffix=".dvi"))
@@ -703,7 +704,7 @@ class LaTeXDep (rubber.depend.Node):
 			self.process(self.source())
 		except EndDocument:
 			pass
-		msg.log(_("dependencies: %r") % self.sources, pkg='latex')
+		msg.debug(_("dependencies: %r") % self.sources)
 
 	def parse_file (self, file):
 		"""
@@ -739,7 +740,7 @@ class LaTeXDep (rubber.depend.Node):
 		must be a valid file name.
 		"""
 		if path in self.processed_sources:
-			msg.debug(_("%s already parsed") % path, pkg='latex')
+			msg.debug(_("%s already parsed") % path)
 			return
 		self.processed_sources[path] = None
 		if path not in self.sources:
@@ -748,7 +749,7 @@ class LaTeXDep (rubber.depend.Node):
 		try:
 			saved_vars = self.vars.copy ()
 			try:
-				msg.log(_("parsing %s") % path, pkg='latex')
+				msg.debug(_("parsing %s") % path)
 				self.vars ["file"] = path
 				self.vars ["line"] = None
 				with open (path, encoding='utf_8', errors='replace') as file:
@@ -756,7 +757,7 @@ class LaTeXDep (rubber.depend.Node):
 
 			finally:
 				self.vars = saved_vars
-				msg.debug(_("end of %s") % path, pkg='latex')
+				msg.debug(_("end of %s") % path)
 
 		except EndInput:
 			pass
@@ -814,12 +815,12 @@ class LaTeXDep (rubber.depend.Node):
 		if len(lst) > 1:
 			self.modules.command(lst[0], lst[1], args)
 		elif not hasattr(self, "do_" + cmd):
-			msg.warn(_("unknown directive '%s'") % cmd, **pos)
+			msg.warning (rubber.util._format (pos, _("unknown directive '%s'") % cmd))
 		else:
-			msg.log(_("directive: %s") % ' '.join([cmd]+args), pkg='latex')
+			msg.debug(_("directive: %s") % ' '.join([cmd]+args))
 			getattr(self, "do_" + cmd)(*args)
 		#except TypeError:
-		#	msg.warn(_("wrong syntax for '%s'") % cmd, **pos)
+		#	msg.warning (rubber.util._format (pos, _("wrong syntax for '%s'") % cmd))
 
 	def do_alias (self, name, val):
 		if val in self.hooks:
@@ -836,7 +837,7 @@ class LaTeXDep (rubber.depend.Node):
 			if file:
 				self.add_source(file)
 			else:
-				msg.warn(_("dependency '%s' not found") % arg, **self.vars)
+				msg.warning (rubber.util._format (self.vars, _("dependency '%s' not found") % arg))
 
 	def do_make (self, file, *args):
 		vars = { "target": file }
@@ -849,7 +850,7 @@ class LaTeXDep (rubber.depend.Node):
 				break
 			args = args[2:]
 		if len(args) != 0:
-			msg.error(_("invalid syntax for 'make'"), **self.vars)
+			msg.error (rubber.util._format (self.vars, _("invalid syntax for 'make'")))
 			return
 		self.env.conv_set(file, vars)
 
@@ -858,13 +859,13 @@ class LaTeXDep (rubber.depend.Node):
 
 	def do_onchange (self, file, cmd):
 		if not self.env.is_in_unsafe_mode_:
-			msg.warn (_("Rubber directive 'onchange' is valid only in unsafe mode"))
+			msg.warning (_("Rubber directive 'onchange' is valid only in unsafe mode"))
 			return
 		self.onchange_cmd[file] = cmd
 		self.onchange_md5[file] = md5_file(file)
 
 	def do_paper (self, arg):
-		msg.warn (_("Rubber directive 'paper' is no longer supported"))
+		msg.warning (_("Rubber directive 'paper' is no longer supported"))
 
 	def do_path (self, name):
 		self.env.path.append(name)
@@ -886,35 +887,35 @@ class LaTeXDep (rubber.depend.Node):
 					lst = parse_line(line, self.vars)
 					self.command(lst[0], lst[1:])
 		except IOError:
-			msg.warn(_("cannot read option file %s") % name, **self.vars)
+			msg.warning (rubber.util._format (self.vars, _("cannot read option file %s") % name))
 		finally:
 			self.vars = saved_vars
 
 	def do_rules (self, file):
 		name = self.env.find_file(file)
 		if name is None:
-			msg.warn(_("cannot read rule file %s") % file, **self.vars)
+			msg.warning (rubber.util._format (self.vars, _("cannot read rule file %s") % file))
 		else:
 			self.env.converter.read_ini(name)
 
 	def do_set (self, name, val):
 		if name in ('arguments',):
-				msg.warn (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
+			msg.warning (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
 		elif name in ('job',):
-			msg.warn (_("variable %s is read-only, please see the manual") % name)
+			msg.warning (_("variable %s is read-only, please see the manual") % name)
 		elif name in ('logfile_limit',):
 				try:
 					val = int (val)
 				except:
-					msg.warn (_("cannot set int variable %s to value %s (ignored)") % (name, val))
+					msg.warning (_("cannot set int variable %s to value %s (ignored)") % (name, val))
 				else:
 					setattr (self, name, val)
 		elif name in ('src-specials',):
 			setattr (self, name, val)
 		elif name in ('engine', 'file', 'line',):
-			msg.warn (_("variable %s is deprecated, please see the manual") % name)
+			msg.warning (_("variable %s is deprecated, please see the manual") % name)
 		else:
-			msg.warn(_("unknown variable: %s") % name, **self.vars)
+			msg.warning (rubber.util._format (self.vars, _("unknown variable: %s") % name))
 
 	def do_shell_escape (self):
 		self.env.doc_requires_shell_ = True
@@ -926,7 +927,7 @@ class LaTeXDep (rubber.depend.Node):
 		if name in ('arguments',):
 			self.arguments.extend (val)
 		else:
-			msg.warn(_("unknown list variable: %s") % name, **self.vars)
+			msg.warning (rubber.util._format (self.vars, _("unknown list variable: %s") % name))
 
 	def do_produce (self, *args):
 		for arg in args:
@@ -1124,7 +1125,7 @@ class LaTeXDep (rubber.depend.Node):
 		Run one LaTeX compilation on the source. Return true on success or
 		false if errors occured.
 		"""
-		msg.progress(_("compiling %s") % os.path.relpath (self.source()))
+		msg.info (_("compiling %s") % os.path.relpath (self.source ()))
 
 		file = self.source()
 
@@ -1144,7 +1145,7 @@ class LaTeXDep (rubber.depend.Node):
 		specials = self.src_specials
 		if specials != "":
 			if self.engine == "VTeX":
-				msg.warn(_("I don't know how to make source specials with VTeX."))
+				msg.warning(_("I don't know how to make source specials with VTeX."))
 				self.src_specials = ""
 			elif specials == "yes":
 				cmd.append("-src-specials")
@@ -1204,7 +1205,7 @@ class LaTeXDep (rubber.depend.Node):
 		Prepare the source for compilation using package-specific functions.
 		This function must return False on failure.
 		"""
-		msg.log(_("building additional files..."), pkg='latex')
+		msg.debug(_("building additional files..."))
 
 		for mod in self.modules.objects.values():
 			if not mod.pre_compile():
@@ -1218,14 +1219,14 @@ class LaTeXDep (rubber.depend.Node):
 		each compilation of the main source. Returns true on success or false
 		on failure.
 		"""
-		msg.log(_("running post-compilation scripts..."), pkg='latex')
+		msg.debug(_("running post-compilation scripts..."))
 
 		for file, md5 in self.onchange_md5.items():
 			new = md5_file(file)
 			if md5 != new:
 				self.onchange_md5[file] = new
 				if new != None:
-					msg.progress(_("running %s") % self.onchange_cmd[file])
+					msg.info (_("running %s") % self.onchange_cmd[file])
 					# FIXME portability issue: explicit reference to shell
 					self.env.execute(["sh", "-c", self.onchange_cmd[file]])
 
@@ -1242,9 +1243,9 @@ class LaTeXDep (rubber.depend.Node):
 		super (LaTeXDep, self).clean ()
 		for file in self.removed_files:
 			if os.path.exists (file):
-				msg.log (_("removing %s") % os.path.relpath (file), pkg = "latex")
+				msg.info (_("removing %s") % os.path.relpath (file))
 				os.remove (file)
-		msg.log(_("cleaning additional files..."), pkg='latex')
+		msg.debug (_("cleaning additional files..."))
 		for mod in self.modules.objects.values():
 			mod.clean()
 
@@ -1300,5 +1301,5 @@ class LaTeXDep (rubber.depend.Node):
 		for suffix in list:
 			file = self.basename (with_suffix=suffix)
 			if os.path.exists (file):
-				msg.log (_("removing %s") % os.path.relpath (file), pkg="latex")
+				msg.info (_("removing %s") % os.path.relpath (file))
 				os.remove (file)

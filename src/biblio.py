@@ -6,7 +6,9 @@
 Bibliographies (Biber and BibTeX).
 """
 
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.util
 import rubber.depend
 import os, os.path
@@ -31,7 +33,7 @@ class BibToolDep (rubber.depend.Node):
 		# check if the input file exists. if not, refuse to run.
 		if not os.path.exists (self.sources[0]):
 			msg.info (_("input file for %s does not yet exist, deferring")
-				% self.tool, pkg="biblio")
+				% self.tool)
 			return True
 
 		# command might have been updated in the mean time, so get it now
@@ -39,13 +41,13 @@ class BibToolDep (rubber.depend.Node):
 		self.environ["BSTINPUTS"] = ":".join (self.bst_paths)
 		command = self.build_command ()
 
-		msg.progress (_("running: %s") % " ".join (command))
+		msg.info (_("running: %s") % " ".join (command))
 		process = subprocess.Popen (command,
 			stdin = subprocess.DEVNULL,
 			stdout = subprocess.DEVNULL,
 			env = self.environ)
 		if process.wait() != 0:
-			msg.error (_("There were errors running %s.") % self.tool, pkg="biblio")
+			msg.error (_("There were errors running %s.") % self.tool)
 			return False
 		return True
 
@@ -59,7 +61,7 @@ class BibToolDep (rubber.depend.Node):
 		try:
 			log = open (self.blg, encoding='utf_8', errors='replace')
 		except:
-			msg.warn (_("cannot open BibTeX logfile: %s") % self.blg, pkg="biblio")
+			msg.warning (_("cannot open BibTeX logfile: %s") % self.blg)
 			return
 
 		with log:
@@ -161,7 +163,7 @@ class BibTeXDep (BibToolDep):
 				self.db[name] = filename
 				self.add_source (filename, track_contents=True)
 			else:
-				msg.error (_ ("cannot find bibliography resource %s") % name, pkg="biblio")
+				msg.error (_ ("cannot find bibliography resource %s") % name)
 
 	def hook_bibliographystyle (self, loc, name):
 		"""
@@ -182,4 +184,4 @@ class BibTeXDep (BibToolDep):
 			self.add_source (filename, track_contents=True)
 		elif name not in [ "plain", "alpha" ]:
 			# do not complain about default styles coming with bibtex
-			msg.warn (_ ("cannot find bibliography style %s") % name, pkg="biblio")
+			msg.warning (_("cannot find bibliography style %s") % name)

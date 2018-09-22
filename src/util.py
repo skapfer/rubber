@@ -19,39 +19,6 @@ import sys
 # The function `_' is defined here to prepare for internationalization.
 def _ (txt): return txt
 
-class Message (object):
-	"""
-	All messages in the program are output using the `msg' object below.
-	This class defines the interface for this object.
-
-	Typical use:
-	from rubber.messages import _, msg
-	msg.log (_("Writing: %.").format (os.path.relpath (file)))
-	"""
-	def __init__ (self):
-		self.level = 1
-		self.write = sys.stderr.write
-
-	def increase_verbosity (self):
-		self.level += 1
-	def decrease_verbosity (self):
-		if 0 < self.level:
-                        self.level -= 1
-	def show_only_warnings (self):
-		self.level = 0
-	def error (self, text, **info):
-		self.display(kind="error", text=text, **info)
-	def warn (self, what, **where):
-		if 0 <= self.level: self.write (_format (where, what) + "\n")
-	def progress (self, what, **where):
-		if 1 <= self.level: self.write (_format (where, what) + "\n")
-	def info (self, what, **where):
-		if 2 <= self.level: self.write (_format (where, what) + "\n")
-	def log (self, what, **where):
-		if 3 <= self.level: self.write (_format (where, what) + "\n")
-	def debug (self, what, **where):
-		if 4 <= self.level: self.write (_format (where, what) + "\n")
-
 def _format (where, text):
 	"""
 	Format the given text into a proper error message, with file and line
@@ -78,8 +45,6 @@ def _format (where, text):
 	if "pkg" in where:
 		text = "[%s] %s" % (where["pkg"], text)
 	return pos + text
-
-msg = Message()
 
 #-- Miscellaneous functions --{{{1
 

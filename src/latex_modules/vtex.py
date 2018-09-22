@@ -10,6 +10,9 @@ produces a PDF or PostScript file directly. The PDF version is used by
 default, switching to PS is possible by using the module option "ps".
 """
 
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):

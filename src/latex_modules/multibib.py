@@ -16,8 +16,9 @@ argument, they apply to all bibliographies.
 """
 
 import os, os.path, re
-from rubber.util import _, msg
-import rubber.util
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.biblio
 import rubber.module_interface
 
@@ -72,4 +73,4 @@ class Module (rubber.module_interface.Module):
         if name in self.commands:
             for cmd in self.commands [name]:
                 bib.bib_command (*cmd)
-        msg.log(_("bibliography %s registered") % name, pkg='multibib')
+        msg.debug(_("bibliography %s registered") % name)

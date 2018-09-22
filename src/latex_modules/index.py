@@ -40,9 +40,10 @@ occur.
 """
 
 import re
-
+import logging
+msg = logging.getLogger (__name__)
 from rubber.index import Index
-from rubber.util import _, msg
+from rubber.util import _
 import rubber.module_interface
 
 re_optarg = re.compile(r'\((?P<list>[^()]*)\) *')
@@ -72,7 +73,7 @@ class Module (rubber.module_interface.Module):
 
     def hook_newindex (self, loc, index, idx, ind):
         self.register(index, idx, ind, 'ilg')
-        msg.log(_("index %s registered") % index, pkg='index')
+        msg.debug(_("index %s registered") % index)
     def command (self, cmd, args):
         names = None
 

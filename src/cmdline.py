@@ -16,7 +16,9 @@ import tempfile
 import rubber.converters.compressor
 from rubber.environment import Environment
 from rubber.depend import ERROR, CHANGED, UNCHANGED
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.util
 import rubber.version
 
@@ -42,7 +44,7 @@ class Main (object):
 		try:
 			self.main (arguments)
 		except KeyboardInterrupt:
-			msg.warn(_("*** interrupted"))
+			msg.warning (_("*** interrupted"))
 			sys.exit (1)
 		except rubber.SyntaxError as e:
 			print (str (e), file=sys.stderr)
@@ -120,7 +122,7 @@ available options:
 		for (opt,arg) in opts:
 			# obsolete options
 			if opt == "--cache":
-				msg.warn (_("ignoring unimplemented option %s") % opt)
+				msg.warning (_("ignoring unimplemented option %s") % opt)
 			elif opt in ("--readopts", "-l", "--landscape" ):
 				raise rubber.SyntaxError (_("option %s is no longer supported") % opt)
 
@@ -134,7 +136,7 @@ available options:
 
 			# mode of operation
 			elif opt == "--clean":
-				msg.warn (_("ignoring duplicate or incompatible option %s") % opt)
+				msg.warning (_("ignoring duplicate or incompatible option %s") % opt)
 			elif opt in ("-k", "--keep"):
 				if isinstance (self, Pipe):
 					self.keep_temp = True
@@ -149,8 +151,7 @@ available options:
 				elif self.compress == algo:
 					msg.info (_("ignoring redundant option %s") % opt)
 				else:
-					msg.warn (_("ignoring option {o} with compressor {c}").format (o=opt, c=self.compress))
-
+					msg.warning (_("ignoring option {o} with compressor {c}").format (o=opt, c=self.compress))
 			elif opt in ("-c", "--command"):
 				self.prologue.append(arg)
 			elif opt in ("-e", "--epilogue"):
@@ -184,7 +185,9 @@ available options:
 				self.epilogue.append("module dvips")
 				using_dvips = True
 			elif opt in ("-q", "--quiet"):
-				msg.decrease_verbosity ()
+				lvl = rubber.logger.getEffectiveLevel ()
+				if lvl < logging.ERROR:
+					rubber.logger.setLevel (lvl + 10)
 			# we continue to accept --shell-escape for now
 			elif opt in ("--unsafe", "--shell-escape"):
 				self.unsafe = True
@@ -199,7 +202,9 @@ available options:
 			elif opt in ("-I", "--texpath"):
 				self.path.append(arg)
 			elif opt in ("-v", "--verbose"):
-				msg.increase_verbosity ()
+				lvl = rubber.logger.getEffectiveLevel ()
+				if logging.DEBUG < lvl:
+					rubber.logger.setLevel (lvl - 10)
 			elif opt in ("-W", "--warn"):
 				self.warn = 1
 				if arg == "all":
@@ -282,7 +287,7 @@ available options:
 		if self.place is not None:
 			self.place = os.path.abspath(self.place)
 
-		msg.log (_("This is Rubber version %s.") % rubber.version.version)
+		msg.debug (_("This is Rubber version %s.") % rubber.version.version)
 
 		for src in args:
 
@@ -389,7 +394,7 @@ available options:
 				raise rubber.GenericError (_("Stopping because of compilation errors."))
 
 			if ret == UNCHANGED:
-				msg.progress(_("nothing to be done for %s") % srcname)
+				msg.info(_("nothing to be done for %s") % srcname)
 
 			if self.warn:
 				# FIXME
@@ -411,21 +416,19 @@ available options:
 		if kind == "error":
 			if text[0:13] == "LaTeX Error: ":
 				text = text[13:]
-			msg.warn (text, **info)
+			msg.warning (rubber.util._format (info, text))
 			if "code" in info and info["code"] and not self.short:
 				if "macro" in info:
 					del info["macro"]
-				msg.warn (_("leading text: ") + info["code"], **info)
-
+				msg.warning (rubber.util._format (info, _("leading text: ") + info["code"]))
 		elif kind == "abort":
 			if self.short:
 				m = _("compilation aborted ") + info["why"]
 			else:
 				m = _("compilation aborted: %s %s") % (text, info["why"])
-			msg.warn (m, **info)
-
+			msg.warning (rubber.util._format (info, m))
 		elif kind == "warning":
-			msg.warn (text, **info)
+			msg.warning (rubber.util._format (info, text))
 
 class Clean (Main):
 	"""
@@ -446,10 +449,6 @@ class Build (Main):
 		self.build (env)
 
 class Pipe (Main):
-	def __init__ (self, arguments):
-		super (Pipe, self).__init__ (arguments)
-		# FIXME why?
-		msg.show_only_warnings ()
 
 	help = """\
 This is Rubber version %s.
@@ -487,7 +486,7 @@ available options:
 		args = super (Pipe, self).parse_opts (cmdline)
 		# rubber-pipe doesn't take file arguments
 		for arg in args:
-			msg.warn (_("rubber-pipe takes no file argument, ignoring %s") % arg)
+			msg.warning (_("rubber-pipe takes no file argument, ignoring %s") % arg)
 		if self.place is None:
 			raise rubber.SyntaxError (_("--inplace only allowed with a filename argument"))
 		# hack: force is required by self.build
@@ -509,7 +508,7 @@ available options:
 				# note the tempfile name so we can remove it later
 				self.pipe_tempfile = srcfile.name
 				# copy stdin into the tempfile
-				msg.progress (_("saving the input in %s") % self.pipe_tempfile)
+				msg.info (_("saving the input in %s") % self.pipe_tempfile)
 				shutil.copyfileobj (sys.stdin.buffer, srcfile)
 		except IOError:
 			raise rubber.GenericError (_("cannot create temporary file for the main LaTeX source"))
@@ -534,7 +533,7 @@ available options:
 			if not self.keep_temp:
 				self.clean (env)
 				if os.path.exists (self.pipe_tempfile):
-					msg.log (_("removing %s") % os.path.relpath (self.pipe_tempfile), pkg='cmdline')
+					msg.info (_("removing %s") % os.path.relpath (self.pipe_tempfile))
 					os.remove (self.pipe_tempfile)
 
 class Info (Main):

@@ -4,7 +4,9 @@
 Compressing the output of Rubber.
 """
 
-from rubber.util import _, msg
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _
 import rubber.depend
 
 class Node (rubber.depend.Node):
@@ -18,7 +20,7 @@ class Node (rubber.depend.Node):
         self.add_source (source)
 
     def run (self):
-        msg.progress (_ ("compressing %s into %s") % (self.source, self.target))
+        msg.info (_("compressing %s into %s") % (self.source, self.target))
         try:
             with open (self.source, 'rb') as f_in:
                 with self.constructor (self.target, 'wb') as f_out:

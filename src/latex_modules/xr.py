@@ -8,7 +8,9 @@ The xr package allows one to put references in one document to other
 file, so this support package registers these files as dependencies.
 """
 
-from rubber.util import _, msg
+from rubber.util import _
+import logging
+msg = logging.getLogger (__name__)
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
@@ -20,8 +22,8 @@ class Module (rubber.module_interface.Module):
         aux = self.doc.env.find_file(name + '.aux')
         if aux:
             self.doc.add_source(aux)
-            msg.log( _(
-                "dependency %s added for external references") % aux, pkg='xr')
+            msg.debug( _(
+                "dependency %s added for external references") % aux)
         else:
-            msg.log(_(
-                "file %s.aux is required by xr package but not found") % name, pkg='xr')
+            msg.debug(_(
+                "file %s.aux is required by xr package but not found") % name)

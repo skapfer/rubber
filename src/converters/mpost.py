@@ -11,7 +11,9 @@ Metapost's log files after the process. Is it enough?
 import os, os.path
 import re
 
-from rubber.util import _, msg, prog_available
+import logging
+msg = logging.getLogger (__name__)
+from rubber.util import _, prog_available
 import rubber.depend
 import rubber.converters.latex
 
@@ -123,7 +125,7 @@ class Dep (rubber.depend.Node):
 		super (Dep, self).__init__(set)
 		self.add_product (target)
 		self.include (os.path.basename (source))
-		msg.log(_("%s is made from %r") % (target, self.sources))
+		msg.debug(_("%s is made from %r") % (target, self.sources))
 		self.env = env
 		self.base = source[:-3]
 		self.cmd = ["mpost", "\\batchmode;input %s" %
@@ -159,7 +161,7 @@ class Dep (rubber.depend.Node):
 		Run Metapost from the source file's directory, so that figures are put
 		next to their source file.
 		"""
-		msg.progress(_("running Metapost on %s") %
+		msg.info(_("running Metapost on %s") %
 				os.path.relpath (self.base + ".mp"))
 		if self.env.execute (self.cmd, self.penv, pwd=self.cmd_pwd) == 0:
 			return True
@@ -199,7 +201,7 @@ class Dep (rubber.depend.Node):
 				ext = file[ln:]
 				m = re_mpext.match(ext)
 				if m and ext[m.end():] == "":
-					msg.log (_("removing %s") % os.path.relpath (file), pkg="mpost")
+					msg.info (_("removing %s") % os.path.relpath (file))
 					os.remove (file)
 
 # The `files' dictionary associates dependency nodes to MetaPost sources. It

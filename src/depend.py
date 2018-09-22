@@ -3,10 +3,12 @@ This module contains code for handling dependency graphs.
 """
 # vim: noet:ts=4
 
-import os, time
+import logging
+msg = logging.getLogger (__name__)
+import os.path, time
 import subprocess
 import rubber.util
-from rubber.util import _, msg
+from rubber.util import _
 
 # constants for the return value of Node.make:
 
@@ -105,20 +107,20 @@ class Node (object):
 			# NB: we ignore the case source.date == None (missing dependency) here.
 			# NB2: to be extra correct, equal (disk-precision) timestamps trigger a recompile.
 			if source.date == None:
-				msg.debug(_("Not rebuilding %s from %s: unknown source timestamp") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Not rebuilding %s from %s: unknown source timestamp") % (self.products[0], source_name))
 			elif source.date < self.date:
-				msg.debug(_("Not rebuilding %s from %s: up to date") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Not rebuilding %s from %s: up to date") % (self.products[0], source_name))
 			elif source_name not in self.md5_for_source:
-				msg.debug(_("Rebuilding %s from %s: outdated, source not tracked") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Rebuilding %s from %s: outdated, source not tracked") % (self.products[0], source_name))
 				return True
 			elif self.md5_for_source [source_name] == None:
-				msg.debug(_("Rebuilding %s from %s: outdated, previous source unknown") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Rebuilding %s from %s: outdated, previous source unknown") % (self.products[0], source_name))
 				return True
 			elif self.md5_for_source [source_name] != rubber.util.md5_file (source_name):
-				msg.debug(_("Rebuilding %s from %s: outdated, source really modified") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Rebuilding %s from %s: outdated, source really modified") % (self.products[0], source_name))
 				return True
 			else:
-				msg.debug(_("Not rebuilding %s from %s: outdated, but source unmodified") % (self.products[0], source_name), pkg="depend")
+				msg.debug(_("Not rebuilding %s from %s: outdated, but source unmodified") % (self.products[0], source_name))
 		return False
 
 	def make (self, force=False):
@@ -154,7 +156,7 @@ class Node (object):
 		rv = UNCHANGED
 		patience = 5
 		primary_product = self.products[0]
-		msg.debug(_("make %s -> %s") % (primary_product, str (self.sources)), pkg="depend")
+		msg.debug(_("make %s -> %s") % (primary_product, str (self.sources)))
 		while patience > 0:
 			# make our sources
 			for source_name in self.sources:
@@ -162,12 +164,12 @@ class Node (object):
 				if source.making:
 					# cyclic dependency -- drop for now, we will re-visit
 					# this would happen while trying to remake the .aux in order to make the .bbl, for example
-					msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name), pkg="depend")
+					msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name))
 					continue
 				source_rv = source.make (force)
 				if source_rv == ERROR:
 					self.failed_dep = source.failed_dep
-					msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name), pkg="depend")
+					msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name))
 					return ERROR
 				elif source_rv == CHANGED:
 					rv = CHANGED
@@ -192,7 +194,7 @@ class Node (object):
 			patience -= 1
 
 		self.failed_dep = self
-		msg.error(_("while making %s: file contents does not seem to settle") % self.products[0], pkg="depend")
+		msg.error(_("while making %s: file contents does not seem to settle") % self.products[0])
 		return ERROR
 
 	def run (self):
@@ -228,7 +230,7 @@ class Node (object):
 		"""
 		for file in self.products:
 			if os.path.exists (file):
-				msg.log (_("removing %s") % os.path.relpath (file), pgk='depend.py')
+				msg.info (_("removing %s") % os.path.relpath (file))
 				os.remove (file)
 		self.date = None
 
@@ -257,7 +259,7 @@ class Leaf (Node):
 		if self.date is not None:
 			return True
 		else:
-			msg.error(_("%r does not exist") % self.products[0], pkg="leaf")
+			msg.error(_("%r does not exist") % self.products[0])
 			return False
 
 	def clean (self):
@@ -273,7 +275,7 @@ class Shell (Node):
 		self.stdout = None
 
 	def run (self):
-		msg.progress(_("running: %s") % ' '.join(self.command))
+		msg.info(_("running: %s") % ' '.join(self.command))
 		process = subprocess.Popen (self.command,
 			stdin=subprocess.DEVNULL,
 			stdout=self.stdout)
