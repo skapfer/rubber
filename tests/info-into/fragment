@@ -1,7 +1,7 @@
 mkdir blarz
 mv doc.tex blarz
-rubber --inplace -d blarz/doc.tex
-rubber-info --into blarz blarz/doc
-rubber --inplace -d --clean blarz/doc
+$python ../rubber.py $VERBOSE --inplace -d blarz/doc.tex
+$python ../rubber-info.py $VERBOSE --into blarz blarz/doc
+$python ../rubber.py $VERBOSE --inplace -d --clean blarz/doc
 mv blarz/doc.tex .
 rmdir blarz

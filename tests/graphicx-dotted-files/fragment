@@ -1,7 +1,7 @@
 cp sample.eps sample.1.eps
 
-rubber $arguments doc.tex
-rubber $arguments doc.tex
-rubber $arguments --clean doc.tex
+$python ../rubber.py $VERBOSE doc.tex
+$python ../rubber.py $VERBOSE doc.tex
+$python ../rubber.py $VERBOSE --clean doc.tex
 
 rm empty1.0.eps sample.1.eps

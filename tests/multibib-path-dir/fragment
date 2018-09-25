@@ -2,10 +2,10 @@ mkdir a b m
 mv biblioa.bib a
 mv bibliob.bib b
 mv biblio.bib m
-rubber doc.tex
+$python ../rubber.py $VERBOSE doc.tex
 [ -r multibiba.bbl ]
 [ -r multibibb.bbl ]
 [ -r doc.bbl ]
-rubber --clean doc.tex
+$python ../rubber.py $VERBOSE --clean doc.tex
 mv ?/*.bib .
 rmdir a b m

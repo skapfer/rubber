@@ -1,7 +1,7 @@
 mkdir blarz
-rubber --into blarz doc.tex
+$python ../rubber.py $VERBOSE --into blarz doc.tex
 status=0
 grep fig2dev-path figure.eps || status=$?
 test $status = 1                # No match.
-rubber --into blarz doc.tex --clean
+$python ../rubber.py $VERBOSE --into blarz doc.tex --clean
 rmdir blarz

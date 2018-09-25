@@ -1,7 +1,7 @@
-rubber -d doc.tex
+$python ../rubber.py $VERBOSE -d doc.tex
 # the result depends on the verbosity level.
-case "`rubber-info --deps doc | wc -w`" in
+case "`$python ../rubber-info.py $VERBOSE --deps doc | wc -w`" in
     2|24|38) true ;;
     *)       false;;
 esac
-rubber -d --clean doc
+$python ../rubber.py $VERBOSE -d --clean doc

@@ -11,7 +11,6 @@ set -e                          # Stop at first failure.
 
 KEEP=false
 VERBOSE=
-DEBCHROOT=
 while [ 1 -le $# ]; do
     case $1 in
         --rmtmp)
@@ -27,7 +26,6 @@ while [ 1 -le $# ]; do
             shift
             ;;
         --debchroot)
-            DEBCHROOT=yes
             # Dependencies inside Debian.
             apt install -y \
                 debhelper dh-python python3 texlive-latex-base asymptote \
@@ -36,6 +34,8 @@ while [ 1 -le $# ]; do
                 texlive-bibtex-extra texlive-binaries texlive-extra-utils \
                 texlive-latex-extra texlive-latex-recommended \
                 texlive-metapost texlive-omega texlive-pictures transfig
+            # combine is not packaged for Debian.
+            touch combine/disable
             shift
             ;;
         *)
@@ -52,22 +52,17 @@ mkdir $tmpdir
 cp -a "$SOURCE_DIR/src" $tmpdir/rubber
 sed "s%@version@%unreleased%;s%@moddir@%$SOURCE_DIR/data%" \
     $tmpdir/rubber/version.py.in > $tmpdir/rubber/version.py
+# Also rename rubber to rubber.py to avoid a clash with rubber/.
 for exe in rubber rubber-info rubber-pipe; do
     cp "$SOURCE_DIR/$exe" $tmpdir/$exe.py
-    alias $exe="$python ../$exe.py $VERBOSE"
 done
 
 for main; do
     case "$main" in
         run.sh | shared | $tmpdir)
             continue;;
-        combine)
-            # combine is not packaged for Debian.
-            if test -n "$DEBCHROOT"; then
-                continue
-            fi
-            ;;
     esac
+
     [ -d $main ] || {
         echo "$main must be a directory"
         exit 1
@@ -98,9 +93,8 @@ for main; do
         . ./fragment
     else
         # default test code:  try to build two times, clean up.
-        echo "Running rubber $arguments $doc ..."
-
-        rubber $arguments "$doc"
+        echo "Running $python ../rubber.py $VERBOSE $arguments $doc ..."
+        $python ../rubber.py $VERBOSE $arguments "$doc"
     fi
 
     if $KEEP; then
@@ -117,8 +111,8 @@ for main; do
 
     if ! [ -e fragment ]; then
         # default test code:  try to build two times, clean up.
-        rubber $arguments         "$doc"
-        rubber $arguments --clean "$doc"
+        $python ../rubber.py $VERBOSE $arguments         "$doc"
+        $python ../rubber.py $VERBOSE $arguments --clean "$doc"
     fi
 
     unset doc arguments
