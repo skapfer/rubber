@@ -2,4 +2,4 @@
 import rubber.dvip_tool
 class Module (rubber.dvip_tool.Module):
     def __init__ (self, document, opt):
-        super (Module, self).__init__ (document, self.__module__)
+        super ().__init__ (document, tool='dvipdfm')

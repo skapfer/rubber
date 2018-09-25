@@ -9,14 +9,14 @@ This module contains all the code in Rubber that actually does the job of
 building a LaTeX document from start to finish.
 """
 
-import os, os.path, sys, imp
+import importlib
+import os, os.path, sys
 import re
 import logging
 msg = logging.getLogger (__name__)
 from rubber.util import _, parse_line
 import rubber.depend
 import rubber.latex_modules
-import rubber.module_interface
 
 from rubber.tex import EOF, OPEN, SPACE, END_LINE
 
@@ -59,9 +59,8 @@ class Modules:
 
 		assert name != ''
 
-		# First look for a script
+		# Warn about obsolete user modules.
 
-		mod = None
 		rub_searchpath = [
 			"",                                # working dir
 			rubber.latex_modules.__path__[0],  # builtin rubber modules
@@ -69,34 +68,29 @@ class Modules:
 			# in old modules from previous installs.
 			"/usr/local/share/rubber/latex_modules",
 			"/usr/share/rubber/latex_modules",
-			# FIXME allow the user to configure this, e.g. via RUBINPUTS
 		]
 		for path in rub_searchpath:
 			file = os.path.join(path, name + ".rub")
 			if os.path.exists(file):
-				msg.error (rubber.util._format ({'file':file}, _('please replace deprecated .rub scripts with python modules.')))
+				msg.error (rubber.util._format ({'file':file},
+					'Ignoring %s. Please contact the authors for a replacement.' % file))
+		for directory in (
+			"",                                # working dir
+			"/usr/local/share/rubber/latex_modules",
+			"/usr/share/rubber/latex_modules",
+		):
+			path = os.path.join(path, name + ".py")
+			if (os.path.exists (path)):
+				msg.error (rubber.util._format ({'file':file},
+					'Ignoring %s. Please contact the authors for a replacement.' % path))
 
-		# Then look for a Python module
+		# Import the built-in python module, if any.
 
-		f = None # so finally works even if find_module raises an exception
 		try:
-			(f, path, (suffix, mode, file_type)) = imp.find_module (
-				name,
-			rubber.latex_modules.__path__)
-			if f == None or suffix != ".py" or file_type != imp.PY_SOURCE:
-				raise ImportError
-			source = imp.load_module (name, f, path, (suffix, mode, file_type))
+			source = importlib.import_module ('rubber.latex_modules.' + name)
 		except ImportError:
 			msg.debug (_("no support found for %s") % name)
 			return 0
-		finally:
-			if f != None:
-				f.close ()
-		if not (hasattr (source, "Module")
-			and issubclass (source.Module, rubber.module_interface.Module)):
-			msg.error (_("{}.Module must subclass rubber.module_interface.Module").format (name))
-			return 0
-
 		mod = source.Module (document=self.latexdep, opt=opt)
 		msg.debug (_("built-in module %s registered") % name)
 
