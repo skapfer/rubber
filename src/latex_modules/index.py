@@ -12,17 +12,17 @@ The following directives are provided to specify options for makeindex:
 
   tool <tool> =
     Choose which indexing tool should be used. Currently this can be either
-	"makeindex" (by default) or "xindy".
+    "makeindex" (by default) or "xindy".
 
   language <lang> =
     Choose the language used for sorting the index (xindy only).
 
   modules <mod> <mod> ... =
-  	Specify which modules xindy should use for the index.
+      Specify which modules xindy should use for the index.
 
   order <ordering> =
     Modify the ordering to be used (makeindex only, supported by xindy with
-	warnings). The argument must be a space separated list of:
+    warnings). The argument must be a space separated list of:
     - standard = use default ordering (no options, this is the default)
     - german = use German ordering (option "-g")
     - letter = use letter instead of word ordering (option "-l")

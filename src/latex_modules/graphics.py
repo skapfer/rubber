@@ -32,22 +32,22 @@ import rubber.module_interface
 # information.
 
 drv_suffixes = {
-	"dvipdf" : ["", ".eps", ".ps", ".eps.bb", ".ps.bb", ".eps.Z"],
-	"dvipdfm" : ["", ".jpg", ".jpeg", ".pdf", ".png"],
-	"dvips" : ["", ".eps", ".ps", ".eps.bb", ".ps.bb", ".eps.Z"],
-	"dvipsone" : ["", ".eps", ".ps", ".pcx", ".bmp"],
-	"dviwin" : ["", ".eps", ".ps", ".wmf", ".tif"],
-	"emtex" : ["", ".eps", ".ps", ".pcx", ".bmp"],
-	"pctex32" : ["", ".eps", ".ps", ".wmf", ".bmp"],
-	"pctexhp" : ["", ".pcl"],
-	"pctexps" : ["", ".eps", ".ps"],
-	"pctexwin" : ["", ".eps", ".ps", ".wmf", ".bmp"],
-	"pdftex" : ["", ".png", ".pdf", ".jpg", ".mps", ".tif"],
-	"tcidvi" : [""],
-	"textures" : ["", ".ps", ".eps", ".pict"],
-	"truetex" : ["", ".eps", ".ps"],
-	"vtex" : ["", ".gif", ".png", ".jpg", ".tif", ".bmp", ".tga", ".pcx",
-	          ".eps", ".ps", ".mps", ".emf", ".wmf"]
+    "dvipdf" : ["", ".eps", ".ps", ".eps.bb", ".ps.bb", ".eps.Z"],
+    "dvipdfm" : ["", ".jpg", ".jpeg", ".pdf", ".png"],
+    "dvips" : ["", ".eps", ".ps", ".eps.bb", ".ps.bb", ".eps.Z"],
+    "dvipsone" : ["", ".eps", ".ps", ".pcx", ".bmp"],
+    "dviwin" : ["", ".eps", ".ps", ".wmf", ".tif"],
+    "emtex" : ["", ".eps", ".ps", ".pcx", ".bmp"],
+    "pctex32" : ["", ".eps", ".ps", ".wmf", ".bmp"],
+    "pctexhp" : ["", ".pcl"],
+    "pctexps" : ["", ".eps", ".ps"],
+    "pctexwin" : ["", ".eps", ".ps", ".wmf", ".bmp"],
+    "pdftex" : ["", ".png", ".pdf", ".jpg", ".mps", ".tif"],
+    "tcidvi" : [""],
+    "textures" : ["", ".ps", ".eps", ".pict"],
+    "truetex" : ["", ".eps", ".ps"],
+    "vtex" : ["", ".gif", ".png", ".jpg", ".tif", ".bmp", ".tga", ".pcx",
+              ".eps", ".ps", ".mps", ".emf", ".wmf"]
 }
 
 class Module (rubber.module_interface.Module):

@@ -14,12 +14,12 @@ from rubber.util import parse_line, prog_available
 from rubber.depend import Shell
 
 def check (source, target, context):
-	line = parse_line(context['command'], context)
-	return prog_available(line[0])
+    line = parse_line(context['command'], context)
+    return prog_available(line[0])
 
 def convert (source, target, context, env):
-	set = env.depends
-	result = Shell (set, parse_line(context['command'], context))
-	result.add_product (target)
-	result.add_source (source)
-	return result
+    set = env.depends
+    result = Shell (set, parse_line(context['command'], context))
+    result.add_product (target)
+    result.add_source (source)
+    return result
