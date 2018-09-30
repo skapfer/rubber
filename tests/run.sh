@@ -15,15 +15,12 @@ while [ 1 -le $# ]; do
     case $1 in
         --rmtmp)
             rm -rf $tmpdir
-            shift
             ;;
         -k)
             KEEP=true
-            shift
             ;;
         -v|-vv|-vvv)
             VERBOSE="$VERBOSE $1"
-            shift
             ;;
         --debchroot)
             # Dependencies inside Debian.
@@ -36,11 +33,11 @@ while [ 1 -le $# ]; do
                 texlive-metapost texlive-omega texlive-pictures transfig
             # combine is not packaged for Debian.
             touch combine/disable
-            shift
             ;;
         *)
             break
     esac
+    shift
 done
 
 echo "When a test fails, please remove the $tmpdir directory manually."
