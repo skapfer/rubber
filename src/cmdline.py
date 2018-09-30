@@ -6,9 +6,9 @@
 This is the command line interface for Rubber.
 """
 
+import argparse
 import os.path
 import sys
-import getopt
 import shutil
 import tempfile
 # bzip2 and/or gzip may be imported depending on command line options.
@@ -30,256 +30,209 @@ RUBBER_PLAIN = 0
 RUBBER_PIPE  = 1
 RUBBER_INFO  = 2
 
-class CommandLineOptions:
-    """
-    An instance is built by parse_opts from the command line options, then
-    read-only afterwards.
-
-    """
-    def __init__ (self, command_name):
-        self.max_errors = 10
-        self.place = "."
-        self.texpath = []
-        self.prologue = []
-        self.epilogue = []
-        self.include_only = None
-        self.compress = None
-        self.jobname = None
-        self.unsafe = False
-        self.short = False
-        if command_name == RUBBER_PLAIN:
-            self.force = False
-            self.clean = False
-            self.warn_boxes = False
-            self.warn_misc = False
-            self.warn_refs = False
-        elif command_name == RUBBER_PIPE:
-            self.keep_temp = False
-            self.warn_boxes = False
-            self.warn_misc = False
-            self.warn_refs = False
-        else:
-            self.info_action = None
-
-full_help_plain = _("""\
-usage: rubber [options] sources...
-available options:
-  -b, --bzip2              compress the final document with bzip2
-      --clean              remove produced files instead of compiling
-  -c, --command=CMD        run the directive CMD before parsing (see man page)
-  -e, --epilogue=CMD       run the directive CMD after parsing
-  -f, --force              force at least one compilation
-  -z, --gzip               compress the final document
-  -h, --help               display this help
-      --inplace            compile the documents from their source directory
-      --into=DIR           go to directory DIR before compiling
-      --jobname=NAME       set the job name for the first target
-  -n, --maxerr=NUM         display at most NUM errors (default: 10)
-  -m, --module=MOD[:OPTS]  use module MOD (with options OPTS)
-      --only=SOURCES       only include the specified SOURCES
-  -o, --post=MOD[:OPTS]    postprocess with module MOD (with options OPTS)
-  -d, --pdf                produce a pdf (synonym for -m pdftex or -o ps2pdf)
-  -p, --ps                 process through dvips (synonym for -o dvips)
-  -q, --quiet              suppress messages
-  -r, --read=FILE          read additional directives from FILE
-  -S, --src-specials       enable insertion of source specials
-      --synctex            enable SyncTeX support
-      --unsafe             permits the document to run external commands
-  -s, --short              display errors in a compact form
-  -I, --texpath=DIR        add DIR to the search path for LaTeX
-  -v, --verbose            increase verbosity
-      --version            print version information and exit
-  -W, --warn=TYPE          report warnings of the given TYPE (see man page)
-""")
-
 def parse_opts (command_name):
-    """
-    Parse the command-line arguments.
-    Returns the extra arguments (i.e. the files to operate on), or an
-    empty list, if no extra arguments are present.
-    Also set the log level according to -q/-v options.
-    """
-    # This implies that we cannot log from here.
-    logLevel = logging.WARNING
 
-    # Set the initial values for options.
-    options = CommandLineOptions (command_name)
-
-    try:
-        opts, args = getopt.gnu_getopt (
-            sys.argv [1:], "I:bc:de:fhklm:n:o:pqr:SsvW:z",
-            ["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
-             "help", "inplace", "into=", "jobname=", "keep", "maxerr=",
-             "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
-             "readopts=",
-             "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
-             "boxes", "check", "deps", "errors", "refs", "rules", "warnings",
-             "warn="])
-    except getopt.GetoptError as e:
-        raise rubber.SyntaxError (_("getopt error: %s") % str (e))
-
-    extra = []
-    using_dvips = False
-
-    for (opt,arg) in opts:
-        # obsolete options
-        if opt == "--cache":
-            print (_("ignoring unimplemented option %s") % opt)
-        elif opt in ("--readopts", "-l", "--landscape" ):
-            raise rubber.SyntaxError (_("option %s is no longer supported") % opt)
-
-        # info
-        elif opt in ("-h", "--help"):
-            if command_name == RUBBER_PLAIN:
-                print (full_help_plain)
-            elif command_name == RUBBER_PIPE:
-                print (full_help_pipe)
-            else:
-                print (full_help_info)
-            sys.exit (0)
-        elif opt == "--version":
-            print ("Rubber version: %s" % rubber.version.version)
-            sys.exit (0)
-
-        # mode of operation
-        elif opt == "--clean":
-            if command_name != RUBBER_PLAIN:
-                raise rubber.SyntaxError (_("--clean only allowed with rubber") )
-            options.clean = True
-
-        elif opt in ("-k", "--keep"):
-            if command_name == RUBBER_PIPE:
-                options.keep_temp = True
-            else:
-                raise rubber.SyntaxError (_("option %s only makes sense in pipe mode") % opt)
-
-        # compression etc. which affects which products exist
-        elif opt in ("-b", "--bzip2", "-z", "--gzip"):
-            algo = "bzip2" if opt in ("-b", "--bzip2") else "gzip"
-            if options.compress is None:
-                options.compress = algo
-            elif options.compress != algo:
-                raise SyntaxError (_("incompatible options: %s and %s") % (opt, "--" + options.compress))
-        elif opt in ("-c", "--command"):
-            options.prologue.append(arg)
-        elif opt in ("-e", "--epilogue"):
-            options.epilogue.append(arg)
-        elif opt in ("-f", "--force"):
-            if command_name != RUBBER_PLAIN:
-                raise rubber.SyntaxError (_("option %s only allowed for rubber") % opt)
-            options.force = True
-        elif opt == "--inplace":
-            if command_name == RUBBER_PIPE:
-                raise rubber.SyntaxError (_("option %s does not make sense for rubber-pipe") % opt)
-            if options.place != '.':
-                raise rubber.SyntaxError (_("only one --inplace/into option allowed"))
-            options.place = None
-        elif opt == "--into":
-            if options.place != '.':
-                raise rubber.SyntaxError (_("only one --inplace/into option allowed"))
-            options.place = arg
-        elif opt == "--jobname":
-            options.jobname = arg
-        elif opt in ("-n", "--maxerr"):
-            try:
-                options.max_errors = int(arg)
-            except ValueError:
-                raise SyntaxError (_('argument for %s must be an integer' % opt))
-        elif opt in ("-m", "--module"):
-            options.prologue.append("module " +
-                arg.replace(":", " ", 1))
-        elif opt == "--only":
-            if options.include_only is not None:
-                raise rubber.SyntaxError (_("only one --only allowed"))
-            options.include_only = arg.split(",")
-        elif opt in ("-o", "--post"):
-            if command_name == RUBBER_INFO:
-                raise rubber.SyntaxError (_("%s not allowed for rubber-info") % opt)
-            options.epilogue.append("module " +
-                arg.replace(":", " ", 1))
-        elif opt in ("-d", "--pdf"):
-            if using_dvips:
-                options.epilogue.append("module ps2pdf")
-            else:
-                options.prologue.append("module pdftex")
-        elif opt in ("-p", "--ps"):
-            options.epilogue.append("module dvips")
-            using_dvips = True
-        elif opt in ("-q", "--quiet"):
-            if logLevel < logging.ERROR:
-                logLevel += 10
-        # we continue to accept --shell-escape for now
-        elif opt in ("--unsafe", "--shell-escape"):
-            options.unsafe = True
-        elif opt in ("-r" ,"--read"):
-            options.prologue.append("read " + arg)
-        elif opt in ("-S", "--src-specials"):
-            options.prologue.append("set src-specials yes")
-        elif opt in ("-s", "--short"):
-            options.short = True
-        elif opt in ("--synctex"):
-            options.prologue.append("synctex")
-        elif opt in ("-I", "--texpath"):
-            options.texpath.append(arg)
-        elif opt in ("-v", "--verbose"):
-            if logging.DEBUG < logLevel:
-                logLevel -= 10
-        elif opt in ("-W", "--warn"):
-            if command_name == RUBBER_INFO:
-                raise rubber.Syntaxerror (_("%s does not make sense with rubber-info") % opt)
-            if arg == "all":
-                options.warn_boxes = True
-                options.warn_misc = True
-                options.warn_refs = True
-            elif arg == "boxes":
-                options.warn_boxes = True
-            elif arg == "misc":
-                options.warn_misc = True
-            elif arg == "refs":
-                options.warn_refs = True
-            else:
-                raise rubber.SyntaxError (_("unexpected value for option %s") % opt)
-        elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
-            if command_name != RUBBER_INFO:
-                raise rubber.SyntaxError (_("%s only allowed for rubber-info") % opt)
-            new_info_action = opt [2:]
-            if options.info_action not in (None, new_info_action):
-                raise rubber.SyntaxError (_("error: cannot have both '--%s' and '%s'") \
-                    % (options.info_action, opt))
-            options.info_action = new_info_action
-
-        elif arg == "":
-            extra.append(opt)
-        else:
-            extra.extend([arg, opt])
-
-    logging.basicConfig (level = logLevel)
-
-    ret = extra + args
-
-    if options.jobname is not None and len (ret) > 1:
-        raise rubber.SyntaxError (_("error: cannot give jobname and have more than one input file"))
+    class DeprecatedAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            raise rubber.SyntaxError ('obsolete option: ' + option_string)
 
     if command_name == RUBBER_PLAIN:
-        if len (ret) == 0:
-            raise rubber.SyntaxError (_("a file argument is required"))
-        if options.clean and options.force:
-            raise rubber.Syntaxerror (_("incompatible options: %s and %s") % ("--clean", "--force"))
-        if (options.warn_boxes or options.warn_refs or options.warn_misc) \
-           and options.clean:
-            raise rubber.Syntaxerror (_("incompatible options: %s and %s") % ("--clean", "--warn"))
-
+        parser = argparse.ArgumentParser (
+            description = 'Run TeX until a document is built.')
+        parser.add_argument ('source', nargs='+')
+        mode = parser.add_mutually_exclusive_group ()
+        mode.add_argument ('--clean', action='store_true',
+            help='remove produced files instead of compiling')
     elif command_name == RUBBER_PIPE:
-        if ret:
-            raise SyntaxError (_("rubber-pipe takes no file argument"))
-
+        parser = argparse.ArgumentParser (
+            description = 'Build a TeX document received on standard input.')
     else: # command_name == RUBBER_INFO
-        if len (ret) == 0:
-            raise rubber.SyntaxError (_("a file argument is requred"))
-        if options.info_action is None:
-            options.info_action = "check"
+        parser = argparse.ArgumentParser (description = """
+            Filter messages from the log created by a previous run of rubber.
+            One of the following options must be selected:
+            boxes, check (the default), deps, errors,refs, rules or warning.
+        """)
+        parser.add_argument ('source', nargs='+')
+        parser.set_defaults (info_action='check')
+        info_action = parser.add_mutually_exclusive_group ()
+        info_action.add_argument (
+            '--boxes',
+            action='store_const', dest='info_action', const='boxes',
+            help='report overfull and underfull boxes')
+        info_action.add_argument (
+            '--check',
+            action='store_const', dest='info_action', const='check',
+            help='report errors or warnings (default action)')
+        info_action.add_argument (
+            '--deps',
+            action='store_const', dest='info_action', const='deps',
+            help="show the target file's dependencies")
+        info_action.add_argument (
+            '--errors',
+            action='store_const', dest='info_action', const='errors',
+            help='show all errors that occured during compilation')
+        info_action.add_argument (
+            '--refs',
+            action='store_const', dest='info_action', const='refs',
+            help='show the list of undefined references')
+        info_action.add_argument (
+            '--rules',
+            action='store_const', dest='info_action', const='rules',
+            help='print the dependency rules including intermediate results')
+        info_action.add_argument (
+            '--warnings',
+            action='store_const', dest='info_action', const='warnings',
+            help='show all LaTeX warnings')
 
-    return options, ret
+    parser.set_defaults (
+        epilogue = [],
+        place    = '.',
+        prologue = [],
+    )
+    compress = parser.add_mutually_exclusive_group ()
+    place    = parser.add_mutually_exclusive_group ()
+
+    # Non-mode options, sorted by short name, else by long name.
+
+    compress.add_argument ('-b', '--bzip2', action='store_const',
+        const='bzip2', dest='compress',
+        help='compress the final document with bzip2')
+
+    parser.add_argument ('-c', '--command', action='append', dest='prologue',
+        metavar='CMD', help='run the directive CMD before parsing')
+
+    class PDFAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if 'module dvips' in namespace.epilogue:
+                namespace.epilogue.append ('module ps2pdf')
+            else:
+                namespace.prologue.append ('module pdftex')
+    parser.add_argument ('-d', '--pdf', action=PDFAction, nargs=0,
+        help="shortcut for -c 'module pdftex' or -e 'module ps2pdf'")
+
+    parser.add_argument ('-e', '--epilogue', action='append', metavar='CMD',
+        help='run the directive CMD after parsing')
+
+    if command_name == RUBBER_PLAIN:
+        mode.add_argument ('-f', '--force', action='store_true',
+            help='force at least one compilation')
+
+    if command_name != RUBBER_PIPE:
+        place.add_argument ('--inplace', action='store_const', dest='place',
+            const=None,
+            help='compile the documents from their source directory')
+
+    place.add_argument ('--into', dest='place', metavar='DIR',
+        help='go to directory DIR before compiling')
+
+    parser.set_defaults (texpath  = [])
+    parser.add_argument ('-I', '--texpath', action='append', metavar='DIR',
+        help='add DIR to the search path for LaTeX')
+
+    parser.add_argument ('--jobname',
+        help='set the job name for the first target')
+
+    if command_name == RUBBER_PIPE:
+        parser.add_argument ('-k', '--keep', action='store_true',
+            dest='keep_temp', help='keep the temporary files after compiling')
+
+    parser.add_argument ('-l', '--landscape', nargs=0,
+        action=DeprecatedAction,
+        help='obsolete option, must not be used')
+
+    class ModuleAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            namespace.prologue.append (
+                'module ' + values.replace (':', ' ', 1))
+    parser.add_argument ('-m', '--module', action=ModuleAction,
+        metavar='MOD[:OPTS]',  help="shortcut for -c 'module MOD OPTS'")
+
+    parser.add_argument ('-n', '--maxerr', type=int, default=10,
+        metavar='NUM', dest='max_errors',
+        help='display at most NUM errors (default %(default)i)')
+
+    class PostAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            namespace.epilogue.append (
+                'module ' + values.replace (':', ' ', 1))
+    if command_name != RUBBER_INFO:
+        parser.add_argument ('-o', '--post', action=PostAction,
+            metavar='MOD[:OPTS]', help="shortcut for -e 'module MOD OPTS'")
+
+    parser.add_argument ('--only', metavar='SOURCE[,SOURCE,...]',
+        dest='include_only', help='only include the specified SOURCES')
+
+    parser.add_argument ('-p', '--ps', action='append_const', dest='epilogue',
+        const='module dvips', help="shortcut for -e 'module dvips'")
+
+    parser.add_argument ('-q', '--quiet', action='count',
+        help='decrease verbosity (may be repeated)')
+
+    class ReadAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            namespace.prologue.append ('read ' + values)
+    parser.add_argument ('-r', '--read', action=ReadAction, metavar='FILE',
+        help="shortcut for -c 'read FILE'")
+
+    parser.add_argument ('--readopts', action=DeprecatedAction,
+        help='obsolete option, must not be used')
+
+    parser.add_argument ('-s', '--short', action='store_true',
+        help='display errors in a compact form')
+
+    parser.add_argument ('-S', '--src-specials', action='append_const',
+        dest='prologue', const='set src-specials yes',
+        help="shortcut for -c 'set src-specials yes'")
+
+    parser.add_argument ('--synctex', action='append_const', dest='prologue',
+        const='synctex', help='shortcut for -c synctex')
+
+    parser.add_argument ('--unsafe', '--shell-escape', action='store_true',
+        help='permits the document to run external commands')
+
+    parser.add_argument ('-v', '--verbose', action='count',
+        help='increase verbosity (may be repeated)')
+
+    parser.add_argument ('--version', action='version',
+        version='%(prog)s ' + rubber.version.version)
+
+    warn_values = ('all', 'boxes', 'misc', 'refs')
+    class WarnAction (argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if option_string == 'all':
+                namespace.warn_boxes = True
+                namespace.warn_misc  = True
+                namespace.warn_refs  = True
+            else:
+                setattr (namespace, 'warn_' + values, True)
+    if command_name != RUBBER_INFO:
+        parser.set_defaults (warn_boxes = False,
+                             warn_misc  = False,
+                             warn_refs  = False)
+        parser.add_argument ('-W', '--warn', action=WarnAction,
+            metavar='TYPE', choices=warn_values,
+            help='report warnings matching TYPE: '   + ','.join (warn_values))
+
+    compress.add_argument ('-z', '--gzip', action='store_const', const='gzip',
+        dest='compress', help='compress the final document with gzip')
+
+    args = parser.parse_args ()
+
+    if args.jobname is not None and 1 < len (args.source):
+        raise rubber.SyntaxError (_('--jobname requires at most one source'))
+
+    if command_name == RUBBER_PLAIN and args.clean \
+       and (args.warn_boxes or args.warn_refs or args.warn_misc):
+        raise rubber.Syntaxerror ('incompatible options: --clean and --warn')
+
+    logLevel = logging.WARNING
+    if args.verbose: logLevel -= 10*args.verbose
+    if args.quiet  : logLevel += 10*args.quiet
+    if logging.ERROR < logLevel: logLevel = logging.ERROR
+    if logLevel < logging.DEBUG: logLevel = logging.DEBUG
+    logging.basicConfig (level = logLevel)
+
+    return args
 
 def prepare_source (filename, command_name, env, options):
     """
@@ -319,9 +272,7 @@ def main (command_name):
     assert command_name in (RUBBER_PLAIN, RUBBER_PIPE, RUBBER_INFO)
 
     try:
-        options, args = parse_opts (command_name)
-
-        args = map (os.path.abspath, args)
+        options = parse_opts (command_name)
 
         if options.place is not None:
             options.place = os.path.abspath(options.place)
@@ -332,9 +283,12 @@ def main (command_name):
             # Generate a temporary source file, and pretend it has
             # been given on the command line.
             args = (prepare_source_pipe (), )
+        else:
+            args = options.source
 
         for src in args:
 
+            src = os.path.abspath (src)
             msg.debug (_("about to process file '%s'") % src)
 
             # Go to the appropriate directory
@@ -491,31 +445,6 @@ def display (short, kind, text, **info):
         assert kind == "warning"
         msg.warning (rubber.util._format (info, text))
 
-full_help_pipe = _("""\
-usage: rubber-pipe [options]
-available options:
-  -b, --bzip2              compress the final document with bzip2
-  -c, --command=CMD        run the directive CMD before parsing (see man page)
-  -e, --epilogue=CMD       run the directive CMD after parsing
-  -z, --gzip               compress the final document
-  -h, --help               display this help
-      --into=DIR           go to directory DIR before compiling
-  -k, --keep               keep the temporary files after compiling
-  -n, --maxerr=NUM         display at most NUM errors (default: 10)
-  -m, --module=MOD[:OPTS]  use module MOD (with options OPTS)
-      --only=SOURCES       only include the specified SOURCES
-  -o, --post=MOD[:OPTS]    postprocess with module MOD (with options OPTS)
-  -d, --pdf                produce a pdf (synonym for -m pdftex or -o ps2pdf)
-  -p, --ps                 process through dvips (synonym for -m dvips)
-  -q, --quiet              suppress messages
-  -r, --read=FILE          read additional directives from FILE
-  -S, --src-specials       enable insertion of source specials
-  -s, --short              display errors in a compact form
-  -I, --texpath=DIR        add DIR to the search path for LaTeX
-  -v, --verbose            increase verbosity
-      --version            print version information and exit
-""")
-
 def prepare_source_pipe ():
     """
     Dump the standard input in a file, and set up that file
@@ -558,22 +487,6 @@ def process_source_pipe (env, pipe_tempfile, options):
             if os.path.exists (pipe_tempfile):
                 msg.info (_("removing %s") % os.path.relpath (pipe_tempfile))
                 os.remove (pipe_tempfile)
-
-full_help_info = _("""\
-usage: rubber-info [options] source
-available options:
-  all options accepted by rubber(1)
-actions:
-  --boxes     report overfull and underfull boxes
-  --check     report errors or warnings (default action)
-  --deps      show the target file's dependencies
-  --errors    show all errors that occured during compilation
-  --help      display this help
-  --refs      show the list of undefined references
-  --rules     print the dependency rules including intermediate results
-  --version   print the program's version and exit
-  --warnings  show all LaTeX warnings
-""")
 
 def process_source_info (env, act, short):
     if act == "deps":
