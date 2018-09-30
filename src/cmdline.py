@@ -6,16 +6,17 @@
 This is the command line interface for Rubber.
 """
 
-import os
 import os.path
 import sys
 import getopt
 import shutil
 import tempfile
-
+# bzip2 and/or gzip may be imported depending on command line options.
 import rubber.converters.compressor
-from rubber.environment import Environment
-from rubber.depend import ERROR, CHANGED, UNCHANGED
+import rubber.converters.latex
+import rubber.converters.literate
+import rubber.depend
+import rubber.environment
 from rubber.util import _
 import logging
 msg = logging.getLogger (__name__)
@@ -293,23 +294,21 @@ def prepare_source (filename, command_name, env, options):
 
     base, ext = os.path.splitext (path)
 
-    from rubber.converters.literate import literate_preprocessors as lpp
-    if ext in lpp.keys ():
+    if ext in rubber.converters.literate.literate_preprocessors.keys ():
         src = base + ".tex"
         # FIXME kill src_node
-        src_node = lpp [ext] (env.depends, src, path)
+        src_node = rubber.converters.literate.literate_preprocessors [ext] (env.depends, src, path)
         if command_name == RUBBER_PLAIN and not options.clean:
             if not options.unsafe:
                 raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
             # Produce the source from its dependency rules, if needed.
-            if src_node.make () == ERROR:
+            if src_node.make () == rubber.depend.ERROR:
                 raise rubber.GenericError (_("Producing the main LaTeX file failed: '%s'") \
                     % src)
     else:
         src = path
 
-    from rubber.converters.latex import LaTeXDep
-    env.final = env.main = LaTeXDep (env, src, options.jobname)
+    env.final = env.main = rubber.converters.latex.LaTeXDep (env, src, options.jobname)
 
     return src
 
@@ -348,7 +347,7 @@ def main (command_name):
             # step, or dumping stdin.  thus, the input filename may change.
             # in case of build mode, preprocessors will be run as part of
             # prepare_source.
-            env = Environment ()
+            env = rubber.environment.Environment ()
             src = prepare_source (src, command_name, env, options)
 
             # safe mode is off during the prologue
@@ -430,7 +429,7 @@ def build (options, command_name, env):
 
     if command_name == RUBBER_PLAIN and options.force:
         ret = env.main.make(True)
-        if ret != ERROR and env.final is not env.main:
+        if ret != rubber.depend.ERROR and env.final is not env.main:
             ret = env.final.make()
         else:
             # This is a hack for the call to get_errors() below
@@ -439,7 +438,7 @@ def build (options, command_name, env):
     else:
         ret = env.final.make (force = False)
 
-    if ret == ERROR:
+    if ret == rubber.depend.ERROR:
         msg.info(_("There were errors compiling %s.") % srcname)
         number = options.max_errors
         for err in env.final.failed().get_errors():
@@ -451,7 +450,7 @@ def build (options, command_name, env):
         # Ensure a message even with -q.
         raise rubber.GenericError (_("Stopping because of compilation errors."))
 
-    if ret == UNCHANGED:
+    if ret == rubber.depend.UNCHANGED:
         msg.info(_("nothing to be done for %s") % srcname)
 
     if options.warn:
@@ -575,8 +574,7 @@ actions:
 
 def process_source_info (env, act, short):
     if act == "deps":
-        from rubber.depend import Leaf
-        deps = [ k for k,n in env.depends.items () if type (n) is Leaf ]
+        deps = [ k for k,n in env.depends.items () if type (n) is rubber.depend.Leaf ]
         print (" ".join (deps))
 
     elif act == "rules":
