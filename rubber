@@ -1,18 +1,5 @@
 #!/usr/bin/env python3
 # (c) Sebastian Kapfer, 2015
 # vim: et:ts=4
-import sys
-from rubber.cmdline import Build, Clean
-
-# --clean is actually a different mode of operation for rubber.
-# it changes the interpretation of several command-line flags,
-args = sys.argv[1:]
-try:
-    index = args.index ('--clean')
-except ValueError:
-    cmdline = Build
-else:
-    del args [index]
-    cmdline = Clean
-
-cmdline (args)
+import rubber.cmdline
+rubber.cmdline.main (command_name = rubber.cmdline.RUBBER_PLAIN)

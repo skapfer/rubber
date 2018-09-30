@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # (c) Sebastian Kapfer, 2015
 # vim: et:ts=4
-import sys
-from rubber.cmdline import Pipe
-Pipe (sys.argv [1:])
+import rubber.cmdline
+rubber.cmdline.main (command_name = rubber.cmdline.RUBBER_PIPE)

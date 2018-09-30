@@ -9,7 +9,7 @@ This is the command line interface for Rubber.
 import os
 import os.path
 import sys
-from getopt import getopt, GetoptError
+import getopt
 import shutil
 import tempfile
 
@@ -22,8 +22,22 @@ msg = logging.getLogger (__name__)
 import rubber.util
 import rubber.version
 
-class Main (object):
-    def __init__ (self, arguments):
+# The expected entry point is the main procedure, with one of these
+# three values to track the command name (which may differ from
+# sys.argv [0] for symbolic links).
+RUBBER_PLAIN = 0
+RUBBER_PIPE  = 1
+RUBBER_INFO  = 2
+
+class CommandLineOptions:
+    """
+    An instance is built by parse_opts from the command line options, then
+    read-only afterwards.
+
+    The instace is name "self" in order to reduce the diff with a
+    previous version.  FIXME: rename it to "options".
+    """
+    def __init__ (self, command_name):
         self.max_errors = 10
         self.place = "."
         self.path = []
@@ -41,28 +55,15 @@ class Main (object):
         self.warn_misc = 0
         self.warn_refs = 0
 
-        try:
-            self.main (arguments)
-        except KeyboardInterrupt:
-            msg.warning (_("*** interrupted"))
-            sys.exit (1)
-        except rubber.SyntaxError as e:
-            print (str (e), file=sys.stderr)
-            sys.exit (1)
-        except rubber.GenericError as e:
-            print (str (e), file=sys.stderr)
-            sys.exit (2)
+        if command_name == RUBBER_PLAIN:
+            self.force = False
+            self.clean = False
+        elif command_name == RUBBER_PIPE:
+            self.keep_temp = False
+        else:
+            self.info_action = None
 
-    def short_help (self):
-        """
-        Display a short description of the command line.
-        """
-        raise rubber.SyntaxError (_("""\
-usage: rubber [options] sources...
-For more information, try `rubber --help'."""))
-
-    help = """\
-This is Rubber version %s.
+full_help_plain = _("""\
 usage: rubber [options] sources...
 available options:
   -b, --bzip2              compress the final document with bzip2
@@ -91,21 +92,24 @@ available options:
   -v, --verbose            increase verbosity
       --version            print version information and exit
   -W, --warn=TYPE          report warnings of the given TYPE (see man page)
-"""
+""")
 
-    def parse_opts (self, cmdline):
+def parse_opts (command_name):
         """
         Parse the command-line arguments.
         Returns the extra arguments (i.e. the files to operate on), or an
         empty list, if no extra arguments are present.
+        Also set the log level according to -q/-v options.
         """
-        # if no arguments at all are given, print a short version of the
-        # help text and exit.
-        if cmdline == []:
-            self.short_help ()
+        # This implies that we cannot log from here.
+        logLevel = logging.WARNING
+
+        # Set the initial values for options.
+        self = CommandLineOptions (command_name)
+
         try:
-            opts, args = getopt(
-                cmdline, "I:bc:de:fhklm:n:o:pqr:SsvW:z",
+            opts, args = getopt.gnu_getopt (
+                sys.argv [1:], "I:bc:de:fhklm:n:o:pqr:SsvW:z",
                 ["bzip2", "cache", "clean", "command=", "epilogue=", "force", "gzip",
                  "help", "inplace", "into=", "jobname=", "keep", "maxerr=",
                  "module=", "only=", "post=", "pdf", "ps", "quiet", "read=",
@@ -113,7 +117,7 @@ available options:
                  "src-specials", "shell-escape", "synctex", "unsafe", "short", "texpath=", "verbose", "version",
                  "boxes", "check", "deps", "errors", "refs", "rules", "warnings",
                  "warn="])
-        except GetoptError as e:
+        except getopt.GetoptError as e:
             raise rubber.SyntaxError (_("getopt error: %s") % str (e))
 
         extra = []
@@ -122,13 +126,18 @@ available options:
         for (opt,arg) in opts:
             # obsolete options
             if opt == "--cache":
-                msg.warning (_("ignoring unimplemented option %s") % opt)
+                print (_("ignoring unimplemented option %s") % opt)
             elif opt in ("--readopts", "-l", "--landscape" ):
                 raise rubber.SyntaxError (_("option %s is no longer supported") % opt)
 
             # info
             elif opt in ("-h", "--help"):
-                print (_(self.help) % rubber.version.version)
+                if command_name == RUBBER_PLAIN:
+                    print (full_help_plain)
+                elif command_name == RUBBER_PIPE:
+                    print (full_help_pipe)
+                else:
+                    print (full_help_info)
                 sys.exit (0)
             elif opt == "--version":
                 print ("Rubber version: %s" % rubber.version.version)
@@ -136,9 +145,12 @@ available options:
 
             # mode of operation
             elif opt == "--clean":
-                msg.warning (_("ignoring duplicate or incompatible option %s") % opt)
+                if command_name != RUBBER_PLAIN:
+                    raise rubber.SyntaxError (_("--clean only allowed with rubber") )
+                self.clean = True
+
             elif opt in ("-k", "--keep"):
-                if isinstance (self, Pipe):
+                if command_name == RUBBER_PIPE:
                     self.keep_temp = True
                 else:
                     raise rubber.SyntaxError (_("option %s only makes sense in pipe mode") % opt)
@@ -148,31 +160,42 @@ available options:
                 algo = "bzip2" if opt in ("-b", "--bzip2") else "gzip"
                 if self.compress is None:
                     self.compress = algo
-                elif self.compress == algo:
-                    msg.info (_("ignoring redundant option %s") % opt)
-                else:
-                    msg.warning (_("ignoring option {o} with compressor {c}").format (o=opt, c=self.compress))
+                elif self.compress != algo:
+                    raise SyntaxError (_("incompatible options: %s and %s") % (opt, "--" + self.compress))
             elif opt in ("-c", "--command"):
                 self.prologue.append(arg)
             elif opt in ("-e", "--epilogue"):
                 self.epilogue.append(arg)
             elif opt in ("-f", "--force"):
+                if command_name != RUBBER_PLAIN:
+                    raise rubber.SyntaxError (_("option %s only allowed for rubber") % opt)
                 self.force = True
             elif opt == "--inplace":
+                if command_name == RUBBER_PIPE:
+                    raise rubber.SyntaxError (_("option %s does not make sense for rubber-pipe") % opt)
+                if self.place != '.':
+                    raise rubber.SyntaxError (_("only one --inplace/into option allowed"))
                 self.place = None
             elif opt == "--into":
+                if self.place != '.':
+                    raise rubber.SyntaxError (_("only one --inplace/into option allowed"))
                 self.place = arg
             elif opt == "--jobname":
                 self.jobname = arg
             elif opt in ("-n", "--maxerr"):
+              try:
                 self.max_errors = int(arg)
+              except ValueError:
+                 raise SyntaxError (_('argument for %s must be an integer' % opt))
             elif opt in ("-m", "--module"):
                 self.prologue.append("module " +
                     arg.replace(":", " ", 1))
             elif opt == "--only":
+                if self.include_only is not None:
+                    raise rubber.SyntaxError (_("only one --only allowed"))
                 self.include_only = arg.split(",")
             elif opt in ("-o", "--post"):
-                if isinstance (self, Info):
+                if command_name == RUBBER_INFO:
                     raise rubber.SyntaxError (_("%s not allowed for rubber-info") % opt)
                 self.epilogue.append("module " +
                     arg.replace(":", " ", 1))
@@ -185,9 +208,8 @@ available options:
                 self.epilogue.append("module dvips")
                 using_dvips = True
             elif opt in ("-q", "--quiet"):
-                lvl = rubber.logger.getEffectiveLevel ()
-                if lvl < logging.ERROR:
-                    rubber.logger.setLevel (lvl + 10)
+                if logLevel < logging.ERROR:
+                    logLevel += 10
             # we continue to accept --shell-escape for now
             elif opt in ("--unsafe", "--shell-escape"):
                 self.unsafe = True
@@ -202,42 +224,62 @@ available options:
             elif opt in ("-I", "--texpath"):
                 self.path.append(arg)
             elif opt in ("-v", "--verbose"):
-                lvl = rubber.logger.getEffectiveLevel ()
-                if logging.DEBUG < lvl:
-                    rubber.logger.setLevel (lvl - 10)
+                if logging.DEBUG < logLevel:
+                    logLevel -= 10
             elif opt in ("-W", "--warn"):
                 self.warn = 1
                 if arg == "all":
                     self.warn_boxes = 1
                     self.warn_misc = 1
                     self.warn_refs = 1
-                if arg == "boxes":
+                elif arg == "boxes":
                     self.warn_boxes = 1
                 elif arg == "misc":
                     self.warn_misc = 1
                 elif arg == "refs":
                     self.warn_refs = 1
+                else:
+                    raise rubber.SyntaxError (_("unexpected value for option %s") % opt)
             elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
-                if not isinstance (self, Info):
+                if command_name != RUBBER_INFO:
                     raise rubber.SyntaxError (_("%s only allowed for rubber-info") % opt)
-                if self.info_action is not None:
+                new_info_action = opt [2:]
+                if self.info_action not in (None, new_info_action):
                     raise rubber.SyntaxError (_("error: cannot have both '--%s' and '%s'") \
                         % (self.info_action, opt))
-                self.info_action = opt[2:]
+                self.info_action = new_info_action
 
             elif arg == "":
                 extra.append(opt)
             else:
                 extra.extend([arg, opt])
 
+        logging.basicConfig (level = logLevel)
+
         ret = extra + args
 
         if self.jobname is not None and len (ret) > 1:
             raise rubber.SyntaxError (_("error: cannot give jobname and have more than one input file"))
 
-        return ret
+        if command_name == RUBBER_PLAIN:
+            if len (ret) == 0:
+                raise rubber.SyntaxError (_("a file argument is required"))
+            if self.clean and self.force:
+                raise rubber.Syntaxerror (_("incompatible options: %s and %s") % ("--clean", "--force"))
 
-    def prepare_source (self, filename):
+        elif command_name == RUBBER_PIPE:
+            if ret:
+                raise SyntaxError (_("rubber-pipe takes no file argument"))
+
+        else: # command_name == RUBBER_INFO
+            if len (ret) == 0:
+                raise rubber.SyntaxError (_("a file argument is requred"))
+            if self.info_action is None:
+                self.info_action = "check"
+
+        return self, ret
+
+def prepare_source (filename, command_name, env, self):
         """
         Prepare the dependency node for the main LaTeX run.
         Returns the filename of the main LaTeX source file, which might
@@ -248,7 +290,7 @@ available options:
         """
         path = rubber.util.find_resource (filename, suffix=".tex")
 
-        if not path:
+        if path is None:
             raise rubber.GenericError (_("Main document not found: '%s'") % filename)
 
         base, ext = os.path.splitext (path)
@@ -257,8 +299,8 @@ available options:
         if ext in lpp.keys ():
             src = base + ".tex"
             # FIXME kill src_node
-            src_node = lpp[ext] (self.env.depends, src, path)
-            if isinstance (self, Build):
+            src_node = lpp [ext] (env.depends, src, path)
+            if command_name == RUBBER_PLAIN and not self.clean:
                 if not self.unsafe:
                     raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
                 # Produce the source from its dependency rules, if needed.
@@ -269,18 +311,15 @@ available options:
             src = path
 
         from rubber.converters.latex import LaTeXDep
-        self.env.final = self.env.main = LaTeXDep (self.env, src, self.jobname)
+        env.final = env.main = LaTeXDep (env, src, self.jobname)
 
         return src
 
-    def main (self, cmdline):
-        """
-        Run Rubber for the specified command line. This processes each
-        specified source in order (for making or cleaning). If an error
-        happens while making one of the documents, the whole process stops.
-        The method returns the program's exit code.
-        """
-        args = self.parse_opts (cmdline)
+def main (command_name):
+    assert command_name in (RUBBER_PLAIN, RUBBER_PIPE, RUBBER_INFO)
+
+    try:
+        self, args = parse_opts (command_name)
 
         args = map (os.path.abspath, args)
 
@@ -289,7 +328,14 @@ available options:
 
         msg.debug (_("This is Rubber version %s.") % rubber.version.version)
 
+        if command_name == RUBBER_PIPE:
+            # Generate a temporary source file, and pretend it has
+            # been given on the command line.
+            args = (prepare_source_pipe (), )
+
         for src in args:
+
+            msg.debug (_("about to process file '%s'") % src)
 
             # Go to the appropriate directory
             try:
@@ -304,11 +350,11 @@ available options:
             # step, or dumping stdin.  thus, the input filename may change.
             # in case of build mode, preprocessors will be run as part of
             # prepare_source.
-            env = self.env = Environment ()
-            src = self.prepare_source (src)
+            env = Environment ()
+            src = prepare_source (src, command_name, env, self)
 
             # safe mode is off during the prologue
-            self.env.is_in_unsafe_mode_ = True
+            env.is_in_unsafe_mode_ = True
 
             if self.include_only is not None:
                 env.main.includeonly (self.include_only)
@@ -331,7 +377,7 @@ available options:
             env.main.vars = saved_vars
 
             # safe mode is enforced for anything that comes from the .tex file
-            self.env.is_in_unsafe_mode_ = self.unsafe
+            env.is_in_unsafe_mode_ = self.unsafe
 
             env.main.parse()
 
@@ -348,29 +394,44 @@ available options:
                     import gzip
                     env.final = rubber.converters.compressor.Node (
                         env.depends, gzip.GzipFile, '.gz', filename)
-                else: # self.compress == 'bzip2'
+                else:
+                    assert self.compress == 'bzip2'
                     import bz2
                     env.final = rubber.converters.compressor.Node (
                         env.depends, bz2.BZ2File, '.bz2', filename)
 
-            self.process_source (env)
+            if command_name == RUBBER_PIPE:
+                # can args [0] be different from src here?
+                process_source_pipe (env, args [0], self)
+            elif command_name == RUBBER_INFO:
+                process_source_info (env, self.info_action, self.short)
+            elif self.clean:
+                # ex self.clean ()
+                for dep in env.final.set.values ():
+                    dep.clean ()
+            else:
+                build (self, RUBBER_PLAIN, env)
 
-    def clean (self, env):
-        """
-        Remove all products.
-        This function should never throw or call exit
-        """
-        for dep in env.final.set.values ():
-            dep.clean ()
+    except KeyboardInterrupt:
+        msg.warning (_("*** interrupted"))
+        sys.exit (1)
+    except rubber.SyntaxError as e:
+        print (str (e), file=sys.stderr)
+        sys.exit (1)
+    except rubber.GenericError as e:
+        print (str (e), file=sys.stderr)
+        sys.exit (2)
 
-    def build (self, env):
+def build (self, command_name, env):
         """
         Build the final product.
         """
+        assert command_name == RUBBER_PIPE \
+                or (command_name == RUBBER_PLAIN and not self.clean)
         srcname = env.main.sources[0]
         # FIXME unindent, untangle
         if True:
-            if self.force:
+            if command_name == RUBBER_PLAIN and self.force:
                 ret = env.main.make(True)
                 if ret != ERROR and env.final is not env.main:
                     ret = env.final.make()
@@ -379,7 +440,7 @@ available options:
                     # to work when compiling failed when using -f.
                     env.final.failed_dep = env.main.failed_dep
             else:
-                ret = env.final.make(self.force)
+                ret = env.final.make (force = False)
 
             if ret == ERROR:
                 msg.info(_("There were errors compiling %s.") % srcname)
@@ -388,7 +449,7 @@ available options:
                     if number == 0:
                         msg.info(_("More errors."))
                         break
-                    self.display (**err)
+                    display (self.short, **err)
                     number -= 1
                 # Ensure a message even with -q.
                 raise rubber.GenericError (_("Stopping because of compilation errors."))
@@ -404,9 +465,9 @@ available options:
                     return 1
                 for err in log.parse(boxes=self.warn_boxes,
                     refs=self.warn_refs, warnings=self.warn_misc):
-                    self.display (**err)
+                    display (self.short, **err)
 
-    def display (self, kind, text, **info):
+def display (short, kind, text, **info):
         """
         Print an error or warning message. The argument 'kind' indicates the
         kind of message, among "error", "warning", "abort", the argument
@@ -417,41 +478,21 @@ available options:
             if text[0:13] == "LaTeX Error: ":
                 text = text[13:]
             msg.warning (rubber.util._format (info, text))
-            if "code" in info and info["code"] and not self.short:
+            if "code" in info and info["code"] and not short:
                 if "macro" in info:
                     del info["macro"]
                 msg.warning (rubber.util._format (info, _("leading text: ") + info["code"]))
         elif kind == "abort":
-            if self.short:
+            if short:
                 m = _("compilation aborted ") + info["why"]
             else:
                 m = _("compilation aborted: %s %s") % (text, info["why"])
             msg.warning (rubber.util._format (info, m))
-        elif kind == "warning":
+        else:
+            assert kind == "warning"
             msg.warning (rubber.util._format (info, text))
 
-class Clean (Main):
-    """
-    rubber --clean
-    """
-    def process_source (self, env):
-        self.clean (env)
-
-class Build (Main):
-    """
-    plain rubber
-    """
-    def parse_opts (self, cmdline):
-        self.force = False
-        return super (Build, self).parse_opts (cmdline)
-
-    def process_source (self, env):
-        self.build (env)
-
-class Pipe (Main):
-
-    help = """\
-This is Rubber version %s.
+full_help_pipe = _("""\
 usage: rubber-pipe [options]
 available options:
   -b, --bzip2              compress the final document with bzip2
@@ -474,31 +515,13 @@ available options:
   -I, --texpath=DIR        add DIR to the search path for LaTeX
   -v, --verbose            increase verbosity
       --version            print version information and exit
-"""
+""")
 
-    def short_help (self):
-        # normally, Rubber prints a short help text if no arguments
-        # at all are given.  This is valid for rubber-pipe, though.
-        pass
-
-    def parse_opts (self, cmdline):
-        self.keep_temp = False
-        args = super (Pipe, self).parse_opts (cmdline)
-        # rubber-pipe doesn't take file arguments
-        for arg in args:
-            msg.warning (_("rubber-pipe takes no file argument, ignoring %s") % arg)
-        if self.place is None:
-            raise rubber.SyntaxError (_("--inplace only allowed with a filename argument"))
-        # hack: force is required by self.build
-        self.force = False
-        return [ "-" ]   # this will be stdin
-
-    def prepare_source (self, filename):
+def prepare_source_pipe ():
         """
         Dump the standard input in a file, and set up that file
         the same way we would normally process LaTeX sources.
         """
-        assert filename.endswith ("-")  # filename is ignored
 
         try:
             # Make a temporary on-disk copy of the standard input,
@@ -506,21 +529,21 @@ available options:
             # The name will have the form "rubtmpXXX.tex.
             with tempfile.NamedTemporaryFile (suffix='.tex', prefix='rubtmp', dir='.', delete=False) as srcfile:
                 # note the tempfile name so we can remove it later
-                self.pipe_tempfile = srcfile.name
+                pipe_tempfile = srcfile.name
                 # copy stdin into the tempfile
-                msg.info (_("saving the input in %s") % self.pipe_tempfile)
+                msg.info (_("saving the input in %s") % pipe_tempfile)
                 shutil.copyfileobj (sys.stdin.buffer, srcfile)
         except IOError:
             raise rubber.GenericError (_("cannot create temporary file for the main LaTeX source"))
 
-        return super (Pipe, self).prepare_source (self.pipe_tempfile)
+        return pipe_tempfile
 
-    def process_source (self, env):
+def process_source_pipe (env, pipe_tempfile, self):
         """
         Build the document, and dump the result on stdout.
         """
         try:
-            self.build (env)
+            build (self, RUBBER_PIPE, env)
             filename = env.final.products[0]
             try:
                 # dump the results on standard output
@@ -531,24 +554,13 @@ available options:
         finally:
             # clean the intermediate files
             if not self.keep_temp:
-                self.clean (env)
-                if os.path.exists (self.pipe_tempfile):
-                    msg.info (_("removing %s") % os.path.relpath (self.pipe_tempfile))
-                    os.remove (self.pipe_tempfile)
+                for dep in env.final.set.values ():
+                    dep.clean ()
+                if os.path.exists (pipe_tempfile):
+                    msg.info (_("removing %s") % os.path.relpath (pipe_tempfile))
+                    os.remove (pipe_tempfile)
 
-class Info (Main):
-    def __init__ (self, arguments):
-        super (Info, self).__init__ (arguments)
-        # FIXME why?
-        self.max_errors = -1
-
-    def short_help (self):
-        raise rubber.SyntaxError (_("""\
-usage: rubber-info [options] source
-For more information, try `rubber-info --help'."""))
-
-    help = """\
-This is Rubber's information extractor version %s.
+full_help_info = _("""\
 usage: rubber-info [options] source
 available options:
   all options accepted by rubber(1)
@@ -562,25 +574,17 @@ actions:
   --rules     print the dependency rules including intermediate results
   --version   print the program's version and exit
   --warnings  show all LaTeX warnings
-"""
+""")
 
-    def parse_opts (self, cmdline):
-        self.info_action = None
-        ret = super (Info, self).parse_opts (cmdline)
-        if self.info_action is None:
-            self.info_action = "check"
-        return ret
-
-    # FIXME rewrite
-    def process_source (self, env):
-        if self.info_action == "deps":
+def process_source_info (env, act, short):
+    if act == "deps":
             from rubber.depend import Leaf
             deps = [ k for k,n in env.depends.items () if type (n) is Leaf ]
             print (" ".join (deps))
 
-        elif self.info_action == "rules":
+    elif act == "rules":
             seen = {}
-            next = [self.env.final]
+            next = [env.final]
             while len(next) > 0:
                 node = next[0]
                 next = next[1:]
@@ -592,61 +596,54 @@ actions:
                 print ("\n%s:" % " ".join (node.products))
                 print (" ".join (node.sources))
                 next.extend(node.source_nodes())
-        else:
-            self.info_log (self.info_action)
 
-    # FIXME rewrite
-    def info_log (self, act):
-        """
-        Check for a log file and extract information from it if it exists,
-        accroding to the argument's value.
-        """
-        log = self.env.main.log
-        if not self.env.main.parse_log ():
+    else:
+        # Check for a log file and extract information from it if it exists,
+        # accroding to the argument's value.
+        log = env.main.log
+        if not env.main.parse_log ():
             raise rubber.GenericError (_("Parsing the log file failed"))
 
         if act == "boxes":
             for err in log.get_boxes():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There is no bad box."))
         elif act == "check":
             finished = False
             for err in log.get_errors ():
-                self.display (**err)
+                display (short, **err)
                 finished = True
             if finished:
                 return 0
             msg.info(_("There was no error."))
             for err in log.get_references():
-                self.display (**err)
+                display (short, **err)
                 finished = True
             if finished:
                 return 0
             msg.info(_("There is no undefined reference."))
             for err in log.get_warnings():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There is no warning."))
             for err in log.get_boxes ():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There is no bad box."))
         elif act == "errors":
             for err in log.get_errors():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There was no error."))
         elif act == "refs":
             for err in log.get_references():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There is no undefined reference."))
-        elif act == "warnings":
+        else:
+            assert act == "warnings"
             for err in log.get_warnings ():
-                self.display (**err)
+                display (short, **err)
             else:
                 msg.info(_("There is no warning."))
-        else:
-            raise rubber.GenericError (_("\
-I don't know the action `%s'. This should not happen.\n") % act)
