@@ -23,6 +23,3 @@ class Module (rubber.module_interface.Module):
 
         document.hook_macro ("bibliography", "a", self.dep.hook_bibliography)
         document.hook_macro ("bibliographystyle", "a", self.dep.hook_bibliographystyle)
-
-    def command (self, cmd, args):
-        self.dep.bib_command (cmd, args)

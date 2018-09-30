@@ -55,7 +55,7 @@ class Module (rubber.module_interface.Module):
 
         for name in names:
             if name in self.bibs:
-                self.bibs[name].bib_command (cmd, args)
+                super ().command (cmd, args, _dep = self.bibs [name])
             elif name in self.commands:
                 self.commands [name].append ([cmd, args])
             else:
@@ -69,8 +69,8 @@ class Module (rubber.module_interface.Module):
         self.doc.hook_macro('bibliographystyle' + name, 'a',
                             bib.hook_bibliographystyle)
         for cmd in self.defaults:
-            bib.bib_command (*cmd)
+            super ().command (*cmd, _dep = bib)
         if name in self.commands:
             for cmd in self.commands [name]:
-                bib.bib_command (*cmd)
+                super ().command (*cmd, _dep = bib)
         msg.debug(_("bibliography %s registered") % name)

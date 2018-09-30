@@ -23,10 +23,10 @@ class BibToolDep (rubber.depend.Node):
         self.bib_paths = rubber.util.explode_path ("BIBINPUTS")
         self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
 
-    def bib_command (self, cmd, args):
-        getattr (self, "do_"+cmd) (*args)
-
-    def do_path (self, path):
+    def do_path (self, args):
+        if len (args) != 1:
+            raise SyntaxError (_("invalid syntax for directive '%s'") % "path")
+        path = args [0]
         self.bib_paths.insert (0, path)
 
     def run (self):
@@ -141,18 +141,25 @@ class BibTeXDep (BibToolDep):
     # The following method are used to specify the various datafiles that
     # BibTeX uses.
     #
-
-    def do_crossrefs (self, number):
+    def do_crossrefs (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+        number = args [0]
         self.crossrefs = number
 
-    def do_stylepath (self, path):
+    def do_stylepath (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+        path = args [0]
         self.bst_paths.insert (0, path)
 
-    def do_sorted (self, mode):
-        # this option is ignored for backwards compatibility
-        pass
+    def do_sorted (self, args):
+        msg.debug (_("directive '%s' is no longer supported") % "sorted")
 
-    def do_tool (self, tool):
+    def do_tool (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+        tool = args [0]
         # FIXME document this in user documentation
         self.tool = tool
 

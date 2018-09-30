@@ -13,7 +13,7 @@ import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
     def __init__ (self, document, opt):
-        document.do_module('graphics')
+        document.modules.register ('graphics')
         _, self.hook_includegraphics = document.hooks['includegraphics']
         # We proceed as if \epsfbox and \includegraphics were equivalent.
         document.hook_macro('epsfbox', 'oa', self.hook_epsfbox)

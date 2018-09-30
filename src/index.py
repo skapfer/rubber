@@ -41,13 +41,16 @@ class Index (rubber.depend.Node):
         self.style = None  # only for makeindex
         self.command_env = None
 
-    def do_language (self, lang):
+    def do_language (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+        lang = args [0]
         self.lang = lang
 
-    def do_modules (self, *args):
+    def do_modules (self, args):
         self.modules.extend(args)
 
-    def do_order (self, *args):
+    def do_order (self, args):
         for opt in args:
             if opt == "standard": self.opts = []
             elif opt == "german": self.opts.append("-g")
@@ -55,15 +58,24 @@ class Index (rubber.depend.Node):
             else: msg.warning(
                 _("unknown option '%s' for 'makeidx.order'") % opt)
 
-    def do_path (self, path):
+    def do_path (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "path")
+        path = args [0]
         self.path.append(path)
 
-    def do_style (self, style):
+    def do_style (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "style")
+        style = args [0]
         self.style = style
 
-    def do_tool (self, tool):
-        if tool not in ("makeindex", "xindy"):
-            msg.error(_("unknown indexing tool '%s'") % tool)
+    def do_tool (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "tool")
+        tool = args [0]
+        if tol not in ("makeindex", "xindy"):
+            msg.error (_("unknown indexing tool '%s'") % tool)
         self.cmd [0] = tool
 
     def run (self):

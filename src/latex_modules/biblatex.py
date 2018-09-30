@@ -31,9 +31,6 @@ class Module (rubber.module_interface.Module):
         # overwrite the hook which would load the bibtex module
         doc.hook_macro ("bibliographystyle", "a", self.dep.bibliographystyle)
 
-    def do_path (self, path):
-        self.dep.do_path (path)
-
 # for parsing the Biber log file
 re_updatefile = re.compile (
     ".*INFO - Found BibTeX data source '(?P<filename>.*)'$")
@@ -44,7 +41,7 @@ biber_to_rubber = { "ERROR": "error",
 
 class BibLaTeXDep (rubber.biblio.BibToolDep):
     def __init__ (self, doc, tool):
-        rubber.biblio.BibToolDep.__init__ (self, doc.set)
+        super ().__init__ (doc.set)
         self.doc = doc
         self.tool = tool
         self.blg = doc.basename (with_suffix = ".blg")

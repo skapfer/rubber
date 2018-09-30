@@ -74,23 +74,24 @@ class Module:
         to remove all the files that this modules generates.
         """
 
-    def command (self, cmd, args):
+    def command (self, cmd, args, _dep = None):
         """
         This is called when a directive for the module is found in the source.
         We treat syntax errors in the directive as fatal, aborting the run.
+
+        The _dep parameter is an implementation detail and must not
+        be used outside the latex_modules subdirectory.
+        When absent, self.dep is tried.
         """
         try:
-            handler = getattr (self, "do_" + cmd)
+            if _dep is None:
+                _dep = self.dep  # may raise AttributeError
+            handler = getattr (_dep, "do_" + cmd) # may raise AttributeError
         except AttributeError:
             # there is no do_ method for this directive, which means there
             # is no such directive.
             raise rubber.SyntaxError (_("no such directive '%s' (in module %s)") % (cmd, self.__module__))
-        try:
-            return handler (*args)
-        except TypeError:
-            # Python failed to coerce the arguments given into whatever
-            # the handler would like to see.  report a generic failure.
-            raise rubber.SyntaxError (_("invalid syntax for directive '%s' (in module %s)") % (cmd, self.__module__))
+        handler (args)
 
     def get_errors (self):
         """

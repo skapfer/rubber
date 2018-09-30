@@ -98,12 +98,7 @@ class Modules:
 
         if name in self.commands:
             for (cmd, args) in self.commands[name]:
-                try:
-                    mod.command (cmd, args)
-                except AttributeError:
-                    msg.warning(_("unknown directive '%s.%s'") % (name, cmd))
-                except TypeError:
-                    msg.warning(_("wrong syntax for '%s.%s'") % (name, cmd))
+                mod.command (cmd, args)
             del self.commands[name]
 
         self.objects[name] = mod
@@ -805,27 +800,32 @@ class LaTeXDep (rubber.depend.Node):
         # Calls to this method are actually translated into calls to "do_*"
         # methods, except for calls to module directives.
         lst = cmd.split(".", 1)
-        #try:
         if len(lst) > 1:
             self.modules.command(lst[0], lst[1], args)
-        elif not hasattr(self, "do_" + cmd):
-            msg.warning (rubber.util._format (pos, _("unknown directive '%s'") % cmd))
         else:
-            msg.debug(_("directive: %s") % ' '.join([cmd]+args))
-            getattr(self, "do_" + cmd)(*args)
-        #except TypeError:
-        #    msg.warning (rubber.util._format (pos, _("wrong syntax for '%s'") % cmd))
+            try:
+                handler = getattr (self, "do_" + cmd)
+            except AttributeError:
+                raise rubber.GenericError (rubber.util._format (pos, _("unknown directive '%s'") % cmd))
+            msg.debug (_("directive: %s %s") % (cmd, ' '.join (args)))
+            handler (args)
 
-    def do_alias (self, name, val):
-        if val in self.hooks:
-            self.hooks[name] = self.hooks[val]
-            self.hooks_version += 1
+    def do_alias (self, args):
+        if len (args) != 2:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "alias")
+        name, val = args
+        try:
+            h = self.hooks [val]
+        except KeyError:
+            raise rubber.SyntaxError (_("cannot alias unknown name %s") % val)
+        self.hooks [name] = h
+        self.hooks_version += 1
 
-    def do_clean (self, *args):
+    def do_clean (self, args):
         for file in args:
             self.removed_files.append(file)
 
-    def do_depend (self, *args):
+    def do_depend (self, args):
         for arg in args:
             file = self.env.find_file(arg)
             if file:
@@ -833,38 +833,48 @@ class LaTeXDep (rubber.depend.Node):
             else:
                 msg.warning (rubber.util._format (self.vars, _("dependency '%s' not found") % arg))
 
-    def do_make (self, file, *args):
+    def do_make (self, args):
+        if len (args) % 2 != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "make")
+        file = args [0]
         vars = { "target": file }
-        while len(args) > 1:
-            if args[0] == "from":
-                vars["source"] = args[1]
-            elif args[0] == "with":
-                vars["name"] = args[1]
+        for i in range (1, len (args), 2):
+            if args [i] == "from":
+                vars ["source"] = args [i + 1]
+            elif args [i] == "with":
+                vars ["name"] = args[1 + 1]
             else:
-                break
-            args = args[2:]
-        if len(args) != 0:
-            msg.error (rubber.util._format (self.vars, _("invalid syntax for 'make'")))
-            return
+                raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "make")
         self.env.conv_set(file, vars)
 
-    def do_module (self, mod, opt=None):
-        self.modules.register (mod, opt=opt)
+    def do_module (self, args):
+        if 0 == len (args) or 2 < len (args):
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "module")
+        self.modules.register (*args)
 
-    def do_onchange (self, file, cmd):
-        if not self.env.is_in_unsafe_mode_:
+    def do_onchange (self, args):
+        if len (args) != 2:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "onchange")
+        file, cmd = args
+        if self.env.is_in_unsafe_mode_:
+            self.onchange_cmd [file] = cmd
+            self.onchange_md5 [file] = md5_file(file)
+        else:
             msg.warning (_("Rubber directive 'onchange' is valid only in unsafe mode"))
-            return
-        self.onchange_cmd[file] = cmd
-        self.onchange_md5[file] = md5_file(file)
 
-    def do_paper (self, arg):
+    def do_paper (self, args):
         msg.warning (_("Rubber directive 'paper' is no longer supported"))
 
-    def do_path (self, name):
+    def do_path (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "path")
+        name = args [0]
         self.env.path.append(name)
 
-    def do_read (self, name):
+    def do_read (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") %  "read")
+        name = args [0]
         saved_vars = self.vars
         try:
             self.vars = self.vars.copy ()
@@ -885,14 +895,20 @@ class LaTeXDep (rubber.depend.Node):
         finally:
             self.vars = saved_vars
 
-    def do_rules (self, file):
+    def do_rules (self, args):
+        if len (args) != 1:
+            raise rubber.SyntaxError (rubber.util._format (self.vars, _("invalid syntax for directive '%s'") % cmd))
+        file = args [0]
         name = self.env.find_file(file)
         if name is None:
             msg.warning (rubber.util._format (self.vars, _("cannot read rule file %s") % file))
         else:
             self.env.converter.read_ini(name)
 
-    def do_set (self, name, val):
+    def do_set (self, args):
+        if len (args) != 2:
+            raise rubber.SyntaxError (rubber.util._format (self.vars, _("invalid syntax for directive '%s'") % cmd))
+        name, val = args
         if name in ('arguments',):
             msg.warning (_("cannot set list-type variable to scalar: set %s %s (ignored; use setlist, not set)") % (name, val))
         elif name in ('job',):
@@ -911,23 +927,30 @@ class LaTeXDep (rubber.depend.Node):
         else:
             msg.warning (rubber.util._format (self.vars, _("unknown variable: %s") % name))
 
-    def do_shell_escape (self):
+    def do_shell_escape (self, args):
+        if len (args) != 0:
+            raise rubber.SyntaxError (rubber.util._format (self.vars, _("invalid syntax for directive '%s'") % cmd))
         self.env.doc_requires_shell_ = True
 
-    def do_synctex (self):
+    def do_synctex (self, args):
+        if len (args) != 0:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
         self.env.synctex = True
 
-    def do_setlist (self, name, *val):
+    def do_setlist (self, args):
+        if len (args) == 0:
+            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+        name, val = args [0], args [1:]
         if name in ('arguments',):
             self.arguments.extend (val)
         else:
             msg.warning (rubber.util._format (self.vars, _("unknown list variable: %s") % name))
 
-    def do_produce (self, *args):
+    def do_produce (self, args):
         for arg in args:
             self.add_product(arg)
 
-    def do_watch (self, *args):
+    def do_watch (self, args):
         for arg in args:
             self.watch_file(arg)
 

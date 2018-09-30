@@ -12,13 +12,11 @@ When the name of the main compiler is "Omega" (instead of "TeX" for
 instance), then "odvips" is used instead of "dvips".
 """
 
-import abc
 from rubber.util import _
 import logging
 msg = logging.getLogger (__name__)
 import rubber.converters
 import rubber.depend
-import rubber.module_interface
 import rubber.util
 
 # FIXME: this class may probably be simplified a lot if inheriting
@@ -26,13 +24,10 @@ import rubber.util
 
 product_extension = { 'dvips':'ps', 'dvipdfm':'pdf' }
 
-class Module (rubber.depend.Node, rubber.module_interface.Module):
-    # This class may not be instantiated directly, only subclassed.
-    __metaclass__ = abc.ABCMeta
+class Dvip_Tool_Dep_Node (rubber.depend.Node):
 
     def __init__ (self, document, tool):
-        super (Module, self).__init__ (document.env.depends)
-
+        super ().__init__ (document.env.depends)
         self.tool = tool
         assert tool in ('dvipdfm', 'dvips')
         self.doc = document
@@ -45,8 +40,9 @@ class Module (rubber.depend.Node, rubber.module_interface.Module):
         self.add_product (self.source [:-3] + product_extension [tool])
         self.add_source (self.source)
         self.extra_args = []
+        self.delegate_commands_to = self
 
-    def do_options (self, *args):
+    def do_options (self, args):
         self.extra_args.extend (args)
 
     def run (self):

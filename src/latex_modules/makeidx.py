@@ -4,6 +4,7 @@
 import rubber.index
 import rubber.module_interface
 
-class Module (rubber.index.Index, rubber.module_interface.Module):
+class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
-        super (Module, self).__init__ (document, 'idx', 'ind', 'ilg')
+        self.dep = rubber.index.Index (document, 'idx', 'ind', 'ilg')
