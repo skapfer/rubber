@@ -47,18 +47,17 @@ class CommandLineOptions:
         self.jobname = None
         self.unsafe = False
         self.short = False
-
-        # FIXME when are these legal
-        self.warn = 0
-        self.warn_boxes = 0
-        self.warn_misc = 0
-        self.warn_refs = 0
-
         if command_name == RUBBER_PLAIN:
             self.force = False
             self.clean = False
+            self.warn_boxes = False
+            self.warn_misc = False
+            self.warn_refs = False
         elif command_name == RUBBER_PIPE:
             self.keep_temp = False
+            self.warn_boxes = False
+            self.warn_misc = False
+            self.warn_refs = False
         else:
             self.info_action = None
 
@@ -226,17 +225,18 @@ def parse_opts (command_name):
             if logging.DEBUG < logLevel:
                 logLevel -= 10
         elif opt in ("-W", "--warn"):
-            options.warn = 1
+            if command_name == RUBBER_INFO:
+                raise rubber.Syntaxerror (_("%s does not make sense with rubber-info") % opt)
             if arg == "all":
-                options.warn_boxes = 1
-                options.warn_misc = 1
-                options.warn_refs = 1
+                options.warn_boxes = True
+                options.warn_misc = True
+                options.warn_refs = True
             elif arg == "boxes":
-                options.warn_boxes = 1
+                options.warn_boxes = True
             elif arg == "misc":
-                options.warn_misc = 1
+                options.warn_misc = True
             elif arg == "refs":
-                options.warn_refs = 1
+                options.warn_refs = True
             else:
                 raise rubber.SyntaxError (_("unexpected value for option %s") % opt)
         elif opt in ("--boxes", "--check", "--deps", "--errors", "--refs", "--rules", "--warnings"):
@@ -265,6 +265,9 @@ def parse_opts (command_name):
             raise rubber.SyntaxError (_("a file argument is required"))
         if options.clean and options.force:
             raise rubber.Syntaxerror (_("incompatible options: %s and %s") % ("--clean", "--force"))
+        if (options.warn_boxes or options.warn_refs or options.warn_misc) \
+           and options.clean:
+            raise rubber.Syntaxerror (_("incompatible options: %s and %s") % ("--clean", "--warn"))
 
     elif command_name == RUBBER_PIPE:
         if ret:
@@ -453,7 +456,7 @@ def build (options, command_name, env):
     if ret == rubber.depend.UNCHANGED:
         msg.info(_("nothing to be done for %s") % srcname)
 
-    if options.warn:
+    if options.warn_boxes or options.warn_misc or options.warn_refs:
         # FIXME
         log = env.main.log
         if not env.main.parse_log ():
