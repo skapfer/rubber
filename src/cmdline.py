@@ -629,7 +629,7 @@ actions:
 			else:
 				msg.info(_("There is no warning."))
 			for err in log.get_boxes ():
-				self.display (*err)
+				self.display (**err)
 			else:
 				msg.info(_("There is no bad box."))
 		elif act == "errors":
