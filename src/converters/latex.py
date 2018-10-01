@@ -674,15 +674,17 @@ class LaTeXDep (rubber.depend.Node):
         """
         Use partial compilation, by appending a call to \\includeonly on the
         command line on compilation.
+        The 'files' string is copied verbatim.
+        It should be a comma-separated list of file names.
         """
         if self.engine == "VTeX":
             msg.error(_("I don't know how to do partial compilation on VTeX."))
             return
         if self.cmdline[-2][:13] == "\\includeonly{":
-            self.cmdline[-2] = "\\includeonly{" + ",".join(files) + "}"
+            self.cmdline[-2] = "\\includeonly{" + files + "}"
         else:
-            self.cmdline.insert(-1, "\\includeonly{" + ",".join(files) + "}")
-        for f in files:
+            self.cmdline.insert(-1, "\\includeonly{" + files + "}")
+        for f in files.split (','):
             self.include_only[f] = None
 
     def source (self):
