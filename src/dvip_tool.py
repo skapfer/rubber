@@ -35,7 +35,7 @@ class Dvip_Tool_Dep_Node (rubber.depend.Node):
         assert type (self.doc.env.final) is rubber.converters.latex.LaTeXDep
         self.source = self.doc.env.final.products[0]
         if not self.source.endswith ('.dvi'):
-            raise rubber.GenericError (_('Tool %sonly produces DVI') % tool)
+            raise rubber.GenericError (_('Tool %s only produces DVI') % tool)
         self.doc.env.final = self
         self.add_product (self.source [:-3] + product_extension [tool])
         self.add_source (self.source)
