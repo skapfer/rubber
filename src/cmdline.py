@@ -416,10 +416,10 @@ def main (command_name):
         msg.warning (_("*** interrupted"))
         sys.exit (1)
     except rubber.SyntaxError as e:
-        print (str (e), file=sys.stderr)
+        print ('error: ' + str (e), file=sys.stderr)
         sys.exit (1)
     except rubber.GenericError as e:
-        print (str (e), file=sys.stderr)
+        print ('error: ' + str (e), file=sys.stderr)
         sys.exit (2)
 
 def build (options, command_name, env):
