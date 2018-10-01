@@ -134,7 +134,7 @@ def parse_opts (command_name):
 
     if command_name == RUBBER_PIPE:
         parser.add_argument ('-k', '--keep', action='store_true',
-            dest='keep_temp', help='keep the temporary files after compiling')
+            help='keep the temporary files after compiling')
 
     parser.add_argument ('-l', '--landscape', nargs=0,
         action=DeprecatedAction,
@@ -148,8 +148,7 @@ def parse_opts (command_name):
         metavar='MOD[:OPTS]',  help="shortcut for -c 'module MOD OPTS'")
 
     parser.add_argument ('-n', '--maxerr', type=int, default=10,
-        metavar='NUM', dest='max_errors',
-        help='display at most NUM errors (default %(default)i)')
+        metavar='NUM', help='display at most NUM errors (default %(default)i)')
 
     class PostAction (argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -160,7 +159,7 @@ def parse_opts (command_name):
             metavar='MOD[:OPTS]', help="shortcut for -e 'module MOD OPTS'")
 
     parser.add_argument ('--only', metavar='SOURCE[,SOURCE,...]',
-        dest='include_only', help='only include the specified SOURCES')
+        help='only include the specified SOURCES')
 
     parser.add_argument ('-p', '--ps', action='append_const', dest='epilogue',
         const='module dvips', help="shortcut for -e 'module dvips'")
@@ -310,8 +309,8 @@ def main (command_name):
             # safe mode is off during the prologue
             env.is_in_unsafe_mode_ = True
 
-            if options.include_only is not None:
-                env.main.includeonly (options.include_only)
+            if options.only is not None:
+                env.main.includeonly (options.only)
 
             # at this point, the LaTeX source file must exist; if it is
             # the result of pre-processing, this has happened already.
@@ -397,7 +396,7 @@ def build (options, command_name, env):
 
     if ret == rubber.depend.ERROR:
         msg.info(_("There were errors compiling %s.") % srcname)
-        number = options.max_errors
+        number = options.maxerr
         for err in env.final.failed().get_errors():
             if number == 0:
                 msg.info(_("More errors."))
@@ -481,7 +480,7 @@ def process_source_pipe (env, pipe_tempfile, options):
             raise rubber.GenericError (_("error copying the product '%s' to stdout") % filename)
     finally:
         # clean the intermediate files
-        if not options.keep_temp:
+        if not options.keep:
             for dep in env.final.set.values ():
                 dep.clean ()
             if os.path.exists (pipe_tempfile):
