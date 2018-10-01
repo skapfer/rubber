@@ -122,6 +122,7 @@ class Modules:
 re_loghead = re.compile("This is [0-9a-zA-Z-]*")
 re_file = re.compile("(\\((?P<file>[^ \n\t(){}]*)|\\))")
 re_badbox = re.compile(r"(Ov|Und)erfull \\[hv]box ")
+re_rawbox = re.compile (r'^\\[hv]box\(')
 re_line = re.compile(r"(l\.(?P<line>[0-9]+)( (?P<code>.*))?$|<\*>)")
 re_cseq = re.compile(r".*(?P<seq>(\\|\.\.\.)[^ ]*) ?$")
 re_macro = re.compile(r"^(?P<macro>\\.*) ->")
@@ -425,6 +426,14 @@ class LogCheck (object):
                 skipping = 1
                 continue
 
+            # If the user asks to see the full bad box in the log,
+            # each line represents a character and may contain a
+            # closing parenthesis. This would confuse update_file().
+            # The human-readable part has already been reported.
+            if re_rawbox.match (line):
+                skipping = 1
+                continue
+
             # If there is no message, track source names and page numbers.
 
             last_file = self.update_file(line, pos, last_file)
@@ -449,17 +458,16 @@ class LogCheck (object):
         read (the new stack top, or the one before the last closing
         parenthesis).
         """
-        m = re_file.search(line)
-        while m:
+        while True:
+            m = re_file.search (line)
+            if not m:
+                return last
             if line[m.start()] == '(':
                 last = m.group("file")
                 stack.append(last)
             else:
-                last = stack[-1]
-                del stack[-1]
+                last = stack.pop ()
             line = line[m.end():]
-            m = re_file.search(line)
-        return last
 
     def update_page (self, line, before):
         """

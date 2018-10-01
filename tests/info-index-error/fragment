@@ -1,0 +1,5 @@
+# The log contains a dump of the whole bad box, with a character by line.
+# Such lines may contain unbalanced parenthesis.
+$python ../rubber.py         $VERBOSE doc
+$python ../rubber-info.py    $VERBOSE doc
+$python ../rubber.py --clean $VERBOSE doc
