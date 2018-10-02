@@ -1,11 +1,29 @@
 \documentclass{article}
 \usepackage{graphicx}
 \begin{document}
+File with extension given, no conversion:
+
 Lorem ipsum. \includegraphics{{sample.1}.eps}
+
+File in subdirectory, no conversion:
+
+Lorem ipsum. \includegraphics{subdir/{sample-in-subdir.1}.eps}
+
+Explicitly giving the extension, no conversion:
+
+Lorem ipsum. \includegraphics[ext=.eps,scale=.3]{{{sample.1}}}
+\includegraphics[ext=.eps,scale=.3]{sample}
+\includegraphics[ext=.eps,scale=.3]{{{sample}}}
+
+Letting TeX derive the extension, no conversion:
 
 Lorem ipsum. \includegraphics{{{sample.1}}}
 
+File with extension given, forcing rubber to do a conversion
+
 Lorem ipsum. \includegraphics{{empty1.0}.eps}
+
+Forcing rubber to do a conversion and to find the correct extension
 
 Lorem ipsum. \includegraphics{{{empty1.0}}}
 \end{document}

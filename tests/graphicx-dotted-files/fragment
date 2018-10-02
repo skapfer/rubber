@@ -1,7 +1,11 @@
 cp sample.eps sample.1.eps
+mkdir subdir
+cp sample.eps subdir/sample-in-subdir.1.eps
 
 $python ../rubber.py $VERBOSE doc.tex
 $python ../rubber.py $VERBOSE doc.tex
 $python ../rubber.py $VERBOSE --clean doc.tex
 
 rm empty1.0.eps sample.1.eps
+rm subdir/sample-in-subdir.1.eps
+rmdir subdir
