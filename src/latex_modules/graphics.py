@@ -93,28 +93,30 @@ class Module (rubber.module_interface.Module):
         # no suffixes are tried when the extension is explicit
 
         options = parse_keyval(optional)
-        if 'ext' in options:
-             # \includepackage[ext=.png]{foo}
-             allowed_suffixes = ['']
-             if options['ext']:
-                 name = name + options['ext']
-        elif name.startswith ('{{') and name.endswith ('}}'):
-            # \includepackage{{{foo}}}
-            allowed_suffixes = self.suffixes
-            name = name [2:-2]
-        elif name.startswith ('{'):
-            # \includepackage{{foo.1}.png}
-            i = name.index ('}')
-            assert 1 <= i
-            name = name [1:i] + name [i+1:]
+        allowed_suffixes = self.suffixes
+
+        # work out the file extension if given explicitly
+        if 'ext' in options and options['ext']:
+            # \includegraphics[ext=.png]{foo} and \includegraphics[ext=.png]{{{foo}}}
             allowed_suffixes = ['']
+            if name.startswith ('{{') and name.endswith ('}}'):
+                name = name [2:-2]
+            name = name + options['ext']
+        elif name.startswith ('{{') and name.endswith ('}}'):
+            # \includegraphics{{{foo}}}
+            name = name [2:-2]
         else:
             for suffix in self.suffixes:
+                # if extension is given, includegraphics will always search for that
+                # and disable automatic discovery
                 if suffix and name.endswith (suffix):
                     allowed_suffixes = ['']
+                    # support special syntax \includegraphics{subdir/{foo.1}.png}
+                    # at least some of the time
+                    if name.endswith ('}' + suffix):
+                        # try to emulate what the TeX parser does.
+                        name = re.sub('{([^{]*)}', '\\1', name)
                     break
-            else:
-                allowed_suffixes = self.suffixes
 
         # If the file name looks like it contains a control sequence or a macro
         # argument, forget about this \includegraphics.
