@@ -30,8 +30,8 @@ class Index (rubber.depend.Node):
         doc.add_product (src)
         self.add_product (tgt)
         self.add_product (log)
-        self.add_source (src, track_contents=True)
-        doc.add_source (tgt, track_contents=True)
+        self.add_source (src)
+        doc.add_source (tgt)
         self.doc = doc
         self.cmd = ["makeindex", src, "-q", "-o", tgt, "-t", log]
         self.lang = None   # only for xindy

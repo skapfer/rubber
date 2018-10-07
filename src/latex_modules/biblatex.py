@@ -58,8 +58,8 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
             self.source = doc.basename (with_suffix = ".aux")
             doc.add_product (doc.basename (with_suffix = "-blx.bib"))
 
-        self.add_source (self.source, track_contents = True)
-        doc.add_source (doc.basename (with_suffix = ".bbl"), track_contents = True)
+        self.add_source (self.source)
+        doc.add_source (doc.basename (with_suffix = ".bbl"))
 
     def build_command (self):
         return [ self.tool, self.source ]

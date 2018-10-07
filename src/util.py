@@ -6,8 +6,7 @@ This module contains utility functions and classes used by the main system and
 by the modules for various tasks.
 """
 
-import hashlib
-import os.path, stat, time
+import os.path, stat
 import errno
 import imp
 import re
@@ -45,25 +44,6 @@ def _format (where, text):
     if "pkg" in where:
         text = "[%s] %s" % (where["pkg"], text)
     return pos + text
-
-#-- Miscellaneous functions --{{{1
-
-def md5_file (fname):
-    """
-    Compute the MD5 sum of a given file.
-    Returns None if the file does not exist.
-    """
-    try:
-        m = hashlib.md5()
-        with open(fname, 'rb') as file:
-            for line in file:
-                m.update(line)
-        return m.digest()
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            return None
-        raise e
-
 
 #-- Keyval parsing --{{{1
 

@@ -123,8 +123,8 @@ class BibTeXDep (BibToolDep):
         self.blg = aux_basename + ".blg"
         self.add_product (self.bbl)
         self.add_product (self.blg)
-        self.add_source (self.aux, track_contents=True)
-        document.add_source (self.bbl, track_contents=True)
+        self.add_source (self.aux)
+        document.add_source (self.bbl)
 
         self.bst_file = None
         self.set_style ("plain")
@@ -168,7 +168,7 @@ class BibTeXDep (BibToolDep):
             filename = self.find_bib (name)
             if filename is not None:
                 self.db[name] = filename
-                self.add_source (filename, track_contents=True)
+                self.add_source (filename)
             else:
                 msg.error (_ ("cannot find bibliography resource %s") % name)
 
@@ -188,7 +188,7 @@ class BibTeXDep (BibToolDep):
         filename = rubber.util.find_resource (name, suffix = ".bst", paths = self.bst_paths)
         if filename is not None:
             self.bst_file = filename
-            self.add_source (filename, track_contents=True)
+            self.add_source (filename)
         elif name not in [ "plain", "alpha" ]:
             # do not complain about default styles coming with bibtex
             msg.warning (_("cannot find bibliography style %s") % name)

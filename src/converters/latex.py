@@ -15,6 +15,7 @@ import re
 import logging
 msg = logging.getLogger (__name__)
 from rubber.util import _, parse_line
+import rubber.contents
 import rubber.depend
 import rubber.latex_modules
 
@@ -612,8 +613,7 @@ class LaTeXDep (rubber.depend.Node):
 
         # description of the building process:
 
-        self.onchange_md5 = {}
-        self.onchange_cmd = {}
+        self.onchange = []
         self.removed_files = []
 
         # state of the builder:
@@ -660,15 +660,13 @@ class LaTeXDep (rubber.depend.Node):
     def basename (self, with_suffix=""):
         return self.vars["job"] + with_suffix
 
-    def set_primary_product_suffix (self, suffix=".dvi"):
+    def set_primary_product_suffix (self, suffix):
         """Change the suffix of the primary product"""
-        del self.set[self.products[0]]
-        self.products[0] = self.basename (with_suffix=suffix)
-        self.add_product (self.products[0])
+        self.replace_primary_product (self.basename (with_suffix = suffix))
 
     def new_aux_file (self, aux_file):
         """Register a new latex .aux file"""
-        self.add_source (aux_file, track_contents=True)
+        self.add_source (aux_file)
         self.add_product (aux_file)
         self.aux_files.append (aux_file)
 
@@ -744,8 +742,7 @@ class LaTeXDep (rubber.depend.Node):
             msg.debug(_("%s already parsed") % path)
             return
         self.processed_sources[path] = None
-        if path not in self.sources:
-            self.add_source(path)
+        self.add_source (path)
 
         try:
             saved_vars = self.vars.copy ()
@@ -869,8 +866,9 @@ class LaTeXDep (rubber.depend.Node):
             raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "onchange")
         file, cmd = args
         if self.env.is_in_unsafe_mode_:
-            self.onchange_cmd [file] = cmd
-            self.onchange_md5 [file] = md5_file(file)
+            file = rubber.files.factory (file)
+            # A list, because we will update the snapshot later.
+            self.onchange.append ([file, file.snapshot, cmd])
         else:
             msg.warning (_("Rubber directive 'onchange' is valid only in unsafe mode"))
 
@@ -1093,13 +1091,13 @@ class LaTeXDep (rubber.depend.Node):
 
     def h_tableofcontents (self, loc):
         self.add_product(self.basename (with_suffix=".toc"))
-        self.add_source(self.basename (with_suffix=".toc"), track_contents=True)
+        self.add_source (self.basename (with_suffix=".toc"))
     def h_listoffigures (self, loc):
         self.add_product(self.basename (with_suffix=".lof"))
-        self.add_source(self.basename (with_suffix=".lof"), track_contents=True)
+        self.add_source (self.basename (with_suffix=".lof"))
     def h_listoftables (self, loc):
         self.add_product(self.basename (with_suffix=".lot"))
-        self.add_source(self.basename (with_suffix=".lot"), track_contents=True)
+        self.add_source (self.basename (with_suffix=".lot"))
 
     def h_bibliography (self, loc, names):
         """
@@ -1250,14 +1248,15 @@ class LaTeXDep (rubber.depend.Node):
         """
         msg.debug(_("running post-compilation scripts..."))
 
-        for file, md5 in self.onchange_md5.items():
-            new = md5_file(file)
-            if md5 != new:
-                self.onchange_md5[file] = new
-                if new != None:
-                    msg.info (_("running %s") % self.onchange_cmd[file])
+        for l in self.onchange:
+            (file, old_contents, cmd) = l
+            new = file.snapshot ()
+            if old_contents != new:
+                l [1] = new
+                if new != rubber.files.NO_SUCH_FILE:
+                    msg.info (_("running %s") % cmd)
                     # FIXME portability issue: explicit reference to shell
-                    self.env.execute(["sh", "-c", self.onchange_cmd[file]])
+                    self.env.execute(("sh", "-c", cmd))
 
         for mod in self.modules.objects.values():
             if not mod.post_compile():
@@ -1320,7 +1319,7 @@ class LaTeXDep (rubber.depend.Node):
         watched. When the file changes during a compilation, it means that
         another compilation has to be done.
         """
-        self.add_source (filename, track_contents=True)
+        self.add_source (filename)
 
     def remove_suffixes (self, list):
         """

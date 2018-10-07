@@ -5,9 +5,9 @@ This module contains code for handling dependency graphs.
 
 import logging
 msg = logging.getLogger (__name__)
-import os.path, time
+import os.path
 import subprocess
-import rubber.util
+import rubber.contents
 from rubber.util import _
 
 # constants for the return value of Node.make:
@@ -31,56 +31,55 @@ class Node (object):
         self.set = set
         self.products = []
         self.sources = []
-        self.md5_for_source = {}
+        # A snapshot of each source as they were used during last
+        # successful build, or None if no build has been attempted yet.
+        self.snapshots = None
         # making is the lock guarding against making a node while making it
         self.making = False
-        # date: timestamp when this Node was last successfully built.
-        # is initialized to the mtime of the most recent product,
-        # or to None if a product is missing.
-        # when a build succeeds, it is set to time.time(), including fractional
-        # seconds. in case building fails, it is set to None.
-        self.date = 0  # 1970-01-01 (will be updated in add_product)
+        self.products_exist = False
         # failed_dep: the Node which caused the build to fail.  can be self
         # if this Node failed to build, or a dependency.
         self.failed_dep = None
 
-    def add_source (self, name, track_contents=False):
+    def add_source (self, name):
         """
         Register a new source for this node. If the source is unknown, a leaf
         node is made for it.
         """
-        if name not in self.set:
-            self.set[name] = Leaf(self.set, name)
-        if name not in self.sources:
-            self.sources.append(name)
-        if track_contents:
-            # mark as "hash unknown"
-            # only for the second build during this rubber run, we want to skip
-            # recompiling based on MD5 hashes.  for the first build, only the
-            # date counts.
-            self.md5_for_source[name] = None
+        # The same source may be inserted many times in the same
+        # document (an image containing a logo for example).
+        if name in self.sources:
+            assert name in self.set
+        else:
+            # The same file may be a source for various recipes.
+            if name not in self.set:
+                self.set[name] = Leaf(self.set, name)
+            self.sources.append (name)
 
     def remove_source (self, name):
         """
         Remove a source for this node.
         """
         self.sources.remove (name)
-        if name in self.md5_for_source:
-            del self.md5_for_source[name]
+        # FIXME: remove from dependency set?
 
     def add_product (self, name):
         """
         Register a new product for this node.
         """
         self.set[name] = self
-        if name not in self.products:
-            self.products.append(name)
-        try:
-            if self.date is not None:
-                self.date = max (os.path.getmtime (name), self.date)
-        except OSError:
-            # a product is missing, we should_make at least once.
-            self.date = None
+        if name in self.products:
+            raise rubber.GenericError ('already a product named ' + name)
+        self.products.append(name)
+
+    def replace_primary_product (self, name):
+        if name != self.products [0]:
+            if name in self.products:
+                raise rubber.GenericError ('already a product named ' + name)
+
+            del self.set [self.products [0]]
+            self.set [name] = self
+            self.products [0] = name
 
     def source_nodes (self):
         """
@@ -99,28 +98,29 @@ class Node (object):
         Check the dependencies. Return true if this node has to be recompiled,
         i.e. if some dependency is modified. Nothing recursive is done here.
         """
-        if not self.date:
+        if self.snapshots is None:
+            msg.debug (_("while making %s: first attempt, building"),
+                       self.products [0])
             return True
-        for source_name in self.sources:
+        if not self.products_exist:
+            msg.debug (_("while making %s: product missing, building"),
+                       self.products [0])
+            return True
+        for i in range (len (self.sources)):
+            source_name = self.sources [i]
             source = self.set[source_name]
-            # FIXME complain if source has been modified in an unplanned way
-            # NB: we ignore the case source.date == None (missing dependency) here.
-            # NB2: to be extra correct, equal (disk-precision) timestamps trigger a recompile.
-            if source.date == None:
-                msg.debug(_("Not rebuilding %s from %s: unknown source timestamp") % (self.products[0], source_name))
-            elif source.date < self.date:
-                msg.debug(_("Not rebuilding %s from %s: up to date") % (self.products[0], source_name))
-            elif source_name not in self.md5_for_source:
-                msg.debug(_("Rebuilding %s from %s: outdated, source not tracked") % (self.products[0], source_name))
-                return True
-            elif self.md5_for_source [source_name] == None:
-                msg.debug(_("Rebuilding %s from %s: outdated, previous source unknown") % (self.products[0], source_name))
-                return True
-            elif self.md5_for_source [source_name] != rubber.util.md5_file (source_name):
-                msg.debug(_("Rebuilding %s from %s: outdated, source really modified") % (self.products[0], source_name))
+            # NB: we ignore this case (missing dependency)
+            if not source.products_exist:
+                msg.debug (_("Not rebuilding %s from missing %s"),
+                           self.products [0], source_name)
+            elif self.snapshots is None \
+                 or self.snapshots [i] != rubber.contents.contents (source_name):
+                msg.debug (_("Rebuilding %s from outdated %s"),
+                           self.products [0], source_name)
                 return True
             else:
-                msg.debug(_("Not rebuilding %s from %s: outdated, but source unmodified") % (self.products[0], source_name))
+                msg.debug (_("Not rebuilding %s from unchanged %s"),
+                           self.products [0], source_name)
         return False
 
     def make (self, force=False):
@@ -145,19 +145,18 @@ class Node (object):
         rv = self.real_make (force)
         self.making = False
         if rv == ERROR:
-            self.date = None
+            self.products_exist = False
             assert self.failed_dep is not None
         else:
-            assert self.date is not None
+            assert self.products_exist or self.snapshots is None
             self.failed_dep = None
         return rv
 
     def real_make (self, force):
         rv = UNCHANGED
-        patience = 5
         primary_product = self.products[0]
-        msg.debug(_("make %s -> %s") % (primary_product, str (self.sources)))
-        while patience > 0:
+        msg.debug(_("make %s -> %r") % (primary_product, self.sources))
+        for patience in range (5):
             # make our sources
             for source_name in self.sources:
                 source = self.set[source_name]
@@ -178,20 +177,17 @@ class Node (object):
             if not must_make:
                 return rv
 
-            # record MD5 hash of source files as we now actually start the build
-            for source_name in self.md5_for_source.keys ():
-                self.md5_for_source[source_name] = rubber.util.md5_file (source_name)
+            # record snapshots of sources as we now actually start the build
+            self.snapshots = tuple (map (rubber.contents.contents, self.sources))
 
             # actually make
             if not self.run ():
                 self.failed_dep = self
                 return ERROR
 
-            self.date = time.time ()
+            self.products_exist = True
             rv = CHANGED
             force = False
-
-            patience -= 1
 
         self.failed_dep = self
         msg.error(_("while making %s: file contents does not seem to settle") % self.products[0])
@@ -232,7 +228,7 @@ class Node (object):
             if os.path.exists (file):
                 msg.info (_("removing %s") % os.path.relpath (file))
                 os.remove (file)
-        self.date = None
+        self.products_exist = False
 
 class Leaf (Node):
     """
@@ -256,11 +252,10 @@ class Leaf (Node):
             return UNCHANGED
 
     def run (self):
-        if self.date is not None:
-            return True
-        else:
+        result = self.snapshots is None or self.products_exist
+        if not result:
             msg.error(_("%r does not exist") % self.products[0])
-            return False
+        return result
 
     def clean (self):
         pass

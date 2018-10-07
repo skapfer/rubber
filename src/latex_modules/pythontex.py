@@ -24,7 +24,7 @@ class PythonTeXDep (rubber.depend.Shell):
         self.pytxmcr = self.pythontex_files + basename + '.pytxmcr'
 
         self.doc.add_product (self.pytxcode)
-        self.add_source (self.pytxcode, track_contents=True)
+        self.add_source (self.pytxcode)
         self.add_product (self.pytxmcr)
         self.doc.add_source (self.pytxmcr)
 

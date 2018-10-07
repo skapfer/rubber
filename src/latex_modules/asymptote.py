@@ -93,7 +93,7 @@ class Module (rubber.module_interface.Module):
         else:
             node.add_product (prefix + self.format)
             self.doc.add_source (prefix + self.format)
-        node.add_source (source, track_contents=True)
+        node.add_source (source)
 
 class Shell_Restoring_Aux (rubber.depend.Shell):
     """This class replaces Shell because of a bug in asymptote. Every run
