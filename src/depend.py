@@ -93,36 +93,6 @@ class Node (object):
         """
         return self.sources == []
 
-    def should_make (self):
-        """
-        Check the dependencies. Return true if this node has to be recompiled,
-        i.e. if some dependency is modified. Nothing recursive is done here.
-        """
-        if self.snapshots is None:
-            msg.debug (_("while making %s: first attempt, building"),
-                       self.products [0])
-            return True
-        if not self.products_exist:
-            msg.debug (_("while making %s: product missing, building"),
-                       self.products [0])
-            return True
-        for i in range (len (self.sources)):
-            source_name = self.sources [i]
-            source = self.set[source_name]
-            # NB: we ignore this case (missing dependency)
-            if not source.products_exist:
-                msg.debug (_("Not rebuilding %s from missing %s"),
-                           self.products [0], source_name)
-            elif self.snapshots is None \
-                 or self.snapshots [i] != rubber.contents.contents (source_name):
-                msg.debug (_("Rebuilding %s from outdated %s"),
-                           self.products [0], source_name)
-                return True
-            else:
-                msg.debug (_("Not rebuilding %s from unchanged %s"),
-                           self.products [0], source_name)
-        return False
-
     def make (self, force=False):
         """
         Make the destination file. This recursively makes all dependencies,
@@ -173,9 +143,32 @@ class Node (object):
                 elif source_rv == CHANGED:
                     rv = CHANGED
 
-            must_make = force or self.should_make ()
-            if not must_make:
-                return rv
+            if force:
+                msg.debug (_("while making %s: --force given"), primary_product)
+            elif self.snapshots is None:
+                msg.debug (_("while making %s: first attempt, building"),
+                           primary_product)
+            elif not self.products_exist:
+                msg.debug (_("while making %s: product missing, building"),
+                           primary_product)
+            else:
+                for i in range (len (self.sources)):
+                    source_name = self.sources [i]
+                    source = self.set [source_name]
+                    # NB: we ignore this case (missing dependency)
+                    if not source.products_exist:
+                        msg.debug (_("Not rebuilding %s from missing %s"),
+                                   primary_product, source_name)
+                    elif self.snapshots is None \
+                         or self.snapshots [i] != rubber.contents.contents (source_name):
+                        msg.debug (_("Rebuilding %s from outdated %s"),
+                                   primary_product, source_name)
+                        break
+                    else:
+                        msg.debug (_("Not rebuilding %s from unchanged %s"),
+                                   primary_product, source_name)
+                else:
+                    return rv
 
             # record snapshots of sources as we now actually start the build
             self.snapshots = tuple (map (rubber.contents.contents, self.sources))
