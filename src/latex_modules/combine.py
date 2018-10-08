@@ -35,7 +35,7 @@ class Module (rubber.module_interface.Module):
         self.combine_level -= 1
 
     def import_doc (self, loc, name):
-        file, _ = self.doc.input_file(name + '.tex')
+        file = self.doc.input_file(name + '.tex')
         if file:
             return
         base = basename(file[:-4])

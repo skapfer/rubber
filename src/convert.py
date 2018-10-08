@@ -102,7 +102,7 @@ class Converter (object):
         is absent, conversion is always assumed to be possible.
 
     - convert(source, target, context, env):
-        Produce a dependency node in the given set (via env.depends) to produce 'target' from
+        Produce a dependency node to produce 'target' from
         'source', using settings from the environment 'env'.
     """
     def __init__ (self, env):

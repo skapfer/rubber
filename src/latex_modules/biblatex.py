@@ -15,6 +15,7 @@ import re
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
         doc = document
 
@@ -40,8 +41,9 @@ biber_to_rubber = { "ERROR": "error",
     "WARN": "warning" }
 
 class BibLaTeXDep (rubber.biblio.BibToolDep):
+
     def __init__ (self, doc, tool):
-        super ().__init__ (doc.set)
+        super ().__init__ ()
         self.doc = doc
         self.tool = tool
         self.blg = doc.basename (with_suffix = ".blg")
@@ -60,6 +62,9 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
 
         self.add_source (self.source)
         doc.add_source (doc.basename (with_suffix = ".bbl"))
+
+    def main_source (self):
+        return self.source
 
     def build_command (self):
         return [ self.tool, self.source ]

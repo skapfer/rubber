@@ -23,7 +23,7 @@ class Index (rubber.depend.Node):
         LaTeX), the target file (the output of makeindex) and the transcript
         (e.g. .ilg) file.  Transcript is used by glosstex.py.
         """
-        super (Index, self).__init__ (doc.set)
+        super ().__init__ ()
         src = doc.basename (with_suffix = "." + source)
         tgt = doc.basename (with_suffix = "." + target)
         log = doc.basename (with_suffix = "." + transcript)

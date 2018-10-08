@@ -15,8 +15,9 @@ import re
 re_bbox = re.compile("%[%\w]*BoundingBox:")
 
 class Dep (rubber.depend.Node):
-    def __init__ (self, set, target, source):
-        super (Dep, self).__init__(set)
+
+    def __init__ (self, target, source):
+        super ().__init__ ()
         self.add_product (target)
         self.add_source (source)
         self.source = source
@@ -50,5 +51,4 @@ class Dep (rubber.depend.Node):
         return False
 
 def convert (source, target, context, env):
-    set = env.depends
-    return Dep(set, target, source)
+    return Dep (target, source)

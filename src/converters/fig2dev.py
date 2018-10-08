@@ -12,8 +12,6 @@ def check (source, target, context):
     return prog_available('fig2dev')
 
 def convert (source, target, context, env):
-    set = env.depends
-
     # The source path is embedded by fig2dev into the target,
     # causing problem with LaTeX and non-ASCII characters.
     # Always give a relative path.
@@ -27,7 +25,8 @@ def convert (source, target, context, env):
         # used, that is for eps, pdf and png).
 
         language = target[target.rfind('.')+1:]
-        result = Shell (set, ['fig2dev', '-L', language, os.path.relpath (source), target])
+        result = Shell (('fig2dev', '-L', language, os.path.relpath (source),
+                         target))
         result.add_product (target)
         result.add_source (source)
         return result
@@ -51,12 +50,14 @@ def convert (source, target, context, env):
             language = 'pstex'
             image_file = base_name + '.eps'
 
-        temp = Shell (set, ['fig2dev', '-L', language, os.path.relpath (source), image_file])
+        temp = Shell (('fig2dev', '-L', language, os.path.relpath (source),
+                       image_file))
         temp.add_product (image_file)
         temp.add_source (source)
 
-        result = Shell (set, ['fig2dev', '-L', language + '_t',
-                      '-p', image_reference, os.path.relpath (source), target])
+        result = Shell (('fig2dev', '-L', language + '_t',
+                         '-p', image_reference, os.path.relpath (source),
+                         target))
         result.add_product (target)
         result.add_source (source)
         result.add_source (image_file)

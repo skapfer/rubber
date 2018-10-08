@@ -15,8 +15,8 @@ import re
 import logging
 msg = logging.getLogger (__name__)
 from rubber.util import _, parse_line
-import rubber.contents
 import rubber.depend
+import rubber.contents
 import rubber.latex_modules
 
 from rubber.tex import EOF, OPEN, SPACE, END_LINE
@@ -556,7 +556,7 @@ class LaTeXDep (rubber.depend.Node):
         'jobname' specifies the job name to something else that
         the base of the file name.
         """
-        super (LaTeXDep, self).__init__(env.depends)
+        super ().__init__ ()
         self.env = env
 
         self.log = LogCheck()
@@ -623,7 +623,7 @@ class LaTeXDep (rubber.depend.Node):
         self.failed_module = None
 
         assert os.path.exists(path)
-        self.sources = []
+        assert len (self.sources) == 0
         self.vars['source'] = path
         (src_path, name) = os.path.split(path)
         # derive jobname, which latex uses as the basename for all output
@@ -660,9 +660,13 @@ class LaTeXDep (rubber.depend.Node):
     def basename (self, with_suffix=""):
         return self.vars["job"] + with_suffix
 
-    def set_primary_product_suffix (self, suffix):
-        """Change the suffix of the primary product"""
-        self.replace_primary_product (self.basename (with_suffix = suffix))
+    def register_post_processor (self, old_suffix, new_suffix):
+        if self.env.final != self \
+           and not self.primary_product ().endswith (old_suffix):
+            raise GenericError (_("there is already a post-processor registered"))
+        f = rubber.contents.factory (self.basename (with_suffix=new_suffix))
+        self.products [0] = f
+        f.set_producer (self)
 
     def new_aux_file (self, aux_file):
         """Register a new latex .aux file"""
@@ -703,7 +707,8 @@ class LaTeXDep (rubber.depend.Node):
             self.process(self.source())
         except EndDocument:
             pass
-        msg.debug(_("dependencies: %r") % self.sources)
+        msg.debug (_("dependencies: %s"),
+                   " ".join (s.path () for s in self.sources))
 
     def parse_file (self, file):
         """
@@ -770,29 +775,28 @@ class LaTeXDep (rubber.depend.Node):
         could neither be read nor built.
         """
         if name.find("\\") >= 0 or name.find("#") >= 0:
-            return None, None
+            return None
 
         for path in self.env.path:
+
             pname = os.path.join(path, name)
             dep = self.env.convert(pname, suffixes=[".tex",""], context=self.vars)
-            if dep:
-                file = dep.products[0]
-            else:
-                file = self.env.find_file(name, ".tex")
-                if not file:
-                    continue
-                dep = None
-            self.add_source(file)
+            if isinstance (dep, str):
+                self.process (dep)
+                return dep
+            if isinstance (dep, rubber.depend.Node):
+                file = dep.primary_product ()
+                # Do not process this source.
+                self.add_source (file)
+                return file
+            assert dep is None
 
-            if dep is None or dep.is_leaf():
+            file = self.env.find_file (name, ".tex")
+            if file is not None:
                 self.process(file)
+                return file
 
-            if dep is None:
-                return file, self.set[file]
-            else:
-                return file, dep
-
-        return None, None
+        return None
 
     #--  Directives  {{{2
 
@@ -866,7 +870,7 @@ class LaTeXDep (rubber.depend.Node):
             raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "onchange")
         file, cmd = args
         if self.env.is_in_unsafe_mode_:
-            file = rubber.files.factory (file)
+            file = rubber.contents.factory (file)
             # A list, because we will update the snapshot later.
             self.onchange.append ([file, file.snapshot, cmd])
         else:
@@ -1034,7 +1038,7 @@ class LaTeXDep (rubber.depend.Node):
             while token.cat not in (EOF, SPACE, END_LINE):
                 file += token.raw
                 token = self.parser.get_token()
-        self.input_file(file, loc)
+        _ = self.input_file(file, loc)
 
     def h_include (self, loc, filename):
         """
@@ -1044,7 +1048,7 @@ class LaTeXDep (rubber.depend.Node):
         """
         if self.include_only and filename not in self.include_only:
             return
-        file, _ = self.input_file(filename, loc)
+        file = self.input_file(filename, loc)
         if file:
             self.new_aux_file (filename + ".aux")
 
@@ -1216,9 +1220,9 @@ class LaTeXDep (rubber.depend.Node):
             return False
         if self.log.errors():
             return False
-        if not os.access(self.products[0], os.F_OK):
-            msg.error(_("Output file `%s' was not produced.") %
-                os.path.relpath (self.products[0]))
+        if not os.access (self.primary_product (), os.F_OK):
+            msg.error (_("Output file `%s' was not produced."),
+                       os.path.relpath (self.primary_product ()))
             return False
         return True
 
@@ -1253,7 +1257,7 @@ class LaTeXDep (rubber.depend.Node):
             new = file.snapshot ()
             if old_contents != new:
                 l [1] = new
-                if new != rubber.files.NO_SUCH_FILE:
+                if new != rubber.contents.NO_SUCH_FILE:
                     msg.info (_("running %s") % cmd)
                     # FIXME portability issue: explicit reference to shell
                     self.env.execute(("sh", "-c", cmd))

@@ -120,9 +120,8 @@ class Dep (rubber.depend.Node):
     sources.
     """
     def __init__ (self, env, target, source):
-        set = env.depends
         self.cmd_pwd = os.path.dirname(source)
-        super (Dep, self).__init__(set)
+        super ().__init__ ()
         self.add_product (target)
         self.include (os.path.basename (source))
         msg.debug(_("%s is made from %r") % (target, self.sources))

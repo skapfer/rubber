@@ -57,10 +57,10 @@ class Module (rubber.module_interface.Module):
         document.add_product (document.basename (with_suffix = ".pre"))
         Shell_Restoring_Aux.initialize (document)
 
-        if (document.engine == 'pdfTeX'
-            and document.products [0] [-4:] == '.pdf'):
+        if document.engine == 'pdfTeX' \
+           and document.primary_product ().endswith ('.pdf'):
             self.format = ".pdf"
-        elif (document.engine == 'VTeX'):
+        elif document.engine == 'VTeX':
             msg.error(_("does not know how to handle VTeX"))
         else:
             self.format = ".eps"
@@ -84,7 +84,7 @@ class Module (rubber.module_interface.Module):
         inline = inline_option (environment_options, default=self.global_inline)
 
         self.doc.add_product (source)
-        node = Shell_Restoring_Aux (self.doc.set, ["asy", source])
+        node = Shell_Restoring_Aux (source)
         if inline:
             node.add_product (prefix + ".tex")
             node.add_product (prefix + "_0" + self.format)
@@ -107,10 +107,13 @@ of /usr/bin/asy flushes the .aux file.
         # In case we are interrupted, clean bak.
         document.add_product (cls.bak)
 
+    def __init__ (self, source):
+        super ().__init__ (command = ('asy', source))
+        self.source = source
+
     def run (self):
-        source = self.sources [0]
-        if not os.path.exists (source):
-            msg.info(_("{} not yet generated").format (os.path.relpath (source)))
+        if not os.path.exists (self.source):
+            msg.info (_("%s not yet generated"), os.path.relpath (self.source))
             return True
         os.rename (self.aux, self.bak)
         msg.debug (_("saving {} to {}").format (os.path.relpath (self.aux),

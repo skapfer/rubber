@@ -27,13 +27,13 @@ product_extension = { 'dvips':'ps', 'dvipdfm':'pdf' }
 class Dvip_Tool_Dep_Node (rubber.depend.Node):
 
     def __init__ (self, document, tool):
-        super ().__init__ (document.env.depends)
+        super ().__init__ ()
         self.tool = tool
         assert tool in ('dvipdfm', 'dvips')
         self.doc = document
 
         assert type (self.doc.env.final) is rubber.converters.latex.LaTeXDep
-        self.source = self.doc.env.final.products[0]
+        self.source = self.doc.env.final.primary_product ()
         if not self.source.endswith ('.dvi'):
             raise rubber.GenericError (_('Tool %s only produces DVI') % tool)
         self.doc.env.final = self

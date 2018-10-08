@@ -252,7 +252,7 @@ def prepare_source (filename, command_name, env, options):
     if ext in rubber.converters.literate.literate_preprocessors.keys ():
         src = base + ".tex"
         # FIXME kill src_node
-        src_node = rubber.converters.literate.literate_preprocessors [ext] (env.depends, src, path)
+        src_node = rubber.converters.literate.literate_preprocessors [ext] (src, path)
         if command_name == RUBBER_PLAIN and not options.clean:
             if not options.unsafe:
                 raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
@@ -342,16 +342,16 @@ def main (command_name):
 
             if options.compress is not None:
                 last_node = env.final
-                filename = last_node.products[0]
+                filename = last_node.primary_product ()
                 if options.compress == 'gzip':
                     import gzip
                     env.final = rubber.converters.compressor.Node (
-                        env.depends, gzip.GzipFile, '.gz', filename)
+                        gzip.GzipFile, '.gz', filename)
                 else:
                     assert options.compress == 'bzip2'
                     import bz2
                     env.final = rubber.converters.compressor.Node (
-                        env.depends, bz2.BZ2File, '.bz2', filename)
+                        bz2.BZ2File, '.bz2', filename)
 
             if command_name == RUBBER_PIPE:
                 # can args [0] be different from src here?
@@ -359,8 +359,7 @@ def main (command_name):
             elif command_name == RUBBER_INFO:
                 process_source_info (env, options.info_action, options.short)
             elif options.clean:
-                # ex options.clean ()
-                for dep in env.final.set.values ():
+                for dep in env.final.all_producers ():
                     dep.clean ()
             else:
                 build (options, RUBBER_PLAIN, env)
@@ -381,7 +380,6 @@ def build (options, command_name, env):
     """
     assert command_name == RUBBER_PIPE \
             or (command_name == RUBBER_PLAIN and not options.clean)
-    srcname = env.main.sources[0]
 
     if command_name == RUBBER_PLAIN and options.force:
         ret = env.main.make(True)
@@ -395,7 +393,7 @@ def build (options, command_name, env):
         ret = env.final.make (force = False)
 
     if ret == rubber.depend.ERROR:
-        msg.info(_("There were errors compiling %s.") % srcname)
+        msg.info (_("There were errors compiling %s."), env.main.source ())
         number = options.maxerr
         for err in env.final.failed().get_errors():
             if number == 0:
@@ -407,7 +405,7 @@ def build (options, command_name, env):
         raise rubber.GenericError (_("Stopping because of compilation errors."))
 
     if ret == rubber.depend.UNCHANGED:
-        msg.info(_("nothing to be done for %s") % srcname)
+        msg.info (_("nothing to be done for %s"), env.main.source ())
 
     if options.warn_boxes or options.warn_misc or options.warn_refs:
         # FIXME
@@ -471,7 +469,7 @@ def process_source_pipe (env, pipe_tempfile, options):
     """
     try:
         build (options, RUBBER_PIPE, env)
-        filename = env.final.products[0]
+        filename = env.final.primary_product ()
         try:
             # dump the results on standard output
             with open (filename, "rb") as output:
@@ -481,7 +479,7 @@ def process_source_pipe (env, pipe_tempfile, options):
     finally:
         # clean the intermediate files
         if not options.keep:
-            for dep in env.final.set.values ():
+            for dep in env.final.all_producers ():
                 dep.clean ()
             if os.path.exists (pipe_tempfile):
                 msg.info (_("removing %s") % os.path.relpath (pipe_tempfile))
@@ -489,23 +487,18 @@ def process_source_pipe (env, pipe_tempfile, options):
 
 def process_source_info (env, act, short):
     if act == "deps":
-        deps = [ k for k,n in env.depends.items () if type (n) is rubber.depend.Leaf ]
-        print (" ".join (deps))
+        # Show sources that are not produced.
+        deps  = set ()
+        for node in env.final.all_producers ():
+            for source in node.sources:
+                if source.producer () is None:
+                    deps.add (source)
+        print (" ".join (s.path () for s in deps))
 
     elif act == "rules":
-        seen = {}
-        next = [env.final]
-        while len(next) > 0:
-            node = next[0]
-            next = next[1:]
-            if node in seen:
-                continue
-            seen[node] = None
-            if len(node.sources) == 0:
-                continue
-            print ("\n%s:" % " ".join (node.products))
-            print (" ".join (node.sources))
-            next.extend(node.source_nodes())
+        for node in env.final.all_producers ():
+            print ("\n%s:" % " ".join (p.path () for p in node.products))
+            print (" ".join (s.path () for s in node.sources))
 
     else:
         # Check for a log file and extract information from it if it exists,

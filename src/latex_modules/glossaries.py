@@ -14,7 +14,7 @@ class Module (rubber.module_interface.Module):
         document.add_product (job + '.ist')
         document.add_source (glo)
 
-        dep = Dep (document.set, ('makeglossaries', job))
+        dep = Dep (('makeglossaries', job))
         # FIXME: does probably fail with --inplace and friends.
         dep.add_product (glo)
         dep.add_product (job + '.gls')

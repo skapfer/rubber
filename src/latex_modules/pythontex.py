@@ -14,11 +14,12 @@ import shutil
 import rubber.module_interface
 
 class PythonTeXDep (rubber.depend.Shell):
-    def __init__ (self, set, document):
+
+    def __init__ (self, document):
         self.doc = document
         self.tool = 'pythontex'
         basename = self.doc.basename ()
-        super (PythonTeXDep, self).__init__ (set, [self.tool, basename ])
+        super ().__init__ ((self.tool, basename))
         self.pytxcode = basename + '.pytxcode'
         self.pythontex_files = 'pythontex-files-%s/' % basename
         self.pytxmcr = self.pythontex_files + basename + '.pytxmcr'
@@ -30,7 +31,7 @@ class PythonTeXDep (rubber.depend.Shell):
 
     def run (self):
         # check if the input file exists. if not, refuse to run.
-        if not os.path.exists (self.sources[0]):
+        if not os.path.exists (self.pytxcode):
             msg.info (_('input file for %s does not yet exist, deferring')
                 % self.tool)
             return True
@@ -46,5 +47,6 @@ class PythonTeXDep (rubber.depend.Shell):
         return super (PythonTeXDep, self).clean ()
 
 class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
-        PythonTeXDep (document.set, document)
+        self.dep = PythonTeXDep (document)

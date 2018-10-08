@@ -8,9 +8,6 @@ When this module is loaded with the otion 'dvi', the document is compiled to
 DVI using pdfTeX.
 """
 
-from rubber.util import _
-import logging
-msg = logging.getLogger (__name__)
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
@@ -27,10 +24,7 @@ class Module (rubber.module_interface.Module):
     def mode_pdf (self):
         if self.mode == 'pdf':
             return
-        if self.doc.env.final != self.doc and self.doc.products[0][-4:] != '.pdf':
-            msg.error(_("there is already a post-processor registered"))
-            return
-        self.doc.set_primary_product_suffix (".pdf")
+        self.doc.register_post_processor (old_suffix='.pdf', new_suffix='.pdf')
         self.doc.cmdline = [
             opt for opt in self.doc.cmdline if opt != '\\pdfoutput=0']
         self.mode = 'pdf'
@@ -38,9 +32,6 @@ class Module (rubber.module_interface.Module):
     def mode_dvi (self):
         if self.mode == 'dvi':
             return
-        if self.doc.env.final != self.doc and self.doc.products[0][-4:] != '.dvi':
-            msg.error(_("there is already a post-processor registered"))
-            return
-        self.doc.set_primary_product_suffix (".dvi")
+        self.doc.register_post_processor (old_suffix='.dvi', new_suffix='.dvi')
         self.doc.cmdline.insert(0, '\\pdfoutput=0')
         self.mode = 'dvi'

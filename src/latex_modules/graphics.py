@@ -19,6 +19,7 @@ import os, os.path
 import re
 import logging
 msg = logging.getLogger (__name__)
+import rubber.depend
 from rubber.util import _
 from rubber.util import parse_keyval
 from rubber.tex import parse_string
@@ -69,7 +70,8 @@ class Module (rubber.module_interface.Module):
             suffixes += [x.upper() for x in suffixes]
 
         # I take dvips as the default, but it is not portable.
-        if document.engine == 'pdfTeX' and document.products[0][-4:] == '.pdf':
+        if document.engine == 'pdfTeX' \
+           and document.primary_product ().endswith ('.pdf'):
             self.suffixes = drv_suffixes['pdftex']
         elif document.engine == 'VTeX':
             self.suffixes = drv_suffixes['vtex']
@@ -142,12 +144,16 @@ class Module (rubber.module_interface.Module):
                                      prefixes=self.prefixes,
                                      check=check, context=self.doc.vars)
 
-        if node:
-            msg.debug(_("graphics `%s' found") % name)
-            for file in node.products:
-                self.doc.add_source(file)
+        if isinstance (node, str):
+            msg.debug (_("graphics %s found in %s"), name, node)
+            self.doc.add_source (node)
+        elif isinstance (node, rubber.depend.Node):
+            msg.debug (_("graphics %s converted from %s"),
+                       name, node.primary_product ())
+            self.doc.add_source (node.primary_product ())
             self.files.append(node)
         else:
+            assert node is None
             msg.warning (rubber.util._format (loc, _("graphics `%s' not found") % name))
 
     def hook_graphicspath (self, loc, arg):
@@ -180,7 +186,8 @@ class Module (rubber.module_interface.Module):
             if not node.making:
                 node.make()
             else:
-                msg.debug("*** FIXME ***  recursive making in graphics: %s" % str (node.products))
+                msg.debug ("*** FIXME ***  recursive making in graphics: %s",
+                           " ".join (p.path () for p in node.products))
         return True
 
     def clean (self):

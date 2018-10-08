@@ -14,7 +14,6 @@ from rubber.util import _, prog_available
 import logging
 msg = logging.getLogger (__name__)
 import rubber.converters
-import rubber.depend
 from rubber.convert import Converter
 
 class Environment:
@@ -30,10 +29,6 @@ class Environment:
         """
         self.path = [os.getcwd ()]
         self.conv_prefs = {}
-
-        # Represents a set of dependency nodes. Nodes can be accessed by absolute
-        # path name using the dictionary interface.
-        self.depends = dict()
         self.converter = Converter (self)
         self.converter.read_ini (os.path.join (rubber.__path__[0], 'rules.ini'))
 
@@ -67,9 +62,11 @@ class Environment:
 
     def convert (self, target, prefixes=[""], suffixes=[""], check=None, context=None):
         """
-        Use conversion rules to make a dependency tree for a given target
-        file, and return the final node, or None if the file does not exist
-        and cannot be built. The optional arguments 'prefixes' and 'suffixes'
+        Use conversion rules to make a given target file, and return:
+        * the file path of an existing file matching the 'target' pattern
+        * the final node of a new dependency tree if a conversion is necessary
+        * None if the file does not exist and cannot be built.
+        The optional arguments 'prefixes' and 'suffixes'
         are lists of strings that can be added at the beginning and the end of
         the name when searching for the file. Prefixes are tried in order, and
         for each prefix, suffixes are tried in order; the first file from this
@@ -109,7 +106,7 @@ class Environment:
                 if last is not None and last["cost"] <= 0:
                     break
                 msg.debug(_("`%s' is `%s', no rule applied") % (target, t))
-                return rubber.depend.Leaf(self.depends, t)
+                return t
 
         if last is None:
             return None

@@ -22,17 +22,21 @@ class Node (object):
     functionality of date checking and recursive making, supposing the
     existence of a method `run()' in the object.
     """
-    def __init__ (self, set):
+    def __init__ (self):
         """
         The node registers itself in the dependency set,
         and if a given depedency is not known in the set, a leaf node is made
         for it.
         """
-        self.set = set
         self.products = []
-        self.sources = []
+        # All prerequisites for this recipe. Elements are instances
+        # returned by rubber.contents.factory. A None value for the
+        # producer means a leaf node.
+        self.sources = set ()
         # A snapshot of each source as they were used during last
-        # successful build, or None if no build has been attempted yet.
+        # successful build, or None if no build has been attempted
+        # yet.  The order in the list is the one in self.sources,
+        # which does not change during build.
         self.snapshots = None
         # making is the lock guarding against making a node while making it
         self.making = False
@@ -41,57 +45,53 @@ class Node (object):
         # if this Node failed to build, or a dependency.
         self.failed_dep = None
 
+    # TODO: once this works and noone outside this files use the
+    # dependency set, replace it with a more efficient structure: each
+    # node can record once and for all whether it causes a circular
+    # dependency or not at creation.
+    def all_producers (self):
+        seen = set ()
+        def rec (node):
+            seen.add (node)
+            # print ("            yielding ", node)
+            yield node
+            for source in node.sources:
+                child = source.producer ()
+                if child is not None  and child not in seen:
+                    # print ("            yielding from ", source.path (), child)
+                    yield from rec (child)
+                # else:
+                #     print ("            skipping leaf ", source.path ())
+        yield from rec (self)
+
     def add_source (self, name):
         """
         Register a new source for this node. If the source is unknown, a leaf
         node is made for it.
         """
+        # Do nothing when the name is already listed.
         # The same source may be inserted many times in the same
         # document (an image containing a logo for example).
-        if name in self.sources:
-            assert name in self.set
-        else:
-            # The same file may be a source for various recipes.
-            if name not in self.set:
-                self.set[name] = Leaf(self.set, name)
-            self.sources.append (name)
+        self.sources.add (rubber.contents.factory (name))
 
     def remove_source (self, name):
         """
         Remove a source for this node.
         """
-        self.sources.remove (name)
-        # FIXME: remove from dependency set?
+        # Fail if the name is not listed.
+        self.sources.remove (rubber.contents.factory (name))
 
     def add_product (self, name):
         """
         Register a new product for this node.
         """
-        self.set[name] = self
-        if name in self.products:
-            raise rubber.GenericError ('already a product named ' + name)
-        self.products.append(name)
+        f = rubber.contents.factory (name)
+        assert f not in self.products
+        f.set_producer (self)
+        self.products.append (f)
 
-    def replace_primary_product (self, name):
-        if name != self.products [0]:
-            if name in self.products:
-                raise rubber.GenericError ('already a product named ' + name)
-
-            del self.set [self.products [0]]
-            self.set [name] = self
-            self.products [0] = name
-
-    def source_nodes (self):
-        """
-        Return the list of nodes for the sources of this node.
-        """
-        return [self.set[name] for name in self.sources]
-
-    def is_leaf (self):
-        """
-        Returns True if this node is a leaf node.
-        """
-        return self.sources == []
+    def primary_product (self):
+        return self.products [0].path ()
 
     def make (self, force=False):
         """
@@ -124,54 +124,69 @@ class Node (object):
 
     def real_make (self, force):
         rv = UNCHANGED
-        primary_product = self.products[0]
-        msg.debug(_("make %s -> %r") % (primary_product, self.sources))
+        msg.debug (_("making %s from %s"),
+                   " ".join (s.path () for s in self.products),
+                   " ".join (s.path () for s in self.sources))
         for patience in range (5):
             # make our sources
-            for source_name in self.sources:
-                source = self.set[source_name]
-                if source.making:
+            for source in self.sources:
+                if source.producer () is None:
+                    continue
+                if source.producer ().making:
                     # cyclic dependency -- drop for now, we will re-visit
                     # this would happen while trying to remake the .aux in order to make the .bbl, for example
-                    msg.debug(_("while making %s: cyclic dependency on %s (pruned)") % (primary_product, source_name))
+                    msg.debug (_("while making %s: cyclic dependency on %s (pruned)"),
+                               self.primary_product (), source.path ())
                     continue
-                source_rv = source.make (force)
+                source_rv = source.producer ().make (force)
                 if source_rv == ERROR:
-                    self.failed_dep = source.failed_dep
-                    msg.debug(_("while making %s: dependency %s could not be made") % (primary_product, source_name))
+                    self.failed_dep = source.producer ().failed_dep
+                    msg.debug (_("while making %s: dependency %s could not be made"),
+                               self.primary_product (), source.path ())
                     return ERROR
                 elif source_rv == CHANGED:
                     rv = CHANGED
 
             if force:
-                msg.debug (_("while making %s: --force given"), primary_product)
+                msg.debug (_("while making %s: --force given"),
+                           self.primary_product ())
             elif self.snapshots is None:
                 msg.debug (_("while making %s: first attempt, building"),
-                           primary_product)
+                           self.primary_product ())
             elif not self.products_exist:
                 msg.debug (_("while making %s: product missing, building"),
-                           primary_product)
+                           self.primary_product ())
             else:
-                for i in range (len (self.sources)):
-                    source_name = self.sources [i]
-                    source = self.set [source_name]
+                i = 0
+                for source in self.sources:
                     # NB: we ignore this case (missing dependency)
-                    if not source.products_exist:
+                    if source.producer () is not None \
+                       and not source.producer ().products_exist:
                         msg.debug (_("Not rebuilding %s from missing %s"),
-                                   primary_product, source_name)
-                    elif self.snapshots is None \
-                         or self.snapshots [i] != rubber.contents.contents (source_name):
+                                   self.primary_product (), source.path ())
+                    elif self.snapshots is None:
+                        msg.info (_("First build attempt for %s"),
+                                  self.primary_product ())
+                        break
+                    elif self.snapshots [i] != source.snapshot ():
                         msg.debug (_("Rebuilding %s from outdated %s"),
-                                   primary_product, source_name)
+                                   self.primary_product (), source.path ())
                         break
                     else:
                         msg.debug (_("Not rebuilding %s from unchanged %s"),
-                                   primary_product, source_name)
+                                   self.primary_product (), source.path ())
+                    i = i + 1
                 else:
+                    msg.debug (_("No reason to rebuild %s."),
+                               self.primary_product ())
                     return rv
 
+            if self.snapshots is None:
+                msg.debug (_("Creating snapshots for %s"), " ".join (s.path () for s in self.sources))
+            else:
+                msg.debug (_("Updating snapshots for %s"), " ".join (s.path () for s in self.sources))
             # record snapshots of sources as we now actually start the build
-            self.snapshots = tuple (map (rubber.contents.contents, self.sources))
+            self.snapshots = tuple (s.snapshot () for s in self.sources)
 
             # actually make
             if not self.run ():
@@ -183,7 +198,8 @@ class Node (object):
             force = False
 
         self.failed_dep = self
-        msg.error(_("while making %s: file contents does not seem to settle") % self.products[0])
+        msg.error (_("while making %s: file contents does not seem to settle"),
+                   self.primary_product ())
         return ERROR
 
     def run (self):
@@ -218,47 +234,17 @@ class Node (object):
                 super (class, self).clean ()
         """
         for file in self.products:
-            if os.path.exists (file):
-                msg.info (_("removing %s") % os.path.relpath (file))
-                os.remove (file)
+            if os.path.exists (file.path ()):
+                msg.info (_("removing %s") % os.path.relpath (file.path ()))
+                os.remove (file.path ())
         self.products_exist = False
-
-class Leaf (Node):
-    """
-    This class specializes Node for leaf nodes, i.e. source files with no
-    dependencies.
-    """
-    def __init__ (self, set, name):
-        """
-        Initialize the node. The argument of this method are the dependency
-        set and the file name.
-        """
-        super (Leaf, self).__init__(set)
-        self.add_product (name)
-
-    def real_make (self, force):
-        # custom version to cut down on debug messages
-        if not self.run ():
-            self.failed_dep = self
-            return ERROR
-        else:
-            return UNCHANGED
-
-    def run (self):
-        result = self.snapshots is None or self.products_exist
-        if not result:
-            msg.error(_("%r does not exist") % self.products[0])
-        return result
-
-    def clean (self):
-        pass
 
 class Shell (Node):
     """
     This class specializes Node for generating files using shell commands.
     """
-    def __init__ (self, set, command):
-        super (Shell, self).__init__ (set)
+    def __init__ (self, command):
+        super ().__init__ ()
         self.command = command
         self.stdout = None
 
@@ -277,12 +263,11 @@ class Pipe (Shell):
     This class specializes Node for generating files using the stdout of shell commands.
     The 'product' will receive the stdout of 'command'.
     """
-    def __init__ (self, set, command, product):
-        super (Pipe, self).__init__(set, command)
+    def __init__ (self, command, product):
+        super ().__init__ (command)
         self.add_product (product)
 
     def run (self):
-        self.stdout = open(self.products[0], 'bw')
-        ret = super (Pipe, self).run ()
-        self.stdout.close()
+        with open (self.primary_product (), 'bw') as self.stdout:
+            ret = super (Pipe, self).run ()
         return ret

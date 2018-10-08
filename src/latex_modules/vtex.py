@@ -10,18 +10,16 @@ produces a PDF or PostScript file directly. The PDF version is used by
 default, switching to PS is possible by using the module option "ps".
 """
 
+import rubber.module_interface
+
 class Module (rubber.module_interface.Module):
 
     def __init__ (self, document, opt):
         document.engine = 'VTeX'
         if opt == 'ps':
-            if document.env.final != document and document.products[0][-4:] != '.ps':
-                raise rubber.GenericError (_("there is already a post-processor registered"))
             document.program = 'vlatexp'
-            document.set_primary_product_suffix (".ps")
+            document.register_post_processor (old_suffix='.ps', new_suffix='.ps')
         else:
-            if document.env.final != document and document.products[0][-4:] != '.pdf':
-                raise rubber.GenericError (_("there is already a post-processor registered"))
             document.program = 'vlatex'
-            document.set_primary_product_suffix (".pdf")
+            document.register_post_processor (old_suffix='.pdf', new_suffix='.pdf')
         document.cmdline = ['-n1', '@latex', '%s']

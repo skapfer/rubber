@@ -4,80 +4,109 @@ log = logging.getLogger (__name__)
 import io
 import os.path
 
-def contents (path):
+def factory (path):
     """
-    A snapshot of the contents of an external file.
-
-    The result is always an int. You may rely on the fact that no
-    other kind of value will ever be returned.
-
-    The special int value NO_SUCH_FILE is returned when path does not
-    refer to an existing external file. However, an exception is
-    raised if an existing file vanishes between two calls.
-
-    The implementation trusts the operating system about modification
-    times, and assumes that an unchanged time stamp implies unchanged
-    contents. Malicious or unadvised users may change timestamps.
-
-    Moreover, an overwrite will not be detected if it is more recent
-    than the smallest interval representable by operating timestamps.
-
-    The implementation trusts a non-cryptographic hash to detect
-    modified contents. With the current algorithm, there will be in
-    average 1 error in 65536 files reported as unchanged.
+    Must be used instead of the constructor.
     """
+    try:
+        result = _file_by_path [path]
+        log.debug ('reusing _File instance for ' + path)
+    except KeyError:
+        result = _File (path)
+        _file_by_path [path] = result
+    return result
 
-    # We expect some files to be sources in many context, like the
-    # main .tex document. In order to spare some checksum
-    # computations, we cache the result.
+_file_by_path = {}
 
-    # Distinct paths refering to the same external file should be
-    # rare, so we do not attempt to detect them.
+class _File:
 
-    if os.path.exists (path):
-        mtime = os.path.getmtime (path)
-        if path in cache:
-            old = cache [path]
-            if old is None:
-                log.debug ('%s has been created', path)
-                result = checksum_algorithm (path)
-            elif old [0] == mtime:
-                log.debug ('%s has the same mtime', path)
-                return old [1]
+    def __init__ (self, path):
+        """
+        This constructor is private, use Contents.factory (path) instead.
+        """
+        log.debug ('new _File: ' + path)
+        self._path     = path
+        self._producer = None
+        self._checksum = None
+
+    def path (self):
+        return self._path
+
+    def producer (self):
+        return self._producer
+
+    def set_producer (self, producer):
+        assert producer is not None
+        self._producer = producer
+
+    def snapshot (self):
+        """
+        A snapshot of the contents of an external file.
+
+        The result is always an int. You may rely on the fact that no
+        other kind of value will ever be returned.
+
+        The special int value NO_SUCH_FILE is returned when path does not
+        refer to an existing external file. However, an exception is
+        raised if an existing file vanishes between two calls.
+
+        The implementation trusts the operating system about modification
+        times, and assumes that an unchanged time stamp implies unchanged
+        contents. Malicious or unadvised users may change timestamps.
+
+        Moreover, an overwrite will not be detected if it is more recent
+        than the smallest interval representable by operating timestamps.
+
+        The implementation trusts a non-cryptographic hash to detect
+        modified contents. With the current algorithm, there will be in
+        average 1 error in 65536 files reported as unchanged.
+        """
+
+        # We expect some files to be sources in many context, like the
+        # main .tex document. In order to spare some checksum
+        # computations, we cache the result.
+
+        # Distinct paths refering to the same external file should be
+        # rare, so we do not attempt to detect them.
+        if os.path.exists (self._path):
+            mtime = os.path.getmtime (self._path)
+            if self._checksum is None:
+                log.debug ('%s contents are now watched', self._path)
+                self._checksum = _checksum_algorithm (self._path)
+                self._mtime    = mtime
+            elif self._checksum == NO_SUCH_FILE:
+                log.debug ('%s has been created', self._path)
+                self._checksum = _checksum_algorithm (self._path)
+                self._mtime    = mtime
+            elif self._mtime == mtime:
+                log.debug ('%s has the same mtime', self._path)
             else:
-                assert old [0] < mtime, path + ' mtime has decreased'
-                result = checksum_algorithm (path)
-                if result == old [1]:
-                    log.debug ('%s rewritten with same checksum', path)
+                assert self._mtime < mtime, 'mtime decreased: ' + self._path
+                self._mtime = mtime
+                checksum = _checksum_algorithm (self._path)
+                if checksum == self._checksum:
+                    log.debug ('%s rewritten with same checksum', self._path)
                 else:
-                    log.debug ('%s rewritten with new contents.', path)
+                    log.debug ('%s rewritten with new contents.', self._path)
+                    self._checksum = checksum
+        elif self._checksum is None:
+            log.debug ('%s will be watched once created', self._path)
+            self._checksum = NO_SUCH_FILE
         else:
-            log.debug ('%s contents are now watched', path)
-            result = checksum_algorithm (path)
-        cache [path] = (mtime, result)
-        return result
-    else:
-        if path in cache:
-            log.debug ('%s does not exist yet',  path)
-            assert cache [path] is None, path + ' has vanished'
-        else:
-            log.debug ('%s will be watched once created', path)
-            cache [path] = None
-        return NO_SUCH_FILE
-
-cache = {}
+            assert self._checksum == NO_SUCH_FILE, self._path + ' vanished'
+            log.debug ('%s does not exist yet',  self._path)
+        return self._checksum
 
 NO_SUCH_FILE = 2**32
 
-def checksum_algorithm (path):
-    result = 0
+def _checksum_algorithm (path):
     with open (path, 'br') as stream:
+        result = 0
         while True:
             data = stream.read (io.DEFAULT_BUFFER_SIZE)
             if not data:
-                break
+                return result
             result = binascii.crc32 (data, result)
-    return result
 
 # Manual tests
 
@@ -88,40 +117,38 @@ def checksum_algorithm (path):
 #     os.remove (t)
 
 # time.sleep (0.1)
-# assert contents (t) == NO_SUCH_FILE
-
-# time.sleep (0.1)
-# assert contents (t) == NO_SUCH_FILE
-# # Successive calls desserve to be tested because of the cache.
+# c = factory (t)
+# assert factory (t) is c
+# assert c.snapshot () == NO_SUCH_FILE
 
 # print ('writing foo')
 # with open (t, 'w') as f:
 #     f.write ('foo')
 
 # time.sleep (0.1)
-# s1 = contents (t)
+# s1 = c.snapshot ()
 # assert s1 != NO_SUCH_FILE
 
 # time.sleep (0.1)
-# assert contents (t) == s1
+# assert c.snapshot () == s1
 
 # print ('writing bar')
 # with open (t, 'w') as f:
 #     f.write ('bar')
 
 # time.sleep (0.1)
-# s2 = contents (t)
+# s2 = c.snapshot ()
 # assert s2 != NO_SUCH_FILE
 # assert s2 != s1
 
 # time.sleep (0.1)
-# assert contents (t) == s2
+# assert c.snapshot () == s2
 
 # print ('writing bar')
 # with open (t, 'w') as f:
 #     f.write ('bar')
 
 # time.sleep (0.1)
-# assert contents (t) == s2
+# assert c.snapshot () == s2
 
 # os.remove (t)

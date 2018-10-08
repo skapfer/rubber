@@ -12,15 +12,13 @@ msg = logging.getLogger (__name__)
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
-        env = document.env
-        if env.final.products[0][-3:] != '.ps':
+        ps = document.env.final.primary_product ()
+        if not ps.endswith ('.ps'):
             raise rubber.GenericError (_("ps2pdf cannot produce PS"))
-        ps = env.final.products[0]
         pdf = ps[:-2] + 'pdf'
-        cmd = ['ps2pdf']
-        cmd.extend([ps, pdf])
-        dep = Shell (env.depends, cmd)
+        dep = Shell (('ps2pdf', ps, pdf))
         dep.add_product (pdf)
         dep.add_source (ps)
-        env.final = dep
+        document.env.final = dep

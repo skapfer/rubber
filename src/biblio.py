@@ -16,12 +16,16 @@ import re
 import subprocess
 
 class BibToolDep (rubber.depend.Node):
-    def __init__ (self, set):
-        super (BibToolDep, self).__init__ (set)
+
+    def __init__ (self):
+        super ().__init__ ()
         self.tool = "bibtex"
         self.environ = os.environ.copy ()
         self.bib_paths = rubber.util.explode_path ("BIBINPUTS")
         self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
+
+    def main_source (self):
+        assert False, 'This method should be overridden by each subclass'
 
     def do_path (self, args):
         if len (args) != 1:
@@ -31,7 +35,7 @@ class BibToolDep (rubber.depend.Node):
 
     def run (self):
         # check if the input file exists. if not, refuse to run.
-        if not os.path.exists (self.sources[0]):
+        if not os.path.exists (self.main_source ()):
             msg.info (_("input file for %s does not yet exist, deferring")
                 % self.tool)
             return True
@@ -115,7 +119,7 @@ class BibTeXDep (BibToolDep):
         Initialise the bibiliography for the given document. The base name is
         that of the aux file from which citations are taken.
         """
-        super (BibTeXDep, self).__init__ (document.set)
+        super ().__init__ ()
 
         self.log = document.basename(with_suffix=".log")
         self.aux = aux_basename + ".aux"
@@ -130,6 +134,9 @@ class BibTeXDep (BibToolDep):
         self.set_style ("plain")
         self.db = {}
         self.crossrefs = None
+
+    def main_source (self):
+        return self.aux
 
     def build_command (self):
         ret = [ self.tool ]
