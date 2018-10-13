@@ -1076,14 +1076,13 @@ class LaTeXDep (rubber.depend.Node):
         """
         Called when a \\usepackage macro is found. If there is a package in the
         directory of the source file, then it is treated as an include file
-        unless there is a supporting module in the current directory,
         otherwise it is treated as a package.
         """
         for name in names.split(","):
             name = name.strip()
             if name == '': continue  # \usepackage{a,}
             file = self.env.find_file(name + ".sty")
-            if file and not os.path.exists(name + ".py"):
+            if file:
                 self.process(file)
             else:
                 self.modules.register (name, opt=opt, maybe_missing=True)
