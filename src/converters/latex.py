@@ -46,7 +46,7 @@ class Modules:
         """
         return name in self.objects
 
-    def register (self, name, opt=None):
+    def register (self, name, opt=None, maybe_missing = False):
         """
         Attempt to register a module with the specified name. If the module is
         already loaded, do nothing. If it is found and not yet loaded, then
@@ -55,7 +55,7 @@ class Modules:
         """
         if name in self:
             msg.debug(_("module %s already registered") % name)
-            return 2
+            return
 
         assert name != ''
 
@@ -89,8 +89,11 @@ class Modules:
         try:
             source = importlib.import_module ('rubber.latex_modules.' + name)
         except ImportError:
-            msg.debug (_("no support found for %s") % name)
-            return 0
+            if maybe_missing:
+                msg.debug (_("no support found for %s") % name)
+                return
+            else:
+                raise rubber.GenericError (_("module %s not found") % name)
         mod = source.Module (document=self.latexdep, opt=opt)
         msg.debug (_("built-in module %s registered") % name)
 
@@ -102,7 +105,6 @@ class Modules:
             del self.commands[name]
 
         self.objects[name] = mod
-        return 1
 
     def command (self, mod, cmd, args):
         """
@@ -1071,7 +1073,7 @@ class LaTeXDep (rubber.depend.Node):
         if file:
             self.process(file)
         else:
-            self.modules.register (name, opt=opt)
+            self.modules.register (name, opt=opt, maybe_missing=True)
 
     def h_usepackage (self, loc, opt, names):
         """
@@ -1087,7 +1089,7 @@ class LaTeXDep (rubber.depend.Node):
             if file and not os.path.exists(name + ".py"):
                 self.process(file)
             else:
-                self.modules.register (name, opt=opt)
+                self.modules.register (name, opt=opt, maybe_missing=True)
 
     def h_tableofcontents (self, loc):
         self.add_product(self.basename (with_suffix=".toc"))

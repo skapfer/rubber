@@ -1,4 +1,3 @@
-from rubber.util import _, msg
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
@@ -8,7 +7,6 @@ class Module (rubber.module_interface.Module):
         document.engine = 'LuaLaTeX'
 
         if document.env.final != document and document.products[0][-4:] != '.pdf':
-            msg.error(_("there is already a post-processor registered"))
-            return
+            raise rubber.GenericError (_("there is already a post-processor registered"))
 
         document.set_primary_product_suffix (".pdf")
