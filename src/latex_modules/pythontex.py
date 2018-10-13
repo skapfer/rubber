@@ -21,13 +21,13 @@ class PythonTeXDep (rubber.depend.Shell):
         basename = self.doc.basename ()
         super ().__init__ ((self.tool, basename))
         self.pytxcode = basename + '.pytxcode'
-        self.pythontex_files = 'pythontex-files-%s/' % basename
-        self.pytxmcr = self.pythontex_files + basename + '.pytxmcr'
+        self.pythontex_files = 'pythontex-files-%s' % basename
+        pytxmcr = os.path.join (self.pythontex_files, basename + '.pytxmcr')
 
         self.doc.add_product (self.pytxcode)
         self.add_source (self.pytxcode)
-        self.add_product (self.pytxmcr)
-        self.doc.add_source (self.pytxmcr)
+        self.add_product (pytxmcr)
+        self.doc.add_source (pytxmcr)
 
     def run (self):
         # check if the input file exists. if not, refuse to run.

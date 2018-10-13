@@ -1184,21 +1184,21 @@ class LaTeXDep (rubber.depend.Node):
                 cmd.append("-src-specials=" + specials)
 
         if self.env.is_in_unsafe_mode_:
-            cmd += [ '--shell-escape' ]
+            cmd.append ('--shell-escape')
         elif self.env.doc_requires_shell_:
             msg.error (_("the document tries to run external programs which could be dangerous.  use rubber --unsafe if the document is trusted."))
 
         if self.env.synctex:
-            cmd += [ "-synctex=1" ]
+            cmd.append ("-synctex=1")
 
         # arguments inserted by the document allowed only in unsafe mode, since
         # this could do arbitrary things such as enable shell escape (write18)
         if self.env.is_in_unsafe_mode_:
-            cmd += self.arguments
+            cmd.extend (self.arguments)
         elif len (self.arguments) > 0:
             msg.error (_("the document tries to modify the LaTeX command line which could be dangerous.  use rubber --unsafe if the document is trusted."))
 
-        cmd += [x.replace("%s",file) for x in self.cmdline]
+        cmd.extend (x.replace ("%s", file) for x in self.cmdline)
 
         # Remove the CWD from elements in the path, to avoid potential problems
         # with special characters if there are any (except that ':' in paths

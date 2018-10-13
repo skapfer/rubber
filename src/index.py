@@ -89,7 +89,8 @@ class Index (rubber.depend.Node):
             if self.cmd [0] == "makeindex":
                 self.cmd.extend (self.opts)
                 if self.style:
-                    self.cmd.extend (["-s", self.style])
+                    self.cmd.append ('-s')
+                    self.cmd.append (self.style)
                 path_var = "INDEXSTYLE"
             else:   # self.cmd [0] == "texindy"
                 for opt in self.opts:
@@ -102,9 +103,11 @@ class Index (rubber.depend.Node):
                         self.modules.append("letter-ordering")
                         msg.warning(_("use 'module letter-ordering' instead of 'order letter'"))
                 for mod in self.modules:
-                    self.cmd.extend(["--module", mod])
+                    self.cmd.append ('--module')
+                    self.cmd.append (mod)
                 if self.lang:
-                    self.cmd.extend(["--language", self.lang])
+                    self.cmd.append ('--language')
+                    self.cmd.append (self.lang)
                 path_var = "XINDY_SEARCHPATH"
 
             if self.path != []:

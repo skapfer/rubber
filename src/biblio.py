@@ -141,8 +141,9 @@ class BibTeXDep (BibToolDep):
     def build_command (self):
         ret = [ self.tool ]
         if self.crossrefs is not None:
-            ret += [ "-min-crossrefs=" + self.crossrefs ]
-        return ret + [ self.aux ]
+            ret.append ("-min-crossrefs=" + self.crossrefs)
+        ret.append (self.aux)
+        return ret
 
     #
     # The following method are used to specify the various datafiles that
