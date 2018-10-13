@@ -273,9 +273,6 @@ def main (command_name):
     try:
         options = parse_opts (command_name)
 
-        if options.place is not None:
-            options.place = os.path.abspath(options.place)
-
         msg.debug (_("This is Rubber version %s.") % rubber.version.version)
 
         if command_name == RUBBER_PIPE:
@@ -285,19 +282,34 @@ def main (command_name):
         else:
             args = options.source
 
+        if options.place is None: # --inplace
+            # Compute all absolute paths before the first chdir.
+            args = map (os.path.abspath, args)
+        elif options.place != '.': # non default --into
+            print ("                       into", options.place)
+            # Make arguments relative to the new directory,
+            # go there then proceed normally.
+            args = map (lambda p:os.path.relpath (p, options.place), args)
+            try:
+                os.chdir (options.place)
+            except OSError as e:
+                raise rubber.GenericError \
+                    (_("Error changing to %s from --into option: %s") \
+                     % (options.place, e.strerror))
+
         for src in args:
 
-            src = os.path.abspath (src)
             msg.debug (_("about to process file '%s'") % src)
 
-            # Go to the appropriate directory
-            try:
-                if options.place is None:
-                    os.chdir (os.path.dirname (src))
-                else:
-                    os.chdir (options.place)
-            except OSError as e:
-                raise rubber.GenericError (_("Error changing to working directory: %s") % e.strerror)
+            if options.place is None: # --inplace
+                # Chdir to the absolute path, then keep the base name.
+                src_dirname, src = os.path.split (src)
+                try:
+                    os.chdir (src_dirname)
+                except OSError as e:
+                    raise rubber.GenericError \
+                        (_("Error changing to directory %s for %s: %s")\
+                         % (src_dirname, src, e.strerror))
 
             # prepare the source file.  this may require a pre-processing
             # step, or dumping stdin.  thus, the input filename may change.
@@ -482,7 +494,7 @@ def process_source_pipe (env, pipe_tempfile, options):
             for dep in env.final.all_producers ():
                 dep.clean ()
             if os.path.exists (pipe_tempfile):
-                msg.info (_("removing %s") % os.path.relpath (pipe_tempfile))
+                msg.info (_("removing %s"), pipe_tempfile)
                 os.remove (pipe_tempfile)
 
 def process_source_info (env, act, short):

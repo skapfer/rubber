@@ -60,10 +60,10 @@ class Module (rubber.module_interface.Module):
     def clean (self):
         for name in ('btaux.aux', 'btbbl.aux'):
             if os.path.exists (name):
-                msg.info (_("removing %s") % os.path.relpath (name))
+                msg.info (_("removing %s"), name)
                 os.remove (name)
         for e in self.btsect_environments:
             name = e.aux
             if os.path.exists (name):
-                msg.info (_("removing %s") % os.path.relpath (name))
+                msg.info (_("removing %s"), name)
                 os.remove (name)

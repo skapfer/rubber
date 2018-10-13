@@ -41,7 +41,7 @@ class PythonTeXDep (rubber.depend.Shell):
         return super (PythonTeXDep, self).run ()
 
     def clean (self):
-        msg.info (_("removing tree %s") % os.path.relpath (self.pythontex_files))
+        msg.info (_("removing tree %s"), self.pythontex_files)
         # FIXME proper error reporting
         shutil.rmtree (self.pythontex_files, ignore_errors=True)
         return super (PythonTeXDep, self).clean ()

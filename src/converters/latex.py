@@ -639,16 +639,11 @@ class LaTeXDep (rubber.depend.Node):
         else:
             self.env.path.append(src_path)
 
-        source = path
-
-        comp_name = os.path.relpath (source)
-        if comp_name.find('"') >= 0:
+        if '"' in path:
             msg.error(_("The filename contains \", latex cannot handle this."))
             return 1
-        for c in " \n\t()":
-            if source.find(c) >= 0:
-                msg.warning(_("Source path uses special characters, error tracking might get confused."))
-                break
+        if any (c in path for c in " \n\t()"):
+            msg.warning (_("Source path uses special characters, error tracking might get confused."))
 
         self.add_product (self.basename (with_suffix=".dvi"))
         self.add_product (self.basename (with_suffix=".log"))
@@ -1156,11 +1151,9 @@ class LaTeXDep (rubber.depend.Node):
         Run one LaTeX compilation on the source. Return true on success or
         false if errors occured.
         """
-        msg.info (_("compiling %s") % os.path.relpath (self.source ()))
+        msg.info (_("compiling %s"), self.source)
 
         file = self.source()
-
-        file = os.path.relpath (file)
 
         if file.find(" ") >= 0:
             file = '"%s"' % file
@@ -1204,8 +1197,7 @@ class LaTeXDep (rubber.depend.Node):
         # with special characters if there are any (except that ':' in paths
         # is not handled).
 
-        paths = map (os.path.relpath, self.env.path)
-        inputs = ":".join (paths)
+        inputs = ":".join (self.env.path)
 
         if inputs == "":
             env = {}
@@ -1222,7 +1214,7 @@ class LaTeXDep (rubber.depend.Node):
             return False
         if not os.access (self.primary_product (), os.F_OK):
             msg.error (_("Output file `%s' was not produced."),
-                       os.path.relpath (self.primary_product ()))
+                       self.primary_product ())
             return False
         return True
 
@@ -1275,7 +1267,7 @@ class LaTeXDep (rubber.depend.Node):
         super (LaTeXDep, self).clean ()
         for file in self.removed_files:
             if os.path.exists (file):
-                msg.info (_("removing %s") % os.path.relpath (file))
+                msg.info (_("removing %s"), file)
                 os.remove (file)
         msg.debug (_("cleaning additional files..."))
         for mod in self.modules.objects.values():
@@ -1333,5 +1325,5 @@ class LaTeXDep (rubber.depend.Node):
         for suffix in list:
             file = self.basename (with_suffix=suffix)
             if os.path.exists (file):
-                msg.info (_("removing %s") % os.path.relpath (file))
+                msg.info (_("removing %s"), file)
                 os.remove (file)

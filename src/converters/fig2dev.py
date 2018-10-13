@@ -4,7 +4,6 @@
 Conversion of XFig graphics into various formats.
 """
 
-import os.path
 from rubber.util import prog_available
 from rubber.depend import Shell
 
@@ -25,8 +24,7 @@ def convert (source, target, context, env):
         # used, that is for eps, pdf and png).
 
         language = target[target.rfind('.')+1:]
-        result = Shell (('fig2dev', '-L', language, os.path.relpath (source),
-                         target))
+        result = Shell (('fig2dev', '-L', language, source, target))
         result.add_product (target)
         result.add_source (source)
         return result
@@ -50,14 +48,12 @@ def convert (source, target, context, env):
             language = 'pstex'
             image_file = base_name + '.eps'
 
-        temp = Shell (('fig2dev', '-L', language, os.path.relpath (source),
-                       image_file))
+        temp = Shell (('fig2dev', '-L', language, source, image_file))
         temp.add_product (image_file)
         temp.add_source (source)
 
         result = Shell (('fig2dev', '-L', language + '_t',
-                         '-p', image_reference, os.path.relpath (source),
-                         target))
+                         '-p', image_reference, source, target))
         result.add_product (target)
         result.add_source (source)
         result.add_source (image_file)

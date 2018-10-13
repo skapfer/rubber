@@ -28,7 +28,7 @@ def _format (where, text):
         return text
 
     if "file" in where and where["file"] is not None:
-        pos = os.path.relpath (where["file"])
+        pos = where ["file"]
         if "line" in where and where["line"]:
             pos = "%s:%d" % (pos, int(where["line"]))
             if "last" in where:

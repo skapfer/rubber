@@ -27,7 +27,7 @@ class Environment:
         reference directory for compilation, by default it is the current
         working directory.
         """
-        self.path = [os.getcwd ()]
+        self.path = [os.path.curdir]
         self.conv_prefs = {}
         self.converter = Converter (self)
         self.converter.read_ini (os.path.join (rubber.__path__[0], 'rules.ini'))

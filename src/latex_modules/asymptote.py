@@ -113,13 +113,11 @@ of /usr/bin/asy flushes the .aux file.
 
     def run (self):
         if not os.path.exists (self.source):
-            msg.info (_("%s not yet generated"), os.path.relpath (self.source))
+            msg.info (_("%s not yet generated"), self.source)
             return True
         os.rename (self.aux, self.bak)
-        msg.debug (_("saving {} to {}").format (os.path.relpath (self.aux),
-                                                os.path.relpath (self.bak)))
+        msg.debug (_("saving %s to %s"), self.aux, self.bak)
         ret = super (Shell_Restoring_Aux, self).run ()
-        msg.debug (_ ("restoring {} to {}").format (os.path.relpath (self.aux),
-                                                    os.path.relpath (self.bak)))
+        msg.debug (_("restoring %s to s"), self.aux, self.bak)
         os.rename (self.bak, self.aux)
         return ret

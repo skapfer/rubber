@@ -160,8 +160,7 @@ class Dep (rubber.depend.Node):
         Run Metapost from the source file's directory, so that figures are put
         next to their source file.
         """
-        msg.info(_("running Metapost on %s") %
-                os.path.relpath (self.base + ".mp"))
+        msg.info (_("running Metapost on %s"), self.base + ".mp")
         if self.env.execute (self.cmd, self.penv, pwd=self.cmd_pwd) == 0:
             return True
 
@@ -200,7 +199,7 @@ class Dep (rubber.depend.Node):
                 ext = file[ln:]
                 m = re_mpext.match(ext)
                 if m and ext[m.end():] == "":
-                    msg.info (_("removing %s") % os.path.relpath (file))
+                    msg.info (_("removing %s"), file)
                     os.remove (file)
 
 # The `files' dictionary associates dependency nodes to MetaPost sources. It

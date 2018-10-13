@@ -235,7 +235,7 @@ class Node (object):
         """
         for file in self.products:
             if os.path.exists (file.path ()):
-                msg.info (_("removing %s") % os.path.relpath (file.path ()))
+                msg.info (_("removing %s"), file.path ())
                 os.remove (file.path ())
         self.products_exist = False
 
