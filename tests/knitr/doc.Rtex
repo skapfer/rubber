@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass{minimal}
 \usepackage{url}
 \begin{document}
 A tiny example for knitr, taken from
