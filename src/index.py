@@ -4,7 +4,6 @@
 """
 Common support for makeindex and xindy external tools.
 """
-import os.path
 import logging
 msg = logging.getLogger (__name__)
 import rubber.depend
@@ -79,10 +78,6 @@ class Index (rubber.depend.Node):
         self.cmd [0] = tool
 
     def run (self):
-        if not os.path.exists (self.cmd [1]):
-            msg.info (_("%s not yet generated") % self.cmd [1])
-            return True
-
         # No more settings are expected, we compute the
         # command once and for all.
         if self.command_env == None:

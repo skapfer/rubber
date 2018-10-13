@@ -188,8 +188,11 @@ class Node (object):
             # record snapshots of sources as we now actually start the build
             self.snapshots = tuple (s.snapshot () for s in self.sources)
 
-            # actually make
-            if not self.run ():
+            if (not isinstance (self, rubber.converters.latex.LaTeXDep)) \
+               and not all (os.path.exists (s.path ()) for s in self.sources):
+                msg.info (_("input files for %s do not yet exist, deferring"),
+                          self.primary_product ())
+            elif not self.run ():
                 self.failed_dep = self
                 return ERROR
 

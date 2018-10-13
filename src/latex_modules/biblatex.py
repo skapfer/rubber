@@ -63,9 +63,6 @@ class BibLaTeXDep (rubber.biblio.BibToolDep):
         self.add_source (self.source)
         doc.add_source (doc.basename (with_suffix = ".bbl"))
 
-    def main_source (self):
-        return self.source
-
     def build_command (self):
         return [ self.tool, self.source ]
 

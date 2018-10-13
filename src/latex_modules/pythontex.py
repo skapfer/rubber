@@ -17,24 +17,19 @@ class PythonTeXDep (rubber.depend.Shell):
 
     def __init__ (self, document):
         self.doc = document
-        self.tool = 'pythontex'
         basename = self.doc.basename ()
-        super ().__init__ ((self.tool, basename))
-        self.pytxcode = basename + '.pytxcode'
-        self.pythontex_files = 'pythontex-files-%s' % basename
-        pytxmcr = os.path.join (self.pythontex_files, basename + '.pytxmcr')
+        super ().__init__ (('pythontex', basename))
+        self.pythontex_files = 'pythontex-files-' + basename
 
-        self.doc.add_product (self.pytxcode)
-        self.add_source (self.pytxcode)
+        pytxcode = basename + '.pytxcode'
+        self.doc.add_product (pytxcode)
+        self.add_source (pytxcode)
+
+        pytxmcr = os.path.join (self.pythontex_files, basename + '.pytxmcr')
         self.add_product (pytxmcr)
         self.doc.add_source (pytxmcr)
 
     def run (self):
-        # check if the input file exists. if not, refuse to run.
-        if not os.path.exists (self.pytxcode):
-            msg.info (_('input file for %s does not yet exist, deferring')
-                % self.tool)
-            return True
         if not self.doc.env.is_in_unsafe_mode_:
             msg.error (_('The document tries to run embedded Python code which could be dangerous.  Use rubber --unsafe if the document is trusted.'))
             return False

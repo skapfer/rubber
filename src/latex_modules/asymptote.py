@@ -32,7 +32,6 @@ Asymptote insists on replacing the main .aux file with an empty one,
 so we backup its content before running the external tool.
 """
 
-import os.path
 import rubber.depend
 import rubber.module_interface
 import rubber.util
@@ -109,12 +108,8 @@ of /usr/bin/asy flushes the .aux file.
 
     def __init__ (self, source):
         super ().__init__ (command = ('asy', source))
-        self.source = source
 
     def run (self):
-        if not os.path.exists (self.source):
-            msg.info (_("%s not yet generated"), self.source)
-            return True
         os.rename (self.aux, self.bak)
         msg.debug (_("saving %s to %s"), self.aux, self.bak)
         ret = super (Shell_Restoring_Aux, self).run ()

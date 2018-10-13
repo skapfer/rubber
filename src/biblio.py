@@ -11,7 +11,7 @@ import logging
 msg = logging.getLogger (__name__)
 import rubber.util
 import rubber.depend
-import os, os.path
+import os
 import re
 import subprocess
 
@@ -24,9 +24,6 @@ class BibToolDep (rubber.depend.Node):
         self.bib_paths = rubber.util.explode_path ("BIBINPUTS")
         self.bst_paths = rubber.util.explode_path ("BSTINPUTS")
 
-    def main_source (self):
-        assert False, 'This method should be overridden by each subclass'
-
     def do_path (self, args):
         if len (args) != 1:
             raise SyntaxError (_("invalid syntax for directive '%s'") % "path")
@@ -34,12 +31,6 @@ class BibToolDep (rubber.depend.Node):
         self.bib_paths.insert (0, path)
 
     def run (self):
-        # check if the input file exists. if not, refuse to run.
-        if not os.path.exists (self.main_source ()):
-            msg.info (_("input file for %s does not yet exist, deferring")
-                % self.tool)
-            return True
-
         # command might have been updated in the mean time, so get it now
         self.environ["BIBINPUTS"] = ":".join (self.bib_paths)
         self.environ["BSTINPUTS"] = ":".join (self.bst_paths)
@@ -134,9 +125,6 @@ class BibTeXDep (BibToolDep):
         self.set_style ("plain")
         self.db = {}
         self.crossrefs = None
-
-    def main_source (self):
-        return self.aux
 
     def build_command (self):
         ret = [ self.tool ]
