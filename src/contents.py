@@ -1,4 +1,4 @@
-import binascii
+import hashlib
 import logging
 log = logging.getLogger (__name__)
 import io
@@ -43,10 +43,7 @@ class _File:
         """
         A snapshot of the contents of an external file.
 
-        The result is always an int. You may rely on the fact that no
-        other kind of value will ever be returned.
-
-        The special int value NO_SUCH_FILE is returned when path does not
+        The special value NO_SUCH_FILE is returned when path does not
         refer to an existing external file. However, an exception is
         raised if an existing file vanishes between two calls.
 
@@ -57,9 +54,9 @@ class _File:
         Moreover, an overwrite will not be detected if it is more recent
         than the smallest interval representable by operating timestamps.
 
-        The implementation trusts a non-cryptographic hash to detect
-        modified contents. With the current algorithm, there will be in
-        average 1 error in 65536 files reported as unchanged.
+        The implementation relies on the MD5 hash to detect modified
+        contents. For such a non-cryptographic use,  the probability of
+        collision (2^-64) can be neglected for all practical needs.
         """
 
         # We expect some files to be sources in many context, like the
@@ -97,16 +94,17 @@ class _File:
             log.debug ('%s does not exist yet',  self._path)
         return self._checksum
 
-NO_SUCH_FILE = 2**32
+# Md5 values are non-empty byte sequences. None is used above.
+NO_SUCH_FILE = []
 
 def _checksum_algorithm (path):
     with open (path, 'br') as stream:
-        result = 0
+        result = hashlib.md5 ()
         while True:
             data = stream.read (io.DEFAULT_BUFFER_SIZE)
             if not data:
-                return result
-            result = binascii.crc32 (data, result)
+                return result.digest ()
+            result.update (data)
 
 # Manual tests
 
