@@ -42,6 +42,8 @@ class _File:
     def snapshot (self):
         """
         A snapshot of the contents of an external file.
+        The returned type is always an int,
+        in order to ease serialization.
 
         The special value NO_SUCH_FILE is returned when path does not
         refer to an existing external file. However, an exception is
@@ -94,8 +96,8 @@ class _File:
             log.debug ('%s does not exist yet',  self._path)
         return self._checksum
 
-# Md5 values are non-empty byte sequences. None is used above.
-NO_SUCH_FILE = []
+# Md5 values are represented as non-negative ints. None is used above.
+NO_SUCH_FILE = -1
 
 def _checksum_algorithm (path):
     with open (path, 'br') as stream:
@@ -103,8 +105,12 @@ def _checksum_algorithm (path):
         while True:
             data = stream.read (io.DEFAULT_BUFFER_SIZE)
             if not data:
-                return result.digest ()
+                break
             result.update (data)
+    as_int = 0
+    for byte  in result.digest ():
+        as_int = 10*as_int + byte
+    return as_int
 
 # Manual tests
 

@@ -371,6 +371,10 @@ def main (command_name):
                 process_source_info (env, options.info_action, options.short)
             elif options.clean:
                 env.final.clean ()
+                cache_path = env.main.basename ('.rubbercache')
+                if os.path.exists (cache_path):
+                    msg.debug (_("removing %s"), cache_path)
+                    os.remove (cache_path)
             else:
                 build (options, RUBBER_PLAIN, env)
 
@@ -391,6 +395,10 @@ def build (options, command_name, env):
     assert command_name == RUBBER_PIPE \
             or (command_name == RUBBER_PLAIN and not options.clean)
 
+    cache_path = env.main.basename ('.rubbercache')
+    if os.path.exists (cache_path):
+        rubber.depend.load_cache (cache_path)
+
     if command_name == RUBBER_PLAIN and options.force:
         ret = env.main.make (force = True)
         if ret != rubber.depend.ERROR and env.final is not env.main:
@@ -401,6 +409,8 @@ def build (options, command_name, env):
             env.final.failed_dep = env.main.failed_dep
     else:
         ret = env.final.make (force = False)
+
+    rubber.depend.save_cache (cache_path, env.final)
 
     if ret == rubber.depend.ERROR:
         msg.info (_("There were errors compiling %s."), env.main.source ())
@@ -458,6 +468,9 @@ def prepare_source_pipe ():
     the same way we would normally process LaTeX sources.
     """
 
+    # FIXME: with a better program structure, the context manager
+    # should remove the input file.
+
     try:
         # Make a temporary on-disk copy of the standard input,
         # in the current working directory.
@@ -490,6 +503,10 @@ def process_source_pipe (env, pipe_tempfile, options):
         # clean the intermediate files
         if not options.keep:
             env.final.clean ()
+            cache_path = env.main.basename ('.rubbercache')
+            if os.path.exists (cache_path):
+                msg.debug (_("removing %s"), cache_path)
+                os.remove (cache_path)
             if os.path.exists (pipe_tempfile):
                 msg.info (_("removing %s"), pipe_tempfile)
                 os.remove (pipe_tempfile)

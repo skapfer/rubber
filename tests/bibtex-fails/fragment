@@ -4,4 +4,4 @@ if $python ../rubber.py $VERBOSE doc 2> tmp; then
    exit 1
 fi
 rm tmp
-rm doc.aux doc.dvi doc.log doc.bbl doc.blg
+$python ../rubber.py $VERBOSE doc --clean

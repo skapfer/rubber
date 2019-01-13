@@ -16,6 +16,47 @@ ERROR = 0
 UNCHANGED = 1
 CHANGED = 2
 
+def save_cache (cache_path, final):
+    msg.debug (_('Creating or overwriting cache file %s') % cache_path)
+    with open (cache_path, 'tw') as f:
+        for node in final.all_producers ():
+            if node.snapshots is not None:
+                f.write (node.products [0].path () + '\n')
+                length = len (node.sources)
+                f.write (str (length) + '\n')
+                for i in range (length):
+                    f.write (node.sources [i].path () + '\n')
+                    f.write (str (node.snapshots [i]) + '\n')
+
+def load_cache (cache_path):
+    msg.debug (_('Reading external cache file %s') % cache_path)
+    with open (cache_path) as f:
+        while True:
+            line = f.readline ()
+            if not line:
+                break
+            product = line.rstrip ()
+            length = int (f.readline ())
+            sources = []
+            snapshots = []
+            for i in range (length):
+                sources.append (f.readline ().rstrip ())
+                snapshots.append (int (f.readline ()))
+            node = rubber.contents.factory (product).producer ()
+            if node is None:
+                msg.debug (_('%s: no such recipe anymore') % product)
+            elif list (s.path () for s in node.sources) != sources:
+                msg.debug (_('%s: depends on %s not anymore on %s') %
+                    (product,
+                     " ".join (s.path () for s in node.sources),
+                     " ".join (s.path () for s in sources)))
+            elif node.snapshots is not None:
+                # FIXME: this should not happen. See cweb-latex test.
+                msg.debug (_('%s: rebuilt before cache read'), product)
+            else:
+                msg.debug (_('%s: using cached checksums'), product)
+                node.snapshots = snapshots
+
 class Node (object):
     """
     This is the base class to represent dependency nodes. It provides the base
@@ -32,7 +73,7 @@ class Node (object):
         # All prerequisites for this recipe. Elements are instances
         # returned by rubber.contents.factory. A None value for the
         # producer means a leaf node.
-        self.sources = set ()
+        self.sources = []
         # A snapshot of each source as they were used during last
         # successful build, or None if no build has been attempted
         # yet.  The order in the list is the one in self.sources,
@@ -40,7 +81,6 @@ class Node (object):
         self.snapshots = None
         # making is the lock guarding against making a node while making it
         self.making = False
-        self.products_exist = False
         # failed_dep: the Node which caused the build to fail.  can be self
         # if this Node failed to build, or a dependency.
         self.failed_dep = None
@@ -72,7 +112,9 @@ class Node (object):
         # Do nothing when the name is already listed.
         # The same source may be inserted many times in the same
         # document (an image containing a logo for example).
-        self.sources.add (rubber.contents.factory (name))
+        s = rubber.contents.factory (name)
+        if s not in self.sources:
+            self.sources.append (s)
 
     def remove_source (self, name):
         """
@@ -115,10 +157,9 @@ class Node (object):
         rv = self.real_make (force)
         self.making = False
         if rv == ERROR:
-            self.products_exist = False
             assert self.failed_dep is not None
         else:
-            assert self.products_exist or self.snapshots is None
+            assert self.snapshots is not None
             self.failed_dep = None
         return rv
 
@@ -131,6 +172,8 @@ class Node (object):
             # make our sources
             for source in self.sources:
                 if source.producer () is None:
+                    msg.debug (_("while making %s: %s is a leaf dependency"),
+                               self.primary_product (), source.path ())
                     continue
                 if source.producer ().making:
                     # cyclic dependency -- drop for now, we will re-visit
@@ -153,50 +196,35 @@ class Node (object):
             elif self.snapshots is None:
                 msg.debug (_("while making %s: first attempt, building"),
                            self.primary_product ())
-            elif not self.products_exist:
-                msg.debug (_("while making %s: product missing, building"),
-                           self.primary_product ())
+                self.snapshots = tuple (s.snapshot () for s in self.sources)
             else:
-                i = 0
-                for source in self.sources:
-                    # NB: we ignore this case (missing dependency)
-                    if source.producer () is not None \
-                       and not source.producer ().products_exist:
-                        msg.debug (_("Not rebuilding %s from missing %s"),
-                                   self.primary_product (), source.path ())
-                    elif self.snapshots is None:
-                        msg.info (_("First build attempt for %s"),
-                                  self.primary_product ())
-                        break
-                    elif self.snapshots [i] != source.snapshot ():
+                # There has already been a successful build.
+                for i in range (len (self.sources)):
+                    source = self.sources [i]
+                    if self.snapshots [i] != source.snapshot ():
                         msg.debug (_("Rebuilding %s from outdated %s"),
                                    self.primary_product (), source.path ())
                         break
                     else:
                         msg.debug (_("Not rebuilding %s from unchanged %s"),
                                    self.primary_product (), source.path ())
-                    i = i + 1
                 else:
                     msg.debug (_("No reason to rebuild %s."),
                                self.primary_product ())
                     return rv
-
-            if self.snapshots is None:
-                msg.debug (_("Creating snapshots for %s"), " ".join (s.path () for s in self.sources))
-            else:
-                msg.debug (_("Updating snapshots for %s"), " ".join (s.path () for s in self.sources))
-            # record snapshots of sources as we now actually start the build
-            self.snapshots = tuple (s.snapshot () for s in self.sources)
+                msg.debug (_("Updating snapshots for %s"), self.primary_product ())
+                self.snapshots = tuple (s.snapshot () for s in self.sources)
 
             if (not isinstance (self, rubber.converters.latex.LaTeXDep)) \
                and not all (os.path.exists (s.path ()) for s in self.sources):
                 msg.info (_("input files for %s do not yet exist, deferring"),
                           self.primary_product ())
+
             elif not self.run ():
                 self.failed_dep = self
+                self.snapshots = None
                 return ERROR
 
-            self.products_exist = True
             rv = CHANGED
             force = False
 
@@ -239,8 +267,6 @@ class Node (object):
             if os.path.exists (path):
                 msg.info (_("removing %s"), path)
                 os.remove (path)
-
-        self.products_exist = False
 
         assert not self.making
         self.making = True
