@@ -257,7 +257,7 @@ def prepare_source (filename, command_name, env, options):
             if not options.unsafe:
                 raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
             # Produce the source from its dependency rules, if needed.
-            if src_node.make () == rubber.depend.ERROR:
+            if src_node.make (force = False) == rubber.depend.ERROR:
                 raise rubber.GenericError (_("Producing the main LaTeX file failed: '%s'") \
                     % src)
     else:
@@ -366,8 +366,7 @@ def main (command_name):
                         bz2.BZ2File, '.bz2', filename)
 
             if command_name == RUBBER_PIPE:
-                # can args [0] be different from src here?
-                process_source_pipe (env, args [0], options)
+                process_source_pipe (env, src, options)
             elif command_name == RUBBER_INFO:
                 process_source_info (env, options.info_action, options.short)
             elif options.clean:
@@ -394,9 +393,9 @@ def build (options, command_name, env):
             or (command_name == RUBBER_PLAIN and not options.clean)
 
     if command_name == RUBBER_PLAIN and options.force:
-        ret = env.main.make(True)
+        ret = env.main.make (force = True)
         if ret != rubber.depend.ERROR and env.final is not env.main:
-            ret = env.final.make()
+            ret = env.final.make (force = False)
         else:
             # This is a hack for the call to get_errors() below
             # to work when compiling failed when using -f.
@@ -500,7 +499,7 @@ def process_source_pipe (env, pipe_tempfile, options):
 def process_source_info (env, act, short):
     if act == "deps":
         # Show sources that are not produced.
-        deps  = set ()
+        deps = set ()
         for node in env.final.all_producers ():
             for source in node.sources:
                 if source.producer () is None:

@@ -138,7 +138,7 @@ class Node (object):
                     msg.debug (_("while making %s: cyclic dependency on %s (pruned)"),
                                self.primary_product (), source.path ())
                     continue
-                source_rv = source.producer ().make (force)
+                source_rv = source.producer ().make (force = force)
                 if source_rv == ERROR:
                     self.failed_dep = source.producer ().failed_dep
                     msg.debug (_("while making %s: dependency %s could not be made"),

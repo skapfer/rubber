@@ -830,8 +830,7 @@ class LaTeXDep (rubber.depend.Node):
         self.hooks_version += 1
 
     def do_clean (self, args):
-        for file in args:
-            self.removed_files.append(file)
+        self.removed_files.extend (args)
 
     def do_depend (self, args):
         for arg in args:
@@ -1247,11 +1246,13 @@ class LaTeXDep (rubber.depend.Node):
             (file, old_contents, cmd) = l
             new = file.snapshot ()
             if old_contents != new:
+                # An exception should already have been raised if the
+                # file has disappeared.
+                assert new != rubber.contents.NO_SUCH_FILE
                 l [1] = new
-                if new != rubber.contents.NO_SUCH_FILE:
-                    msg.info (_("running %s") % cmd)
-                    # FIXME portability issue: explicit reference to shell
-                    self.env.execute(("sh", "-c", cmd))
+                msg.info (_("running %s") % cmd)
+                # FIXME portability issue: explicit reference to shell
+                self.env.execute(("sh", "-c", cmd))
 
         for mod in self.modules.objects.values():
             if not mod.post_compile():
