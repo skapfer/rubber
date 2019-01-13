@@ -32,6 +32,7 @@ Asymptote insists on replacing the main .aux file with an empty one,
 so we backup its content before running the external tool.
 """
 
+import os
 import rubber.depend
 import rubber.module_interface
 import rubber.util
@@ -49,12 +50,12 @@ def inline_option (option_string, default):
     return value == None or value == "true"
 
 class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
         self.asy_environments = 0
         self.doc = document
 
         document.add_product (document.basename (with_suffix = ".pre"))
-        Shell_Restoring_Aux.initialize (document)
 
         if document.engine == 'pdfTeX' \
            and document.primary_product ().endswith ('.pdf'):
@@ -83,7 +84,8 @@ class Module (rubber.module_interface.Module):
         inline = inline_option (environment_options, default=self.global_inline)
 
         self.doc.add_product (source)
-        node = Shell_Restoring_Aux (source)
+        node = Shell_Restoring_Aux (self.doc.basename (with_suffix = '.aux'),
+                                    source)
         if inline:
             node.add_product (prefix + ".tex")
             node.add_product (prefix + "_0" + self.format)
@@ -99,20 +101,17 @@ class Shell_Restoring_Aux (rubber.depend.Shell):
 of /usr/bin/asy flushes the .aux file.
 
     """
-    @classmethod
-    def initialize (cls, document):
-        cls.aux = document.basename (with_suffix = ".aux")
-        cls.bak = document.basename (with_suffix = ".aux.tmp")
-        # In case we are interrupted, clean bak.
-        document.add_product (cls.bak)
 
-    def __init__ (self, source):
+    def __init__ (self, aux, source):
         super ().__init__ (command = ('asy', source))
+        self.aux = aux
 
     def run (self):
-        os.rename (self.aux, self.bak)
-        msg.debug (_("saving %s to %s"), self.aux, self.bak)
-        ret = super (Shell_Restoring_Aux, self).run ()
-        msg.debug (_("restoring %s to s"), self.aux, self.bak)
-        os.rename (self.bak, self.aux)
-        return ret
+        bak = self.aux + '.away_from_asymptote'
+        msg.debug (_("saving %s to %s"), self.aux, bak)
+        os.rename (self.aux, bak)
+        try:
+            return super ().run ()
+        finally:
+            msg.debug (_("restoring %s to s"), bak, self.aux)
+            os.rename (bak, self.aux)
