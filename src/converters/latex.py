@@ -614,7 +614,6 @@ class LaTeXDep (rubber.depend.Node):
         # description of the building process:
 
         self.onchange = []
-        self.removed_files = []
 
         # state of the builder:
 
@@ -830,7 +829,8 @@ class LaTeXDep (rubber.depend.Node):
         self.hooks_version += 1
 
     def do_clean (self, args):
-        self.removed_files.extend (args)
+        for arg in args:
+            self.add_product (arg)
 
     def do_depend (self, args):
         for arg in args:
@@ -1265,10 +1265,6 @@ class LaTeXDep (rubber.depend.Node):
         Remove all files that are produced by compilation.
         """
         super (LaTeXDep, self).clean ()
-        for file in self.removed_files:
-            if os.path.exists (file):
-                msg.info (_("removing %s"), file)
-                os.remove (file)
         msg.debug (_("cleaning additional files..."))
         for mod in self.modules.objects.values():
             mod.clean()

@@ -35,13 +35,14 @@ class PythonTeXDep (rubber.depend.Shell):
             return False
         return super (PythonTeXDep, self).run ()
 
-    def clean (self):
-        msg.info (_("removing tree %s"), self.pythontex_files)
-        # FIXME proper error reporting
-        shutil.rmtree (self.pythontex_files, ignore_errors=True)
-        return super (PythonTeXDep, self).clean ()
-
 class Module (rubber.module_interface.Module):
 
     def __init__ (self, document, opt):
         self.dep = PythonTeXDep (document)
+
+    # Cleaning a module involves no recursion.
+    def clean (self):
+        trash = self.dep.pythontex_files
+        msg.info (_("removing tree %s"), trash)
+        # FIXME proper error reporting
+        shutil.rmtree (trash, ignore_errors=True)

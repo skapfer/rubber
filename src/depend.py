@@ -229,18 +229,26 @@ class Node (object):
 
     def clean (self):
         """
-        Remove the files produced by this rule.  Note that cleaning is not
-        done recursively; rather, all dependency nodes are cleaned in no
-        particular order (see cmdline.py / cmd_pipe.py)
+        Remove the products of this recipe and of recursive dependencies.
 
                 Each override should start with
                 super (class, self).clean ()
         """
-        for file in self.products:
-            if os.path.exists (file.path ()):
-                msg.info (_("removing %s"), file.path ())
-                os.remove (file.path ())
+        for product in self.products:
+            path = product.path ()
+            if os.path.exists (path):
+                msg.info (_("removing %s"), path)
+                os.remove (path)
+
         self.products_exist = False
+
+        assert not self.making
+        self.making = True
+        for source in self.sources:
+            producer = source.producer ()
+            if producer is not None and not producer.making:
+                producer.clean ()
+        self.making = False
 
 class Shell (Node):
     """

@@ -70,8 +70,10 @@ class Module:
 
     def clean (self):
         """
-        This method is called when cleaning the compiled files. It is supposed
-        to remove all the files that this modules generates.
+        This method is called when cleaning the compiled files, in order
+        to allow modules to clean additionnal files.
+        Nothing recursive happens here.
+        Files registered as Node products are removed by other means.
         """
 
     def command (self, cmd, args, _dep = None):

@@ -370,8 +370,7 @@ def main (command_name):
             elif command_name == RUBBER_INFO:
                 process_source_info (env, options.info_action, options.short)
             elif options.clean:
-                for dep in env.final.all_producers ():
-                    dep.clean ()
+                env.final.clean ()
             else:
                 build (options, RUBBER_PLAIN, env)
 
@@ -490,8 +489,7 @@ def process_source_pipe (env, pipe_tempfile, options):
     finally:
         # clean the intermediate files
         if not options.keep:
-            for dep in env.final.all_producers ():
-                dep.clean ()
+            env.final.clean ()
             if os.path.exists (pipe_tempfile):
                 msg.info (_("removing %s"), pipe_tempfile)
                 os.remove (pipe_tempfile)

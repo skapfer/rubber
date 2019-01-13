@@ -187,9 +187,5 @@ class Module (rubber.module_interface.Module):
                 node.make (force = False)
             else:
                 msg.debug ("*** FIXME ***  recursive making in graphics: %s",
-                           " ".join (p.path () for p in node.products))
+                           node.primary_product ())
         return True
-
-    def clean (self):
-        for node in self.files:
-            node.clean()

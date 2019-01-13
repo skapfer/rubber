@@ -31,8 +31,9 @@ import rubber.biblio
 import rubber.module_interface
 
 class Module (rubber.module_interface.Module):
+
     def __init__ (self, document, opt):
-        self.btsect_environments = []
+        self.btsect_environments = 0
         self.current_style = "plain"
         self.doc = document
 
@@ -44,26 +45,18 @@ class Module (rubber.module_interface.Module):
         document.hook_macro ('bibliography', 'a', self.hook_bibliography)
         document.hook_macro ('bibliographystyle', 'a', self.hook_bibliographystyle)
 
+        document.add_product ('btaux.aux')
+        document.add_product ('btbbl.aux')
+
     def on_begin_btsect (self, loc):
-        name = self.doc.basename() + str (len (self.btsect_environments) + 1)
+        self.btsect_environments += 1
+        name = self.doc.basename() + str (self.btsect_environments)
         self.doc.add_product (name + ".aux")
         e = rubber.biblio.BibTeXDep (self.doc, name)
         e.set_style (self.current_style)
-        self.btsect_environments.append (e)
 
     def hook_bibliography (self, loc, bibs):
         raise rubber.GenericError (_("\\usepackage{bibtopic} and \\bibliography are incompatible"))
 
     def hook_bibliographystyle (self, loc, name):
         self.current_style = name
-
-    def clean (self):
-        for name in ('btaux.aux', 'btbbl.aux'):
-            if os.path.exists (name):
-                msg.info (_("removing %s"), name)
-                os.remove (name)
-        for e in self.btsect_environments:
-            name = e.aux
-            if os.path.exists (name):
-                msg.info (_("removing %s"), name)
-                os.remove (name)
