@@ -42,8 +42,6 @@ class _File:
     def snapshot (self):
         """
         A snapshot of the contents of an external file.
-        The returned type is always an int,
-        in order to ease serialization.
 
         The special value NO_SUCH_FILE is returned when path does not
         refer to an existing external file. However, an exception is
@@ -96,8 +94,8 @@ class _File:
             log.debug ('%s does not exist yet',  self._path)
         return self._checksum
 
-# Md5 values are represented as non-negative ints. None is used above.
-NO_SUCH_FILE = -1
+# Md5 values are represented as bytes. None is used above.
+NO_SUCH_FILE = bytes ()
 
 def _checksum_algorithm (path):
     with open (path, 'br') as stream:
@@ -105,12 +103,27 @@ def _checksum_algorithm (path):
         while True:
             data = stream.read (io.DEFAULT_BUFFER_SIZE)
             if not data:
-                break
+                return result.digest ()
             result.update (data)
-    as_int = 0
-    for byte  in result.digest ():
-        as_int = 10*as_int + byte
-    return as_int
+
+# These two functions encapsulate the hexadecimal representation of
+# checksums other than NO_SUCH_FILE.  In order to ease formatting, all
+# results are guaranteed to have a common length.
+cs_str_len = 32
+def cs2str (checksum):
+    if checksum == NO_SUCH_FILE:
+        result = 'No such file                    '
+    else:
+        result = ''.join ('{:02X}'.format (byte) for byte in checksum)
+    assert len (result) == cs_str_len
+    return result
+def str2cs (string):
+    assert len (string) == cs_str_len
+    if string == 'No such file                    ':
+        return NO_SUCH_FILE
+    else:
+        return bytes (int (string [i:i+2], base=16)
+                      for i in range (0, len (string), 2))
 
 # Manual tests
 

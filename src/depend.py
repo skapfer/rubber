@@ -21,35 +21,37 @@ def save_cache (cache_path, final):
     with open (cache_path, 'tw') as f:
         for node in final.all_producers ():
             if node.snapshots is not None:
-                f.write (node.products [0].path () + '\n')
-                length = len (node.sources)
-                f.write (str (length) + '\n')
-                for i in range (length):
-                    f.write (node.sources [i].path () + '\n')
-                    f.write (str (node.snapshots [i]) + '\n')
+                f.write (node.primary_product ())
+                f.write ('\n')
+                for i in range (len (node.sources)):
+                    f.write ('  ')
+                    f.write (rubber.contents.cs2str (node.snapshots [i]))
+                    f.write (' ')
+                    f.write (node.sources [i].path ())
+                    f.write ('\n')
 
 def load_cache (cache_path):
     msg.debug (_('Reading external cache file %s') % cache_path)
     with open (cache_path) as f:
-        while True:
-            line = f.readline ()
-            if not line:
-                break
-            product = line.rstrip ()
-            length = int (f.readline ())
+        line = f.readline ()
+        while line:
+            product = line [:-1]
             sources = []
             snapshots = []
-            for i in range (length):
-                sources.append (f.readline ().rstrip ())
-                snapshots.append (int (f.readline ()))
+            while True:
+                line = f.readline ()
+                if not line.startswith ('  '): # Including end of file.
+                    break
+                limit = 2 + rubber.contents.cs_str_len
+                snapshots.append (rubber.contents.str2cs (line [2:limit]))
+                sources.append (line [limit + 1:-1])
             node = rubber.contents.factory (product).producer ()
             if node is None:
                 msg.debug (_('%s: no such recipe anymore') % product)
             elif list (s.path () for s in node.sources) != sources:
-                msg.debug (_('%s: depends on %s not anymore on %s') %
-                    (product,
+                msg.debug (_('%s: depends on %s not anymore on %s'), product,
                      " ".join (s.path () for s in node.sources),
-                     " ".join (s.path () for s in sources)))
+                     " ".join (sources))
             elif node.snapshots is not None:
                 # FIXME: this should not happen. See cweb-latex test.
                 msg.debug (_('%s: rebuilt before cache read'), product)
