@@ -257,7 +257,7 @@ def prepare_source (filename, command_name, env, options):
             if not options.unsafe:
                 raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
             # Produce the source from its dependency rules, if needed.
-            if src_node.make (force = False) == rubber.depend.ERROR:
+            if src_node.make () == rubber.depend.ERROR:
                 raise rubber.GenericError (_("Producing the main LaTeX file failed: '%s'") \
                     % src)
     else:
@@ -396,19 +396,20 @@ def build (options, command_name, env):
             or (command_name == RUBBER_PLAIN and not options.clean)
 
     cache_path = env.main.basename ('.rubbercache')
-    if os.path.exists (cache_path):
-        rubber.depend.load_cache (cache_path)
 
     if command_name == RUBBER_PLAIN and options.force:
-        ret = env.main.make (force = True)
+        msg.debug (_('Ignoring cache file if any because of --force.'))
+        ret = env.main.make ()
         if ret != rubber.depend.ERROR and env.final is not env.main:
-            ret = env.final.make (force = False)
+            ret = env.final.make ()
         else:
             # This is a hack for the call to get_errors() below
             # to work when compiling failed when using -f.
             env.final.failed_dep = env.main.failed_dep
     else:
-        ret = env.final.make (force = False)
+        if os.path.exists (cache_path):
+            rubber.depend.load_cache (cache_path)
+        ret = env.final.make ()
 
     rubber.depend.save_cache (cache_path, env.final)
 

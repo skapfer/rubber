@@ -13,6 +13,18 @@ echo 'Document unchanged with recent timestamp, should not build.'
 $python ../rubber.py $VERBOSE $arguments doc
 ls -l doc.log | grep ' 2000 doc.log'
 
+echo 'Document unchanged with correct timestamp and --force, should build.'
+touch --date=2000-01-01 doc.tex
+touch --date=2001-01-01 doc.aux doc.log doc.dvi
+$python ../rubber.py $VERBOSE $arguments doc --force
+ls -l doc.log | grep -v ' 2001 doc.log'
+
+touch --date=2000-01-01 doc.tex
+touch --date=2001-01-01 doc.aux doc.log doc.dvi
+echo 'Document unchanged. Should not build if cache is correct.'
+$python ../rubber.py $VERBOSE $arguments doc
+ls -l doc.log | grep ' 2001 doc.log'
+
 sed -i 's/lorem/ipsum/' doc.tex
 touch --date=2000-01-01 doc.tex
 touch --date=2001-01-01 doc.aux doc.log doc.dvi

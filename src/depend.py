@@ -137,7 +137,7 @@ class Node (object):
     def primary_product (self):
         return self.products [0].path ()
 
-    def make (self, force=False):
+    def make (self):
         """
         Make the destination file. This recursively makes all dependencies,
         then compiles the target if dependencies were modified. The return
@@ -149,14 +149,11 @@ class Node (object):
           depend on this one might have to be remade)
           This is mainly for diagnostics to the user, rubber no longer makes
           build decisions based on this value - proved to be error-prone.
-        If the optional argument 'force' is true, then the method 'run' is
-        called unless an error occurred in dependencies, and in this case
-        UNCHANGED cannot be returned.
         """
         # catch if cyclic dependencies have not been detected properly
         assert not self.making
         self.making = True
-        rv = self.real_make (force)
+        rv = self.real_make ()
         self.making = False
         if rv == ERROR:
             assert self.failed_dep is not None
@@ -165,7 +162,7 @@ class Node (object):
             self.failed_dep = None
         return rv
 
-    def real_make (self, force):
+    def real_make (self):
         rv = UNCHANGED
         msg.debug (_("making %s from %s"),
                    " ".join (s.path () for s in self.products),
@@ -183,7 +180,7 @@ class Node (object):
                     msg.debug (_("while making %s: cyclic dependency on %s (pruned)"),
                                self.primary_product (), source.path ())
                     continue
-                source_rv = source.producer ().make (force = force)
+                source_rv = source.producer ().make ()
                 if source_rv == ERROR:
                     self.failed_dep = source.producer ().failed_dep
                     msg.debug (_("while making %s: dependency %s could not be made"),
@@ -192,11 +189,8 @@ class Node (object):
                 elif source_rv == CHANGED:
                     rv = CHANGED
 
-            if force:
-                msg.debug (_("while making %s: --force given"),
-                           self.primary_product ())
-            elif self.snapshots is None:
-                msg.debug (_("while making %s: first attempt, building"),
+            if self.snapshots is None:
+                msg.debug (_("while making %s: first attempt or --force given, building"),
                            self.primary_product ())
                 self.snapshots = tuple (s.snapshot () for s in self.sources)
             else:
