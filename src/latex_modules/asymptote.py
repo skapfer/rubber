@@ -113,5 +113,5 @@ of /usr/bin/asy flushes the .aux file.
         try:
             return super ().run ()
         finally:
-            msg.debug (_("restoring %s to s"), bak, self.aux)
+            msg.debug (_("restoring %s to %s"), bak, self.aux)
             os.rename (bak, self.aux)
