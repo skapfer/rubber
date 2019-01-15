@@ -124,8 +124,7 @@ class Dep (rubber.depend.Node):
         super ().__init__ ()
         self.add_product (target)
         self.include (os.path.basename (source))
-        msg.debug(_("%s is made from %s") %
-                  (target, " ".join (s.path () for s in self.sources)))
+        msg.debug (_("%s is made from %s"), target, " ".join (self.sources))
         self.env = env
         self.base = source[:-3]
         self.cmd = ["mpost", "\\batchmode;input %s" %

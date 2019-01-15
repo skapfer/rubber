@@ -658,9 +658,7 @@ class LaTeXDep (rubber.depend.Node):
         if self.env.final != self \
            and not self.primary_product ().endswith (old_suffix):
             raise GenericError (_("there is already a post-processor registered"))
-        f = rubber.contents.factory (self.basename (with_suffix=new_suffix))
-        self.products [0] = f
-        f.set_producer (self)
+        self.replace_product (self.basename (with_suffix=new_suffix))
 
     def new_aux_file (self, aux_file):
         """Register a new latex .aux file"""
@@ -701,8 +699,7 @@ class LaTeXDep (rubber.depend.Node):
             self.process(self.source())
         except EndDocument:
             pass
-        msg.debug (_("dependencies: %s"),
-                   " ".join (s.path () for s in self.sources))
+        msg.debug (_("dependencies: %s"), " ".join (self.sources))
 
     def parse_file (self, file):
         """
@@ -864,9 +861,8 @@ class LaTeXDep (rubber.depend.Node):
             raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % "onchange")
         file, cmd = args
         if self.env.is_in_unsafe_mode_:
-            file = rubber.contents.factory (file)
             # A list, because we will update the snapshot later.
-            self.onchange.append ([file, file.snapshot, cmd])
+            self.onchange.append ([file, rubber.contents.snapshot (file), cmd])
         else:
             msg.warning (_("Rubber directive 'onchange' is valid only in unsafe mode"))
 
@@ -1244,7 +1240,7 @@ class LaTeXDep (rubber.depend.Node):
 
         for l in self.onchange:
             (file, old_contents, cmd) = l
-            new = file.snapshot ()
+            new = rubber.contents.snapshot (file)
             if old_contents != new:
                 # An exception should already have been raised if the
                 # file has disappeared.

@@ -16,6 +16,14 @@ class MakeError (Exception):
         self.msg    = msg
         self.errors = errors
 
+# Dictionnary allowing to find a Node by one of its products.
+# It should not be used outside this module, because we want
+# to keep it in sync with the product list in each Node.
+
+# It would be nice to clean all products by traversing the keys, but
+# see the TODO remark in add_product and replace_product.
+_producer = {}
+
 def save_cache (cache_path, final):
     msg.debug (_('Creating or overwriting cache file %s') % cache_path)
     with open (cache_path, 'tw') as f:
@@ -27,7 +35,7 @@ def save_cache (cache_path, final):
                     f.write ('  ')
                     f.write (rubber.contents.cs2str (node.snapshots [i]))
                     f.write (' ')
-                    f.write (node.sources [i].path ())
+                    f.write (node.sources [i])
                     f.write ('\n')
 
 def load_cache (cache_path):
@@ -45,17 +53,18 @@ def load_cache (cache_path):
                 limit = 2 + rubber.contents.cs_str_len
                 snapshots.append (rubber.contents.str2cs (line [2:limit]))
                 sources.append (line [limit + 1:-1])
-            node = rubber.contents.factory (product).producer ()
-            if node is None:
+            try:
+                node = _producer [product]
+            except KeyError:
                 msg.debug (_('%s: no such recipe anymore') % product)
-            elif list (s.path () for s in node.sources) != sources:
+            else:
+              if node.sources != sources:
                 msg.debug (_('%s: depends on %s not anymore on %s'), product,
-                     " ".join (s.path () for s in node.sources),
-                     " ".join (sources))
-            elif node.snapshots is not None:
+                    " ".join (node.sources), " ".join (sources))
+              elif node.snapshots is not None:
                 # FIXME: this should not happen. See cweb-latex test.
                 msg.debug (_('%s: rebuilt before cache read'), product)
-            else:
+              else:
                 msg.debug (_('%s: using cached checksums'), product)
                 node.snapshots = snapshots
 
@@ -84,10 +93,6 @@ class Node (object):
         # making is the lock guarding against making a node while making it
         self.making = False
 
-    # TODO: once this works and noone outside this files use the
-    # dependency set, replace it with a more efficient structure: each
-    # node can record once and for all whether it causes a circular
-    # dependency or not at creation.
     def all_producers (self):
         def rec (node):
             if not node.making:
@@ -95,12 +100,33 @@ class Node (object):
                 try:
                     yield node
                     for source in node.sources:
-                        child = source.producer ()
-                        if child is not None:
+                        try:
+                            child = _producer [source]
+                        except KeyError:
+                            pass
+                        else:
                             yield from rec (child)
                 finally:
                     self.making = False
         yield from rec (self)
+
+    def all_leaves (self):
+        """Show sources that are not produced."""
+        # We need to build a set in order to remove duplicates.
+        result = set ()
+        def rec (node):
+            if not node.making:
+                node.making = True
+                try:
+                    for source in node.sources:
+                        if source in _producer:
+                            rec (_producer [source])
+                        else:
+                            result.add (source)
+                finally:
+                    self.making = False
+        rec (self)
+        return result
 
     def add_source (self, name):
         """
@@ -110,9 +136,8 @@ class Node (object):
         # Do nothing when the name is already listed.
         # The same source may be inserted many times in the same
         # document (an image containing a logo for example).
-        s = rubber.contents.factory (name)
-        if s not in self.sources:
-            self.sources.append (s)
+        if name not in self.sources:
+            self.sources.append (name)
 
     def remove_source (self, name):
         """
@@ -125,13 +150,20 @@ class Node (object):
         """
         Register a new product for this node.
         """
-        f = rubber.contents.factory (name)
-        assert f not in self.products
-        f.set_producer (self)
-        self.products.append (f)
+        # TODO: why does this break? assert name not in _producer, name
+        assert name not in self.products, name
+        _producer [name] = self
+        self.products.append (name)
 
     def primary_product (self):
-        return self.products [0].path ()
+        return self.products [0]
+
+    def replace_product (self, name):
+        """Trick for latex.py"""
+        # TODO: why does this break? assert name not in _producer, name
+        del _producer [self.products [0]]
+        self.products [0] = name
+        _producer [name] = self
 
     def make (self):
         """
@@ -156,25 +188,26 @@ class Node (object):
         try:
             for patience in range (5):
                 msg.debug (_('%s   made from   %s   attempt %i'),
-                           ','.join (s.path () for s in self.products),
-                           ','.join (s.path () for s in self.sources),
+                           ','.join (self.products), ','.join (self.sources),
                            patience)
 
                 # make our sources
                 for source in self.sources:
-                    if source.producer () is None:
-                        msg.debug (_("%s: needs %s, leaf"), pp, source.path ())
+                    try:
+                        dep = _producer [source]
+                    except KeyError:
+                        msg.debug (_("%s: needs %s, leaf"), pp, source)
                     else:
-                        msg.debug (_("%s: needs %s, making %s"), pp,
-                            source.path (), source.producer ().primary_product ())
-                        rv = source.producer ().make () or rv
+                        msg.debug (_("%s: needs %s, making %s"), pp, source,
+                                   dep.primary_product ())
+                        rv = dep.make () or rv
 
                 # Once all dependent recipes have been run, check the
                 # state of the sources on disk.
-                snapshots = tuple (s.snapshot () for s in self.sources)
+                snapshots = tuple (map (rubber.contents.snapshot, self.sources))
 
                 missing = ','.join (
-                    self.sources [i].path () for i in range (len (snapshots))
+                    self.sources [i] for i in range (len (snapshots))
                     if snapshots [i] == rubber.contents.NO_SUCH_FILE)
                 if missing:
                     if isinstance (self, rubber.converters.latex.LaTeXDep) \
@@ -190,7 +223,7 @@ class Node (object):
                 else:
                     # There has already been a successful build.
                     changed = ','.join (
-                        self.sources [i].path () for i in range (len (snapshots))
+                        self.sources [i] for i in range (len (snapshots))
                         if self.snapshots [i] != snapshots [i])
                     if not changed:
                         msg.debug (_("%s: sources unchanged since last build"), pp)
@@ -235,8 +268,7 @@ class Node (object):
                 Each override should start with
                 super (class, self).clean ()
         """
-        for product in self.products:
-            path = product.path ()
+        for path in self.products:
             if os.path.exists (path):
                 msg.info (_("removing %s"), path)
                 os.remove (path)

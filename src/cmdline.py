@@ -518,18 +518,12 @@ def process_source_pipe (env, pipe_tempfile, options):
 
 def process_source_info (env, act, short):
     if act == "deps":
-        # Show sources that are not produced.
-        deps = set ()
-        for node in env.final.all_producers ():
-            for source in node.sources:
-                if source.producer () is None:
-                    deps.add (source)
-        print (" ".join (s.path () for s in deps))
+        print (" ".join (env.final.all_leaves ()))
 
     elif act == "rules":
         for node in env.final.all_producers ():
-            print ("\n%s:" % " ".join (p.path () for p in node.products))
-            print (" ".join (s.path () for s in node.sources))
+            print ("\n%s:" % " ".join (node.products))
+            print (" ".join (node.sources))
 
     else:
         # Check for a log file and extract information from it if it exists,
