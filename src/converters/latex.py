@@ -1284,16 +1284,12 @@ class LaTeXDep (rubber.depend.Node):
             return False
 
         # If an error occurs after this point, it will be while LaTeXing.
-        self.failed_dep = self
         self.failed_module = None
 
         if not self.compile():
             return False
         if not self.post_compile():
             return False
-
-        # Finally there was no error.
-        self.failed_dep = None
 
         return True
 

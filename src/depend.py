@@ -10,11 +10,11 @@ import subprocess
 import rubber.contents
 from rubber.util import _
 
-# constants for the return value of Node.make:
-
-ERROR = 0
-UNCHANGED = 1
-CHANGED = 2
+class MakeError (Exception):
+    def __init__ (self, msg, errors):
+        super (MakeError, self).__init__ (msg)
+        self.msg    = msg
+        self.errors = errors
 
 def save_cache (cache_path, final):
     msg.debug (_('Creating or overwriting cache file %s') % cache_path)
@@ -83,27 +83,23 @@ class Node (object):
         self.snapshots = None
         # making is the lock guarding against making a node while making it
         self.making = False
-        # failed_dep: the Node which caused the build to fail.  can be self
-        # if this Node failed to build, or a dependency.
-        self.failed_dep = None
 
     # TODO: once this works and noone outside this files use the
     # dependency set, replace it with a more efficient structure: each
     # node can record once and for all whether it causes a circular
     # dependency or not at creation.
     def all_producers (self):
-        seen = set ()
         def rec (node):
-            seen.add (node)
-            # print ("            yielding ", node)
-            yield node
-            for source in node.sources:
-                child = source.producer ()
-                if child is not None  and child not in seen:
-                    # print ("            yielding from ", source.path (), child)
-                    yield from rec (child)
-                # else:
-                #     print ("            skipping leaf ", source.path ())
+            if not node.making:
+                node.making = True
+                try:
+                    yield node
+                    for source in node.sources:
+                        child = source.producer ()
+                        if child is not None:
+                            yield from rec (child)
+                finally:
+                    self.making = False
         yield from rec (self)
 
     def add_source (self, name):
@@ -141,93 +137,80 @@ class Node (object):
         """
         Make the destination file. This recursively makes all dependencies,
         then compiles the target if dependencies were modified. The return
-        value is one of the following:
-        - ERROR means that the process failed somewhere (in this node or in
-          one of its dependencies)
-        - UNCHANGED means that nothing had to be done
-        - CHANGED means that something was recompiled (therefore nodes that
-          depend on this one might have to be remade)
-          This is mainly for diagnostics to the user, rubber no longer makes
-          build decisions based on this value - proved to be error-prone.
+        value is
+        - False when nothing had to be done
+        - True when something was recompiled (among all dependencies)
+        MakeError is raised in case of error.
         """
-        # catch if cyclic dependencies have not been detected properly
-        assert not self.making
+        # The recurrence is similar to all_producers, except that we
+        # try each compilations a few times.
+
+        pp = self.primary_product ()
+
+        if self.making:
+            msg.debug (_("%s: cyclic dependency, pruning"), pp)
+            return False
+
+        rv = False
         self.making = True
-        rv = self.real_make ()
-        self.making = False
-        if rv == ERROR:
-            assert self.failed_dep is not None
-        else:
-            assert self.snapshots is not None
-            self.failed_dep = None
-        return rv
+        try:
+            for patience in range (5):
+                msg.debug (_('%s   made from   %s   attempt %i'),
+                           ','.join (s.path () for s in self.products),
+                           ','.join (s.path () for s in self.sources),
+                           patience)
 
-    def real_make (self):
-        rv = UNCHANGED
-        msg.debug (_("making %s from %s"),
-                   " ".join (s.path () for s in self.products),
-                   " ".join (s.path () for s in self.sources))
-        for patience in range (5):
-            # make our sources
-            for source in self.sources:
-                if source.producer () is None:
-                    msg.debug (_("while making %s: %s is a leaf dependency"),
-                               self.primary_product (), source.path ())
-                    continue
-                if source.producer ().making:
-                    # cyclic dependency -- drop for now, we will re-visit
-                    # this would happen while trying to remake the .aux in order to make the .bbl, for example
-                    msg.debug (_("while making %s: cyclic dependency on %s (pruned)"),
-                               self.primary_product (), source.path ())
-                    continue
-                source_rv = source.producer ().make ()
-                if source_rv == ERROR:
-                    self.failed_dep = source.producer ().failed_dep
-                    msg.debug (_("while making %s: dependency %s could not be made"),
-                               self.primary_product (), source.path ())
-                    return ERROR
-                elif source_rv == CHANGED:
-                    rv = CHANGED
-
-            if self.snapshots is None:
-                msg.debug (_("while making %s: first attempt or --force given, building"),
-                           self.primary_product ())
-                self.snapshots = tuple (s.snapshot () for s in self.sources)
-            else:
-                # There has already been a successful build.
-                for i in range (len (self.sources)):
-                    source = self.sources [i]
-                    if self.snapshots [i] != source.snapshot ():
-                        msg.debug (_("Rebuilding %s from outdated %s"),
-                                   self.primary_product (), source.path ())
-                        break
+                # make our sources
+                for source in self.sources:
+                    if source.producer () is None:
+                        msg.debug (_("%s: needs %s, leaf"), pp, source.path ())
                     else:
-                        msg.debug (_("Not rebuilding %s from unchanged %s"),
-                                   self.primary_product (), source.path ())
+                        msg.debug (_("%s: needs %s, making %s"), pp,
+                            source.path (), source.producer ().primary_product ())
+                        rv = source.producer ().make () or rv
+
+                # Once all dependent recipes have been run, check the
+                # state of the sources on disk.
+                snapshots = tuple (s.snapshot () for s in self.sources)
+
+                missing = ','.join (
+                    self.sources [i].path () for i in range (len (snapshots))
+                    if snapshots [i] == rubber.contents.NO_SUCH_FILE)
+                if missing:
+                    if isinstance (self, rubber.converters.latex.LaTeXDep) \
+                       and self.snapshots is None \
+                       and patience == 0:
+                        msg.debug (_("%s: missing %s, but first LaTeX run"), pp, missing)
+                    else:
+                        msg.debug (_("%s: missing %s, pruning"), pp, missing)
+                        return rv
+
+                if self.snapshots is None:
+                    msg.debug (_("%s: first attempt or --force, building"), pp)
                 else:
-                    msg.debug (_("No reason to rebuild %s."),
-                               self.primary_product ())
-                    return rv
-                msg.debug (_("Updating snapshots for %s"), self.primary_product ())
-                self.snapshots = tuple (s.snapshot () for s in self.sources)
+                    # There has already been a successful build.
+                    changed = ','.join (
+                        self.sources [i].path () for i in range (len (snapshots))
+                        if self.snapshots [i] != snapshots [i])
+                    if not changed:
+                        msg.debug (_("%s: sources unchanged since last build"), pp)
+                        return rv
+                    msg.debug (_("%s: some sources changed: %s"), pp, changed)
 
-            if (not isinstance (self, rubber.converters.latex.LaTeXDep)) \
-               and not all (os.path.exists (s.path ()) for s in self.sources):
-                msg.info (_("input files for %s do not yet exist, deferring"),
-                          self.primary_product ())
+                if not self.run ():
+                    raise MakeError (_("Recipe for {} failed").format (pp),
+                                     self.get_errors ())
 
-            elif not self.run ():
-                self.failed_dep = self
-                self.snapshots = None
-                return ERROR
+                # Build was successful.
+                self.snapshots = snapshots
+                rv = True
 
-            rv = CHANGED
-            force = False
+            # Patience exhausted.
+            raise MakeError (_("Contents of {} do not settle").format (pp),
+                             self.get_errors ())
 
-        self.failed_dep = self
-        msg.error (_("while making %s: file contents does not seem to settle"),
-                   self.primary_product ())
-        return ERROR
+        finally:
+            self.making = False
 
     def run (self):
         """
@@ -236,13 +219,6 @@ class Node (object):
         on failure. It must be redefined by derived classes.
         """
         return False
-
-    def failed (self):
-        """
-        Return a reference to the node that caused the failure of the last
-        call to 'make'. If there was no failure, return None.
-        """
-        return self.failed_dep
 
     def get_errors (self):
         """
@@ -253,7 +229,8 @@ class Node (object):
 
     def clean (self):
         """
-        Remove the products of this recipe and of recursive dependencies.
+        Remove the products of this recipe.
+        Nothing recursive happens with dependencies.
 
                 Each override should start with
                 super (class, self).clean ()
@@ -263,14 +240,6 @@ class Node (object):
             if os.path.exists (path):
                 msg.info (_("removing %s"), path)
                 os.remove (path)
-
-        assert not self.making
-        self.making = True
-        for source in self.sources:
-            producer = source.producer ()
-            if producer is not None and not producer.making:
-                producer.clean ()
-        self.making = False
 
 class Shell (Node):
     """

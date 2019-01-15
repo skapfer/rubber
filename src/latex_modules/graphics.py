@@ -183,9 +183,6 @@ class Module (rubber.module_interface.Module):
         # through the standard dependency mechanism because we do not want to
         # interrupt compilation when a graphic is not found.
         for node in self.files:
-            if not node.making:
-                node.make ()
-            else:
-                msg.debug ("*** FIXME ***  recursive making in graphics: %s",
-                           node.primary_product ())
+            assert not node.making
+            node.make ()
         return True

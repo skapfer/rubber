@@ -10,7 +10,6 @@ def factory (path):
     """
     try:
         result = _file_by_path [path]
-        log.debug ('reusing _File instance for ' + path)
     except KeyError:
         result = _File (path)
         _file_by_path [path] = result
@@ -24,7 +23,6 @@ class _File:
         """
         This constructor is private, use Contents.factory (path) instead.
         """
-        log.debug ('new _File: ' + path)
         self._path     = path
         self._producer = None
         self._checksum = None

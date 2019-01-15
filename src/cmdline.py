@@ -257,9 +257,12 @@ def prepare_source (filename, command_name, env, options):
             if not options.unsafe:
                 raise rubber.SyntaxError (_("Running external commands requires --unsafe."))
             # Produce the source from its dependency rules, if needed.
-            if src_node.make () == rubber.depend.ERROR:
-                raise rubber.GenericError (_("Producing the main LaTeX file failed: '%s'") \
-                    % src)
+            try:
+                src_node.make ()
+            except rubber.depend.MakeError as e:
+                raise rubber.GenericError (
+                    _("Producing the main LaTeX file {} failed: {}")
+                    .format (src, e.msg))
     else:
         src = path
 
@@ -370,7 +373,8 @@ def main (command_name):
             elif command_name == RUBBER_INFO:
                 process_source_info (env, options.info_action, options.short)
             elif options.clean:
-                env.final.clean ()
+                for node in env.final.all_producers ():
+                    node.clean ()
                 cache_path = env.main.basename ('.rubbercache')
                 if os.path.exists (cache_path):
                     msg.debug (_("removing %s"), cache_path)
@@ -396,27 +400,24 @@ def build (options, command_name, env):
             or (command_name == RUBBER_PLAIN and not options.clean)
 
     cache_path = env.main.basename ('.rubbercache')
-
-    if command_name == RUBBER_PLAIN and options.force:
-        msg.debug (_('Ignoring cache file if any because of --force.'))
-        ret = env.main.make ()
-        if ret != rubber.depend.ERROR and env.final is not env.main:
-            ret = env.final.make ()
+    if os.path.exists (cache_path):
+        if command_name == RUBBER_PLAIN and options.force:
+            msg.debug (_('Ignoring cache file if any because of --force.'))
         else:
-            # This is a hack for the call to get_errors() below
-            # to work when compiling failed when using -f.
-            env.final.failed_dep = env.main.failed_dep
-    else:
-        if os.path.exists (cache_path):
             rubber.depend.load_cache (cache_path)
-        ret = env.final.make ()
 
-    rubber.depend.save_cache (cache_path, env.final)
-
-    if ret == rubber.depend.ERROR:
-        msg.info (_("There were errors compiling %s."), env.main.source ())
+    try:
+        if command_name == RUBBER_PLAIN and options.force:
+            ret = env.main.make ()
+            if env.final is not env.main:
+                ret = env.final.make () or ret
+        else:
+            ret = env.final.make ()
+    except rubber.depend.MakeError as e:
+        msg.info (_("There were errors compiling %s: %s."),
+                  env.main.source (), e.msg)
         number = options.maxerr
-        for err in env.final.failed().get_errors():
+        for err in e.errors:
             if number == 0:
                 msg.info(_("More errors."))
                 break
@@ -425,7 +426,9 @@ def build (options, command_name, env):
         # Ensure a message even with -q.
         raise rubber.GenericError (_("Stopping because of compilation errors."))
 
-    if ret == rubber.depend.UNCHANGED:
+    if ret:
+        rubber.depend.save_cache (cache_path, env.final)
+    else:
         msg.info (_("nothing to be done for %s"), env.main.source ())
 
     if options.warn_boxes or options.warn_misc or options.warn_refs:
@@ -503,7 +506,8 @@ def process_source_pipe (env, pipe_tempfile, options):
     finally:
         # clean the intermediate files
         if not options.keep:
-            env.final.clean ()
+            for node in env.final.all_producers ():
+                node.clean ()
             cache_path = env.main.basename ('.rubbercache')
             if os.path.exists (cache_path):
                 msg.debug (_("removing %s"), cache_path)
