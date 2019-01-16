@@ -14,6 +14,7 @@ import os, os.path, sys
 import re
 import logging
 msg = logging.getLogger (__name__)
+import rubber.util
 from rubber.util import _, parse_line
 import rubber.depend
 import rubber.contents
@@ -1198,8 +1199,9 @@ class LaTeXDep (rubber.depend.Node):
         else:
             inputs = inputs + ":" + os.getenv("TEXINPUTS", "")
             env = {"TEXINPUTS": inputs}
-
-        self.env.execute (cmd, env)
+        if rubber.util.execute (cmd, env=env) != 0:
+            msg.error(_("Running %s resulted in a non-zero exit status."), cmd [0])
+            return False
 
         if not self.parse_log ():
             msg.error(_("Running %s failed.") % cmd[0])
@@ -1248,7 +1250,9 @@ class LaTeXDep (rubber.depend.Node):
                 l [1] = new
                 msg.info (_("running %s") % cmd)
                 # FIXME portability issue: explicit reference to shell
-                self.env.execute(("sh", "-c", cmd))
+                if rubber.util.execute (("sh", "-c", cmd)) != 0:
+                    msg.error (_("command '%s' returned a non-zero status"), cmd)
+                    return False
 
         for mod in self.modules.objects.values():
             if not mod.post_compile():

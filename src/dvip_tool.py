@@ -55,7 +55,7 @@ class Dvip_Tool_Dep_Node (rubber.depend.Node):
         cmd.append (self.source)
 
         # run
-        if self.doc.env.execute (cmd) != 0:
+        if rubber.util.execute (cmd) != 0:
             msg.error (_('%s failed on %s') % (tool, self.source))
             return False
         return True

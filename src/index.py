@@ -111,4 +111,4 @@ class Index (rubber.depend.Node):
                 self.command_env = {}
 
         # The actual run.
-        return self.doc.env.execute(self.cmd, self.command_env) == 0
+        return rubber.util.execute (self.cmd, env=self.command_env) == 0

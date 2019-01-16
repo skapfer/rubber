@@ -7,10 +7,10 @@ the class Environment, which contains all information about a given
 building process.
 """
 
-import os.path, subprocess
+import os.path
 import re
 
-from rubber.util import _, prog_available
+from rubber.util import _
 import logging
 msg = logging.getLogger (__name__)
 import rubber.converters
@@ -120,44 +120,3 @@ class Environment:
         any of the converters.
         """
         return self.converter.may_produce(name)
-
-    def execute (self, prog, env={}, pwd=None, out=None):
-        """
-        Silently execute an external program. The `prog' argument is the list
-        of arguments for the program, `prog[0]' is the program name. The `env'
-        argument is a dictionary with definitions that should be added to the
-        environment when running the program. The standard output is passed
-        line by line to the `out' function (or discarded by default).
-        """
-        msg.info(_("executing: %s") % " ".join (prog))
-        if pwd:
-            msg.debug(_("  in directory %s") % pwd)
-        if env != {}:
-            msg.debug(_("  with environment: %r") % env)
-
-        progname = prog_available(prog[0])
-        if not progname:
-            msg.error(_("%s not found") % prog[0])
-            return 1
-
-        penv = os.environ.copy()
-        for (key,val) in env.items():
-            penv[key] = val
-
-        process = subprocess.Popen(prog,
-            executable = progname,
-            env = penv,
-            cwd = pwd,
-            stdin = subprocess.DEVNULL,
-            stdout = subprocess.PIPE,
-            stderr = None)
-
-        if out is not None:
-            for line in process.stdout:
-                out(line)
-        else:
-            process.stdout.readlines()
-
-        ret = process.wait()
-        msg.debug(_("process %d (%s) returned %d") % (process.pid, prog[0], ret))
-        return ret

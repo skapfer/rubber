@@ -125,11 +125,10 @@ class Dep (rubber.depend.Node):
         self.add_product (target)
         self.include (os.path.basename (source))
         msg.debug (_("%s is made from %s"), target, " ".join (self.sources))
-        self.env = env
         self.base = source[:-3]
         self.cmd = ["mpost", "\\batchmode;input %s" %
             os.path.basename(self.base)]
-        path = ':'.join (self.env.path)
+        path = ':'.join (env.path)
         self.penv = {
                 "TEXINPUTS": "%s:%s" % (path, os.getenv("TEXINPUTS", "")),
                 "MPINPUTS": "%s:%s" % (path, os.getenv("MPINPUTS", "")) }
@@ -161,7 +160,7 @@ class Dep (rubber.depend.Node):
         next to their source file.
         """
         msg.info (_("running Metapost on %s"), self.base + ".mp")
-        if self.env.execute (self.cmd, self.penv, pwd=self.cmd_pwd) == 0:
+        if rubber.util.execute (self.cmd, env=self.penv, pwd=self.cmd_pwd) == 0:
             return True
 
         # This creates a log file that has the same aspect as TeX logs.
