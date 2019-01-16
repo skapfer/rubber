@@ -40,7 +40,6 @@ class Module (rubber.module_interface.Module):
     def __init__ (self, document, opt):
         self.dep = PythonTeXDep (document)
 
-    # Cleaning a module involves no recursion.
     def clean (self):
         trash = self.dep.pythontex_files
         msg.info (_("removing tree %s"), trash)

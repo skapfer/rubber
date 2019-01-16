@@ -382,6 +382,10 @@ def main (command_name):
             else:
                 build (options, RUBBER_PLAIN, env)
 
+        if (command_name == RUBBER_PLAIN and options.clean) \
+           or (command_name == RUBBER_PIPE and not options.keep):
+            rubber.depend.clean_all_products ()
+
     except KeyboardInterrupt:
         msg.warning (_("*** interrupted"))
         sys.exit (1)
@@ -522,7 +526,7 @@ def process_source_info (env, act, short):
 
     elif act == "rules":
         for node in env.final.all_producers ():
-            print ("\n%s:" % " ".join (node.products))
+            print ("\n%s:" % " ".join (node.products ()))
             print (" ".join (node.sources))
 
     else:

@@ -23,7 +23,6 @@ class Module (rubber.module_interface.Module):
     def __init__ (self, document, opt):
         self.maf = document.basename (with_suffix = ".maf")
 
-    # Cleaning a module involves no recursion.
     # Adding the .maf file to products may lead it to be removed
     # before we can read it. It is wise to deal with it locally.
     def clean (self):

@@ -17,12 +17,15 @@ class MakeError (Exception):
         self.errors = errors
 
 # Dictionnary allowing to find a Node by one of its products.
-# It should not be used outside this module, because we want
-# to keep it in sync with the product list in each Node.
-
-# It would be nice to clean all products by traversing the keys, but
-# see the TODO remark in add_product and replace_product.
+# It should not be used outside this module.
 _producer = {}
+
+def clean_all_products ():
+    """Clean all products of all recipes."""
+    for path in _producer:
+        if os.path.exists (path):
+            msg.info (_("removing %s"), path)
+            os.remove (path)
 
 def save_cache (cache_path, final):
     msg.debug (_('Creating or overwriting cache file %s') % cache_path)
@@ -80,7 +83,7 @@ class Node (object):
         and if a given depedency is not known in the set, a leaf node is made
         for it.
         """
-        self.products = []
+        self.product = None
         # All prerequisites for this recipe.
         self.sources = []
         # A snapshot of each source as they were used during last
@@ -144,23 +147,29 @@ class Node (object):
         # Fail if the name is not listed.
         self.sources.remove (name)
 
+    def products (self):
+        """An iterable with all all products for this recipe.
+        This function is not efficient, but called only once by
+        cmdline.py with a specific command-line option."""
+        return (key for key, value in _producer.items () if value is self)
+
     def add_product (self, name):
         """
         Register a new product for this node.
         """
         # TODO: why does this break? assert name not in _producer, name
-        assert name not in self.products, name
         _producer [name] = self
-        self.products.append (name)
+        if self.product is None:
+            self.product = name
 
     def primary_product (self):
-        return self.products [0]
+        return self.product
 
     def replace_product (self, name):
         """Trick for latex.py"""
         # TODO: why does this break? assert name not in _producer, name
-        del _producer [self.products [0]]
-        self.products [0] = name
+        del _producer [self.product]
+        self.product = name
         _producer [name] = self
 
     def make (self):
@@ -185,8 +194,8 @@ class Node (object):
         self.making = True
         try:
             for patience in range (5):
-                msg.debug (_('%s   made from   %s   attempt %i'),
-                           ','.join (self.products), ','.join (self.sources),
+                msg.debug (_('%s: made from %s   attempt %i'),
+                           self.product, ','.join (self.sources),
                            patience)
 
                 # make our sources
@@ -260,16 +269,10 @@ class Node (object):
 
     def clean (self):
         """
-        Remove the products of this recipe.
-        Nothing recursive happens with dependencies.
-
-                Each override should start with
-                super (class, self).clean ()
+        Remove additional files for this recipe.
+        Nothing recursive happens here.
+        Files registered as products are removed by rubber.clean ().
         """
-        for path in self.products:
-            if os.path.exists (path):
-                msg.info (_("removing %s"), path)
-                os.remove (path)
 
 class Shell (Node):
     """

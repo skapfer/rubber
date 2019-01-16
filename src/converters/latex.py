@@ -1262,10 +1262,9 @@ class LaTeXDep (rubber.depend.Node):
 
     def clean (self):
         """
-        Remove all files that are produced by compilation.
+        Run clean method of LaTeX modules.
         """
-        super (LaTeXDep, self).clean ()
-        msg.debug (_("cleaning additional files..."))
+        msg.debug (_("cleaning LaTeX modules..."))
         for mod in self.modules.objects.values():
             mod.clean()
 

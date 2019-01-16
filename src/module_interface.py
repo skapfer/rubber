@@ -70,10 +70,9 @@ class Module:
 
     def clean (self):
         """
-        This method is called when cleaning the compiled files, in order
-        to allow modules to clean additionnal files.
+        Remove additional files for this LaTeX module.
         Nothing recursive happens here.
-        Files registered as Node products are removed by other means.
+        Files registered as products are removed by rubber.clean ().
         """
 
     def command (self, cmd, args, _dep = None):
