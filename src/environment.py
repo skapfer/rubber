@@ -7,7 +7,7 @@ the class Environment, which contains all information about a given
 building process.
 """
 
-import os, os.path, sys, subprocess
+import os.path, subprocess
 import re
 
 from rubber.util import _, prog_available

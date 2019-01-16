@@ -81,9 +81,7 @@ class Node (object):
         for it.
         """
         self.products = []
-        # All prerequisites for this recipe. Elements are instances
-        # returned by rubber.contents.factory. A None value for the
-        # producer means a leaf node.
+        # All prerequisites for this recipe.
         self.sources = []
         # A snapshot of each source as they were used during last
         # successful build, or None if no build has been attempted
@@ -144,7 +142,7 @@ class Node (object):
         Remove a source for this node.
         """
         # Fail if the name is not listed.
-        self.sources.remove (rubber.contents.factory (name))
+        self.sources.remove (name)
 
     def add_product (self, name):
         """

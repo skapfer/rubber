@@ -139,13 +139,15 @@ class BibTeXDep (BibToolDep):
     #
     def do_crossrefs (self, args):
         if len (args) != 1:
-            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+            raise rubber.SyntaxError (_("invalid syntax for directive '{}'")
+                                      .format ('crossrefs'))
         number = args [0]
         self.crossrefs = number
 
     def do_stylepath (self, args):
         if len (args) != 1:
-            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+            raise rubber.SyntaxError (_("invalid syntax for directive '{}'")
+                                      .format ('stylepath'))
         path = args [0]
         self.bst_paths.insert (0, path)
 
@@ -154,7 +156,8 @@ class BibTeXDep (BibToolDep):
 
     def do_tool (self, args):
         if len (args) != 1:
-            raise rubber.SyntaxError (_("invalid syntax for directive '%s'") % cmd)
+            raise rubber.SyntaxError (_("invalid syntax for directive '{}'")
+                                      .format ('tool'))
         tool = args [0]
         # FIXME document this in user documentation
         self.tool = tool
